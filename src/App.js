@@ -1,0 +1,382 @@
+import React, { useState, useEffect } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "./firebaseConfig";
+import Signup from "./Signup";
+import Login from "./Login";
+import HomeFeed from "./HomeFeed";
+import SearchPage from "./SearchPage";
+import CaptureComponent from "./CaptureComponent";
+import ProfilePage from "./ProfilePage";
+import ActivityFeed from "./ActivityFeed"; // ✅ NEW: Import ActivityFeed component
+import MobileBottomNavigation from "./MobileBottomNavigation";
+import { LoadScript } from "@react-google-maps/api";
+
+// ✅ FIXED: Define libraries that need to be loaded
+const googleMapsLibraries = ["places"];
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [photos, setPhotos] = useState([]);
+
+  // ✅ NEW: Detect CodeSandbox environment for navigation adjustments
+  const isCodeSandbox =
+    window.location.hostname.includes("csb.app") ||
+    window.location.hostname.includes("codesandbox.io") ||
+    window.parent !== window;
+
+  // ✅ NEW: Calculate bottom padding based on environment
+  const bottomPadding = isCodeSandbox ? "150px" : "90px"; // Extra 60px for CodeSandbox
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        setUser(null);
+      }
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Real-time photo updates for the feed
+  useEffect(() => {
+    if (user) {
+      const photosRef = collection(db, "photos");
+      const unsubscribe = onSnapshot(photosRef, (snapshot) => {
+        const allPhotos = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Sort by timestamp (newest first)
+        const sortedPhotos = allPhotos.sort((a, b) => {
+          const aTime = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
+          const bTime = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
+          return bTime - aTime;
+        });
+
+        setPhotos(sortedPhotos);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user]);
+
+  // Hide loading screen when app is ready
+  useEffect(() => {
+    if (!authLoading) {
+      const loadingScreen = document.getElementById("loading-screen");
+      if (loadingScreen) {
+        loadingScreen.style.opacity = "0";
+        setTimeout(() => {
+          loadingScreen.style.display = "none";
+          document.body.classList.add("app-loaded");
+        }, 300);
+      }
+    }
+  }, [authLoading]);
+
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          backgroundColor: "#f8f9fa",
+          position: "relative",
+        }}
+      >
+        <div style={{ textAlign: "center", color: "#343a40" }}>
+          <h1
+            style={{
+              fontSize: "32px",
+              fontWeight: "300",
+              marginBottom: "10px",
+              color: "#007bff",
+              letterSpacing: "1px",
+            }}
+          >
+            Corkt
+          </h1>
+          <div
+            style={{
+              width: "32px",
+              height: "32px",
+              border: "3px solid #e9ecef",
+              borderTop: "3px solid #007bff",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "20px auto",
+            }}
+          />
+          <p style={{ fontSize: "16px", opacity: 0.7, margin: 0 }}>
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const googleMapsApiKey = "AIzaSyA868vL4wcDalIHwajFXLgTACs87w7apRE";
+
+  return (
+    <LoadScript
+      googleMapsApiKey={googleMapsApiKey}
+      libraries={googleMapsLibraries}
+      loadingElement={
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            backgroundColor: "#f8f9fa",
+          }}
+        >
+          <div style={{ textAlign: "center", color: "#343a40" }}>
+            <h1
+              style={{
+                fontSize: "32px",
+                fontWeight: "300",
+                marginBottom: "10px",
+                color: "#007bff",
+                letterSpacing: "1px",
+              }}
+            >
+              Corkt
+            </h1>
+            <div
+              style={{
+                width: "32px",
+                height: "32px",
+                border: "3px solid #e9ecef",
+                borderTop: "3px solid #007bff",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+                margin: "20px auto",
+              }}
+            />
+            <p style={{ fontSize: "16px", opacity: 0.7, margin: 0 }}>
+              Loading Maps...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <Router>
+        <div
+          style={{
+            height: "100vh",
+            backgroundColor: "#f8f9fa",
+            color: "#343a40",
+            fontFamily:
+              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden", // Prevent body scroll on mobile
+          }}
+        >
+          {user ? (
+            <>
+              {/* ✅ FIXED: Main content area - dynamic padding for CodeSandbox */}
+              <main
+                style={{
+                  flex: 1,
+                  paddingBottom: bottomPadding, // ✅ FIXED: Dynamic padding based on environment
+                  overflow: "hidden",
+                  position: "relative",
+                  backgroundColor: "#f8f9fa", // Ensure solid background
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    overflow: "auto",
+                    WebkitOverflowScrolling: "touch",
+                    overscrollBehavior: "contain",
+                  }}
+                >
+                  <Routes>
+                    <Route
+                      path="/"
+                      element={<HomeFeed photos={photos} currentUser={user} />}
+                    />
+                    <Route
+                      path="/search"
+                      element={
+                        <SearchPage photos={photos} currentUser={user} />
+                      }
+                    />
+                    <Route
+                      path="/capture"
+                      element={<CaptureComponent user={user} />}
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProfilePage currentUser={user} photos={photos} />
+                      }
+                    />
+                    {/* ✅ UPDATED: Real activity feed instead of placeholder */}
+                    <Route
+                      path="/activity"
+                      element={<ActivityFeed currentUser={user} />}
+                    />
+                  </Routes>
+                </div>
+              </main>
+
+              {/* ✅ FIXED: Mobile-optimized bottom navigation with CodeSandbox detection */}
+              <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
+            </>
+          ) : (
+            // 🎯 MOBILE-FIXED LOGIN SCREEN
+            <div
+              style={{
+                minHeight: "100vh",
+                padding: "20px",
+                background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+                display: "flex",
+                flexDirection: "column",
+                // 🎯 MOBILE FIX: Allow scrolling instead of centering
+                paddingTop: "40px",
+                paddingBottom: "40px",
+                overflowY: "auto",
+                // 🎯 MOBILE: Ensure proper viewport behavior
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "#ffffff",
+                  padding: "30px 20px", // 🎯 MOBILE: Reduced padding
+                  borderRadius: "20px",
+                  maxWidth: "400px",
+                  width: "100%",
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                  border: "1px solid #e9ecef",
+                  // 🎯 MOBILE FIX: Center horizontally but allow vertical scroll
+                  margin: "auto",
+                  marginTop: "20px",
+                  marginBottom: "20px",
+                  // 🎯 MOBILE: Ensure it doesn't exceed viewport
+                  maxHeight: "calc(100vh - 120px)",
+                  overflowY: "auto",
+                }}
+              >
+                <div style={{ textAlign: "center", marginBottom: "24px" }}>
+                  <h1
+                    style={{
+                      fontSize: "28px", // 🎯 MOBILE: Smaller title
+                      fontWeight: "300",
+                      margin: "0 0 8px 0",
+                      color: "#007bff",
+                      letterSpacing: "2px",
+                    }}
+                  >
+                    Corkt
+                  </h1>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#6c757d",
+                      fontSize: "14px", // 🎯 MOBILE: Smaller subtitle
+                    }}
+                  >
+                    Share your moments
+                  </p>
+                </div>
+
+                <Signup />
+
+                <div
+                  style={{
+                    margin: "20px 0", // 🎯 MOBILE: Reduced margin
+                    textAlign: "center",
+                    color: "#6c757d",
+                    position: "relative",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: 0,
+                      right: 0,
+                      height: "1px",
+                      backgroundColor: "#e9ecef",
+                    }}
+                  />
+                  <span
+                    style={{
+                      backgroundColor: "#ffffff",
+                      padding: "0 15px", // 🎯 MOBILE: Reduced padding
+                      fontSize: "12px", // 🎯 MOBILE: Smaller text
+                      position: "relative",
+                      zIndex: 1,
+                    }}
+                  >
+                    or
+                  </span>
+                </div>
+
+                <Login />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Global mobile optimizations */}
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+
+            /* Mobile-specific touch optimizations */
+            * {
+              -webkit-tap-highlight-color: transparent;
+            }
+
+            /* Smooth transitions for mobile */
+            a, button {
+              transition: all 0.15s ease;
+            }
+
+            /* Better mobile scrolling */
+            .mobile-scroll {
+              -webkit-overflow-scrolling: touch;
+              overscroll-behavior: contain;
+            }
+
+            /* iOS Safari specific fixes */
+            @supports (-webkit-touch-callout: none) {
+              .ios-fix {
+                -webkit-appearance: none;
+                border-radius: 0;
+              }
+            }
+
+            /* 🎯 MOBILE LOGIN FIXES */
+            @media (max-height: 600px) {
+              /* For shorter screens like landscape mobile */
+              .login-container {
+                padding-top: 10px !important;
+                padding-bottom: 10px !important;
+              }
+            }
+          `}
+        </style>
+      </Router>
+    </LoadScript>
+  );
+}

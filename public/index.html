@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Mobile-optimized viewport with pull-to-refresh prevention -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+
+    <!-- PWA and mobile app behaviors -->
+    <meta name="theme-color" content="#007bff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Corkt" />
+
+    <!-- Prevent pull-to-refresh and optimize for mobile -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!--
+      manifest.json provides metadata used when your web app is added to the
+      homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
+
+    <!-- Apple touch icons for when added to home screen -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.ico" />
+
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>Corkt - Photo Sharing</title>
+
+    <!-- Mobile-specific CSS optimizations -->
+    <style>
+      /* Prevent native pull-to-refresh behaviors */
+      html,
+      body {
+        overscroll-behavior: contain !important;
+        overscroll-behavior-y: contain !important;
+        position: relative;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Prevent iOS Safari bounce and zoom */
+      body {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-text-size-adjust: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+
+      /* Re-enable text selection for specific elements */
+      input,
+      textarea,
+      [contenteditable] {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+      }
+
+      /* Ensure full height on mobile */
+      #root {
+        height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for modern browsers */
+        overflow: hidden;
+      }
+
+      /* iOS Safari safe area support */
+      @supports (padding: max(0px)) {
+        body {
+          padding-left: max(0px, env(safe-area-inset-left));
+          padding-right: max(0px, env(safe-area-inset-right));
+        }
+      }
+
+      /* Smooth scrolling for the entire app */
+      * {
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+      }
+
+      /* Prevent text selection on UI elements but allow on content */
+      button,
+      .nav-item,
+      .photo-action {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      /* Optimize font rendering on mobile */
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Loading screen styles */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        z-index: 9999;
+      }
+
+      .loading-logo {
+        font-size: 48px;
+        font-weight: 300;
+        margin-bottom: 20px;
+        letter-spacing: 2px;
+      }
+
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Hide loading screen when React loads */
+      .app-loaded .loading-screen {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease-out;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+
+    <!-- Loading screen shown while React app loads -->
+    <div class="loading-screen" id="loading-screen">
+      <div class="loading-logo">Corkt</div>
+      <div class="loading-spinner"></div>
+    </div>
+
+    <div id="root"></div>
+
+    <!-- Hide loading screen when React mounts -->
+    <script>
+      // Hide loading screen when React app loads
+      window.addEventListener("DOMContentLoaded", function () {
+        setTimeout(function () {
+          const loadingScreen = document.getElementById("loading-screen");
+          if (loadingScreen) {
+            loadingScreen.style.opacity = "0";
+            setTimeout(function () {
+              loadingScreen.style.display = "none";
+            }, 500);
+          }
+        }, 1000); // Show loading for at least 1 second
+      });
+
+      // Prevent zoom on iOS Safari
+      document.addEventListener("gesturestart", function (e) {
+        e.preventDefault();
+      });
+
+      // Additional mobile optimizations
+      document.addEventListener("touchstart", function () {}, {
+        passive: true,
+      });
+      document.addEventListener("touchmove", function () {}, { passive: true });
+    </script>
+
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>

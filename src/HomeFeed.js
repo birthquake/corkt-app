@@ -1,0 +1,838 @@
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useOptimizedUsersData } from "./performanceHooks";
+import { PhotoInteractionSummary } from "./ActionBar";
+import { useFollowing, filterPhotosByFollowing } from "./useFollows";
+import { getDisplayName, getScreenName } from "./useUserData";
+import MobilePhotoCard from "./MobilePhotoCard";
+
+const HomeFeed = ({ photos, currentUser }) => {
+  const [activeFilter, setActiveFilter] = useState("public");
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+
+  // 🆕 LOCATION STATE
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(true);
+
+  // 🌍 NEW: Global/Local toggle state
+  const [isGlobalMode, setIsGlobalMode] = useState(true); // Default to global mode
+
+  // Get following list for friends filter and privacy checking
+  const { followingList, loading: followingLoading } = useFollowing(
+    currentUser?.uid
+  );
+
+  // 🚀 Get unique user IDs and use optimized user data fetching
+  const uniqueUserIds = useMemo(() => {
+    return [...new Set(photos.map((photo) => photo.uid).filter(Boolean))];
+  }, [photos.map((p) => p.uid).join(",")]);
+
+  const { usersData, loading: usersLoading } =
+    useOptimizedUsersData(uniqueUserIds);
+
+  // 🆕 GET CURRENT LOCATION ON COMPONENT MOUNT
+  useEffect(() => {
+    console.log("📍 HomeFeed: Getting current location for filtering...");
+    
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation not supported");
+      setLocationLoading(false);
+      return;
+    }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 30000 // Use cached location if less than 30 seconds old
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: Date.now()
+        };
+        
+        console.log("📍 HomeFeed: Current location obtained:", location);
+        setCurrentLocation(location);
+        setLocationError(null);
+        setLocationLoading(false);
+      },
+      (error) => {
+        console.error("📍 HomeFeed: Location error:", error);
+        setLocationError(error.message);
+        setLocationLoading(false);
+      },
+      options
+    );
+
+    // 🔄 Update location every 30 seconds for real-time filtering
+    const locationInterval = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: Date.now()
+          };
+          setCurrentLocation(location);
+        },
+        (error) => {
+          console.warn("📍 HomeFeed: Location update failed:", error);
+        },
+        options
+      );
+    }, 30000);
+
+    return () => clearInterval(locationInterval);
+  }, []);
+
+  // 🆕 HAVERSINE DISTANCE CALCULATION
+  const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in meters
+  }, []);
+
+  // 🌍 UPDATED: DYNAMIC LOCATION-BASED FILTERING FUNCTION
+  const filterPhotosByLocation = useCallback((photosToFilter) => {
+    if (!currentLocation) {
+      console.log("📍 HomeFeed: No current location - showing all photos");
+      return photosToFilter;
+    }
+
+    // 🌍 DYNAMIC RADIUS based on toggle state
+    const PROXIMITY_RADIUS = isGlobalMode ? 50000000 : 100; // Global: 50,000km, Local: 100m
+    const modeText = isGlobalMode ? "globally" : "locally";
+    
+    console.log(`📍 HomeFeed: Filtering ${photosToFilter.length} photos ${modeText} (${PROXIMITY_RADIUS}m radius)...`);
+    console.log(`📍 Current location: ${currentLocation.latitude.toFixed(6)}, ${currentLocation.longitude.toFixed(6)}`);
+
+    const nearbyPhotos = photosToFilter.filter((photo) => {
+      // Skip photos without location data
+      if (!photo.latitude || !photo.longitude) {
+        console.log(`📍 Photo ${photo.id}: No location data - EXCLUDING`);
+        return false;
+      }
+
+      const distance = calculateDistance(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        photo.latitude,
+        photo.longitude
+      );
+
+      const isNearby = distance <= PROXIMITY_RADIUS;
+      
+      console.log(
+        `📍 Photo ${photo.id}: ${Math.round(distance)}m away - ${
+          isNearby ? "INCLUDING" : "EXCLUDING"
+        }`
+      );
+
+      return isNearby;
+    });
+
+    console.log(`📍 Location filtering (${modeText}): ${photosToFilter.length} total → ${nearbyPhotos.length} nearby`);
+    return nearbyPhotos;
+  }, [currentLocation, calculateDistance, isGlobalMode]); // Added isGlobalMode to dependencies
+
+  // Filter options
+  const filters = [
+    { id: "public", icon: "🌍", tooltip: "Public" },
+    { id: "friends", icon: "👥", tooltip: "Friends" },
+    { id: "tagged", icon: "🏷️", tooltip: "Tagged" },
+    { id: "mine", icon: "👤", tooltip: "My Posts" },
+  ];
+
+  // 🚀 ENHANCED PHOTO FILTERING WITH LOCATION-BASED FILTERING FIRST
+  const filteredPhotos = useMemo(() => {
+    console.log(
+      `🔄 HomeFeed: Starting filter process - ${photos.length} total photos, filter: ${activeFilter}, mode: ${isGlobalMode ? 'global' : 'local'}`
+    );
+
+    // 🎯 STEP 1: LOCATION-BASED FILTERING
+    const locationFilteredPhotos = filterPhotosByLocation(photos);
+
+    // Function to check if user can see a photo based on privacy
+    const canUserSeePhoto = (photo) => {
+      // User can always see their own photos
+      if (photo.uid === currentUser?.uid) {
+        return true;
+      }
+
+      // Handle privacy settings
+      switch (photo.privacy) {
+        case "public":
+          return true;
+
+        case "friends":
+          // Only followers of the photo owner can see
+          return followingList.includes(photo.uid);
+
+        case "tagged":
+          // Only tagged users can see
+          return (
+            photo.taggedUsers?.some(
+              (taggedUser) => taggedUser.uid === currentUser?.uid
+            ) || false
+          );
+
+        default:
+          // For photos without privacy setting (legacy), treat as public
+          return true;
+      }
+    };
+
+    // 🎯 STEP 2: PRIVACY FILTERING (after location filtering)
+    const privacyFilteredPhotos = locationFilteredPhotos.filter(canUserSeePhoto);
+
+    // 🎯 STEP 3: USER FILTER (public/friends/tagged/mine)
+    let filtered = [];
+    switch (activeFilter) {
+      case "public":
+        // Show public photos that user can see (based on privacy AND location)
+        filtered = privacyFilteredPhotos.filter((photo) => photo.imageUrl);
+        break;
+
+      case "friends":
+        // Show photos from users that current user follows (and can see based on privacy AND location)
+        filtered = filterPhotosByFollowing(
+          privacyFilteredPhotos,
+          followingList
+        );
+        break;
+
+      case "tagged":
+        // Show photos where user is tagged (and can see based on privacy AND location)
+        filtered = privacyFilteredPhotos.filter((photo) =>
+          photo.taggedUsers?.some(
+            (taggedUser) => taggedUser.uid === currentUser?.uid
+          )
+        );
+        break;
+
+      case "mine":
+        // Show user's own photos (apply location filtering but not privacy)
+        const myPhotos = photos.filter((photo) => photo.uid === currentUser?.uid);
+        filtered = filterPhotosByLocation(myPhotos);
+        break;
+
+      default:
+        filtered = privacyFilteredPhotos;
+    }
+
+    console.log(`✅ HomeFeed: Final result - ${filtered.length} photos after all filtering`);
+    return filtered;
+  }, [
+    photos.map((p) => `${p.id}-${p.privacy}-${p.latitude}-${p.longitude}`).join(","), // Include location in dependency
+    activeFilter,
+    currentUser?.uid,
+    followingList.join(","),
+    currentLocation, // Re-filter when location changes
+    filterPhotosByLocation,
+    isGlobalMode // Re-filter when mode changes
+  ]);
+
+  // 🆕 Enhanced photo modal with index tracking for future swipe support
+  const openPhotoModal = useCallback(
+    (photo) => {
+      const photoIndex = filteredPhotos.findIndex((p) => p.id === photo.id);
+      setSelectedPhoto(photo);
+      setSelectedPhotoIndex(photoIndex);
+    },
+    [filteredPhotos]
+  );
+
+  const closePhotoModal = useCallback(() => {
+    setSelectedPhoto(null);
+    setSelectedPhotoIndex(0);
+  }, []);
+
+  const formatTimeAgo = useCallback((timestamp) => {
+    if (!timestamp) return "Unknown time";
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffDays < 1) return "Today";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  }, []);
+
+  // 🚀 Memoized helper function to get user info for a photo
+  const getUserInfo = useCallback(
+    (photo) => {
+      const userData = usersData[photo.uid];
+      return {
+        displayName: getDisplayName(userData, currentUser?.uid),
+        screenName: getScreenName(userData),
+        profilePicture: userData?.profilePicture || "",
+        initials:
+          userData?.realName?.charAt(0)?.toUpperCase() ||
+          photo.uid?.charAt(0)?.toUpperCase() ||
+          "?",
+      };
+    },
+    [usersData, currentUser?.uid]
+  );
+
+  // Helper function to get privacy icon
+  const getPrivacyIcon = (privacy) => {
+    switch (privacy) {
+      case "friends":
+        return "👥";
+      case "tagged":
+        return "🏷️";
+      case "public":
+      default:
+        return "🌍";
+    }
+  };
+
+  return (
+    <div
+      style={{
+        maxWidth: "500px",
+        margin: "0 auto",
+        backgroundColor: "#f8f9fa",
+        minHeight: "100vh",
+        paddingTop: "16px",
+      }}
+    >
+      {/* 🆕 LOCATION STATUS INDICATOR */}
+      {locationError && (
+        <div style={{
+          backgroundColor: "#f8d7da",
+          border: "1px solid #f5c6cb",
+          borderRadius: "8px",
+          padding: "8px 16px",
+          margin: "0 16px 16px 16px",
+          fontSize: "12px",
+          color: "#721c24"
+        }}>
+          📍 Location error: {locationError}
+          <div style={{ fontSize: "10px", marginTop: "4px", opacity: 0.8 }}>
+            Without location, all photos will be shown regardless of distance
+          </div>
+        </div>
+      )}
+
+      {locationLoading && (
+        <div style={{
+          backgroundColor: "#fff3cd",
+          border: "1px solid #ffeaa7",
+          borderRadius: "8px",
+          padding: "8px 16px",
+          margin: "0 16px 16px 16px",
+          fontSize: "12px",
+          color: "#856404",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px"
+        }}>
+          <div style={{ animation: "spin 1s linear infinite" }}>📍</div>
+          Getting your location for nearby photo filtering...
+        </div>
+      )}
+
+      {/* 🌍 UPDATED: Dynamic status message */}
+      {currentLocation && (
+        <div style={{
+          backgroundColor: "#d4edda",
+          border: "1px solid #c3e6cb",
+          borderRadius: "8px",
+          padding: "8px 16px",
+          margin: "0 16px 16px 16px",
+          fontSize: "12px",
+          color: "#155724"
+        }}>
+          📍 Showing photos {isGlobalMode ? "globally (within 50,000km)" : "nearby (within 100m)"}
+          <div style={{ fontSize: "10px", marginTop: "4px", opacity: 0.8 }}>
+            Location: {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
+          </div>
+        </div>
+      )}
+
+      {/* 🌍 UPDATED: Filter Tabs with Global/Local Toggle */}
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderBottom: "1px solid #e9ecef",
+          padding: "12px 0",
+          position: "sticky",
+          top: "0",
+          zIndex: 100,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "16px",
+            padding: "0 16px",
+          }}
+        >
+          {/* 🌍 GLOBAL/LOCAL TOGGLE */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginRight: "8px",
+            }}
+          >
+            <button
+              onClick={() => setIsGlobalMode(!isGlobalMode)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 12px",
+                backgroundColor: isGlobalMode ? "#007bff" : "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "20px",
+                fontSize: "12px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              }}
+              title={`Switch to ${isGlobalMode ? 'local' : 'global'} mode`}
+            >
+              <span style={{ fontSize: "14px" }}>
+                {isGlobalMode ? "🌍" : "📍"}
+              </span>
+              <span>
+                {isGlobalMode ? "Global" : "Local"}
+              </span>
+            </button>
+          </div>
+
+          {/* Separator */}
+          <div
+            style={{
+              width: "1px",
+              height: "24px",
+              backgroundColor: "#e9ecef",
+            }}
+          />
+
+          {/* Existing Filter Tabs */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "24px",
+            }}
+          >
+            {filters.map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
+                title={filter.tooltip}
+                style={{
+                  width: "44px",
+                  height: "44px",
+                  backgroundColor: "transparent",
+                  color: activeFilter === filter.id ? "#007bff" : "#6c757d",
+                  border: "none",
+                  borderRadius: "50%",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                }}
+                onMouseEnter={(e) => {
+                  if (activeFilter !== filter.id) {
+                    e.target.style.backgroundColor = "#f8f9fa";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeFilter !== filter.id) {
+                    e.target.style.backgroundColor = "transparent";
+                  }
+                }}
+              >
+                {filter.icon}
+                {/* Active indicator */}
+                {activeFilter === filter.id && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "-2px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "6px",
+                      height: "6px",
+                      backgroundColor: "#007bff",
+                      borderRadius: "50%",
+                    }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Feed Content */}
+      <div style={{ padding: "16px" }}>
+        {filteredPhotos.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "60px 20px",
+              color: "#6c757d",
+            }}
+          >
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>
+              {activeFilter === "public" && "🌍"}
+              {activeFilter === "friends" && "👥"}
+              {activeFilter === "tagged" && "🏷️"}
+              {activeFilter === "mine" && "📸"}
+            </div>
+            {/* 🌍 UPDATED: Dynamic empty state messages */}
+            <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
+              {currentLocation 
+                ? (isGlobalMode ? "No photos found globally" : "No nearby photos")
+                : (activeFilter === "public" && "No photos yet")}
+              {!currentLocation && activeFilter === "friends" && followingList.length === 0
+                ? "No followed users"
+                : !currentLocation && activeFilter === "friends" && "No photos from friends"}
+              {!currentLocation && activeFilter === "tagged" && "No tagged photos"}
+              {!currentLocation && activeFilter === "mine" && "No photos posted"}
+            </h3>
+            <p style={{ margin: 0, fontSize: "14px" }}>
+              {currentLocation 
+                ? (isGlobalMode 
+                    ? "No photos found matching your current filters"
+                    : "Take a photo here or move to a location where photos were shared"
+                  )
+                : "Enable location to see photos near you, or check location permissions"}
+            </p>
+          </div>
+        ) : (
+          <div>
+            {/* 🆕 Enhanced photo cards with mobile interactions */}
+            {filteredPhotos.map((photo) => {
+              const userInfo = getUserInfo(photo);
+
+              return (
+                <MobilePhotoCard
+                  key={photo.id}
+                  photo={photo}
+                  userInfo={userInfo}
+                  currentUser={currentUser}
+                  onPhotoClick={openPhotoModal}
+                  showUserInfo={true}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Enhanced Photo Modal with FIXED mobile positioning */}
+      {selectedPhoto && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.95)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 2000,
+            padding: "20px 20px 110px 20px",
+          }}
+          onClick={closePhotoModal}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: "16px",
+              overflow: "hidden",
+              maxWidth: "90vw",
+              maxHeight: "calc(100vh - 130px)",
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: "16px 20px",
+                borderBottom: "1px solid #f0f0f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
+                {getUserInfo(selectedPhoto).profilePicture ? (
+                  <img
+                    src={getUserInfo(selectedPhoto).profilePicture}
+                    alt={getUserInfo(selectedPhoto).displayName}
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      backgroundColor: "#007bff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "white",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {getUserInfo(selectedPhoto).initials}
+                  </div>
+                )}
+                <div>
+                  <div
+                    style={{
+                      fontWeight: "600",
+                      fontSize: "14px",
+                      color: "#343a40",
+                    }}
+                  >
+                    {getUserInfo(selectedPhoto).displayName}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                    @{getUserInfo(selectedPhoto).screenName}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={closePhotoModal}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  color: "#6c757d",
+                  padding: "4px",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Photo */}
+            <div
+              style={{
+                flex: "0 0 auto",
+                maxHeight: "60vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#f8f9fa",
+              }}
+            >
+              <img
+                src={selectedPhoto.imageUrl}
+                alt={selectedPhoto.caption || "Photo"}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  maxHeight: "60vh",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
+
+            {/* Modal Content - Scrollable */}
+            <div
+              style={{
+                padding: "20px",
+                flex: "1 1 auto",
+                overflow: "auto",
+                maxHeight: "30vh",
+              }}
+            >
+              {/* Privacy indicator in modal */}
+              {selectedPhoto.privacy && selectedPhoto.privacy !== "public" && (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    backgroundColor: "#f8f9fa",
+                    padding: "4px 8px",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    color: "#6c757d",
+                    marginBottom: "12px",
+                  }}
+                >
+                  {getPrivacyIcon(selectedPhoto.privacy)}
+                  <span style={{ textTransform: "capitalize" }}>
+                    {selectedPhoto.privacy} photo
+                  </span>
+                </div>
+              )}
+
+              {/* Caption */}
+              {selectedPhoto.caption && (
+                <p
+                  style={{
+                    margin: "0 0 12px 0",
+                    fontSize: "16px",
+                    lineHeight: "1.4",
+                    color: "#343a40",
+                  }}
+                >
+                  <span style={{ fontWeight: "600" }}>
+                    {getUserInfo(selectedPhoto).displayName}
+                  </span>{" "}
+                  {selectedPhoto.caption}
+                </p>
+              )}
+
+              {/* Show tagged users in modal */}
+              {selectedPhoto.taggedUsers &&
+                selectedPhoto.taggedUsers.length > 0 && (
+                  <p
+                    style={{
+                      margin: "0 0 12px 0",
+                      fontSize: "12px",
+                      color: "#007bff",
+                    }}
+                  >
+                    with{" "}
+                    {selectedPhoto.taggedUsers.map((taggedUser, index) => (
+                      <span key={taggedUser.uid}>
+                        @{taggedUser.displayScreenName}
+                        {index < selectedPhoto.taggedUsers.length - 1
+                          ? ", "
+                          : ""}
+                      </span>
+                    ))}
+                  </p>
+                )}
+
+              {/* Time and location */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  fontSize: "12px",
+                  color: "#6c757d",
+                  marginBottom: "16px",
+                }}
+              >
+                <span>📅 {formatTimeAgo(selectedPhoto.timestamp)}</span>
+                {selectedPhoto.latitude && selectedPhoto.longitude && (
+                  <span>
+                    📍 {selectedPhoto.latitude.toFixed(4)},{" "}
+                    {selectedPhoto.longitude.toFixed(4)}
+                    {/* Show distance if current location available */}
+                    {currentLocation && (
+                      <span style={{ marginLeft: "8px", fontWeight: "500" }}>
+                        ({Math.round(calculateDistance(
+                          currentLocation.latitude,
+                          currentLocation.longitude,
+                          selectedPhoto.latitude,
+                          selectedPhoto.longitude
+                        ))}m away)
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+
+              {/* Photo interaction summary */}
+              <PhotoInteractionSummary
+                photo={selectedPhoto}
+                currentUserId={currentUser?.uid}
+              />
+            </div>
+
+            {/* Fixed Bottom Button */}
+            <div
+              style={{
+                padding: "16px 20px",
+                borderTop: "1px solid #f0f0f0",
+                backgroundColor: "#ffffff",
+                flexShrink: 0,
+              }}
+            >
+              <button
+                onClick={closePhotoModal}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  backgroundColor: "#007bff",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "white",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                  fontWeight: "500",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+    </div>
+  );
+};
+
+export default HomeFeed;
