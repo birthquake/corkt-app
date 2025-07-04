@@ -114,7 +114,7 @@ const HomeFeed = ({ photos, currentUser }) => {
     }
 
     // 🌍 DYNAMIC RADIUS based on toggle state
-    const PROXIMITY_RADIUS = isGlobalMode ? 50000000 : 100; // Global: 50,000km, Local: 100m
+    const PROXIMITY_RADIUS = isGlobalMode ? 50000000 : 25; // Global: 50,000km, Local: 25m
     const modeText = isGlobalMode ? "globally" : "locally";
     
     console.log(`📍 HomeFeed: Filtering ${photosToFilter.length} photos ${modeText} (${PROXIMITY_RADIUS}m radius)...`);
@@ -360,7 +360,7 @@ const HomeFeed = ({ photos, currentUser }) => {
           fontSize: "12px",
           color: "#155724"
         }}>
-          📍 Showing photos {isGlobalMode ? "globally (within 50,000km)" : "nearby (within 100m)"}
+          📍 Showing photos {isGlobalMode ? "globally (within 50,000km)" : "nearby (within 25m)"}
           <div style={{ fontSize: "10px", marginTop: "4px", opacity: 0.8 }}>
             Location: {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
           </div>
