@@ -10,7 +10,7 @@ const AdminPanel = ({ currentUser }) => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   // Check if current user is admin (you'll need to implement this check)
-  const isAdmin = currentUser?.email === 'your-admin-email@gmail.com'; // Replace with your email
+  const isAdmin = currentUser?.email === 'corktapp@gmail.com'; // Replace with your email
 
   useEffect(() => {
     if (!isAdmin) {
