@@ -1,86 +1,142 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, doc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 const AdminPanel = ({ currentUser }) => {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [error, setError] = useState('');
-  const [debugInfo, setDebugInfo] = useState([]);
 
   // REPLACE WITH YOUR ACTUAL EMAIL
   const adminEmail = 'corktapp@gmail.com';
   const userEmail = currentUser?.email || '';
   const isAdmin = userEmail === adminEmail;
 
-  const addDebugInfo = (message) => {
-    console.log('DEBUG:', message);
-    setDebugInfo(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-  };
-
   useEffect(() => {
-    addDebugInfo('useEffect started');
-    
     if (!isAdmin) {
-      addDebugInfo('User is not admin, stopping');
       setLoading(false);
       return;
     }
 
-    addDebugInfo('User is admin, starting photo query');
-
     try {
-      addDebugInfo('Creating photos collection reference');
       const photosRef = collection(db, 'photos');
-      
-      addDebugInfo('Creating query with orderBy');
       const photosQuery = query(photosRef, orderBy('timestamp', 'desc'));
       
-      addDebugInfo('Setting up onSnapshot listener');
-      const unsubscribe = onSnapshot(
-        photosQuery, 
-        (snapshot) => {
-          addDebugInfo(`onSnapshot success - got ${snapshot.docs.length} documents`);
-          
-          try {
-            const allPhotos = snapshot.docs.map((doc) => {
-              const data = doc.data();
-              addDebugInfo(`Processing photo ${doc.id} - has data: ${!!data}`);
-              return {
-                id: doc.id,
-                ...data,
-              };
-            });
-            
-            addDebugInfo(`Successfully processed ${allPhotos.length} photos`);
-            setPhotos(allPhotos);
-            setLoading(false);
-            setError('');
-          } catch (processingError) {
-            addDebugInfo(`Error processing photos: ${processingError.message}`);
-            setError('Error processing photos: ' + processingError.message);
-            setLoading(false);
-          }
-        }, 
-        (queryError) => {
-          addDebugInfo(`onSnapshot error: ${queryError.message}`);
-          setError('Firebase query error: ' + queryError.message);
+      const unsubscribe = onSnapshot(photosQuery, (snapshot) => {
+        try {
+          const allPhotos = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setPhotos(allPhotos);
+          setLoading(false);
+          setError('');
+        } catch (err) {
+          console.error('Error processing photos:', err);
+          setError('Error loading photos: ' + err.message);
           setLoading(false);
         }
-      );
+      }, (err) => {
+        console.error('Error fetching photos:', err);
+        setError('Error fetching photos: ' + err.message);
+        setLoading(false);
+      });
 
-      addDebugInfo('onSnapshot listener set up successfully');
-      
-      return () => {
-        addDebugInfo('Cleanup: unsubscribing from listener');
-        unsubscribe();
-      };
-    } catch (setupError) {
-      addDebugInfo(`Error setting up query: ${setupError.message}`);
-      setError('Error setting up Firebase query: ' + setupError.message);
+      return () => unsubscribe();
+    } catch (err) {
+      console.error('Error setting up photo listener:', err);
+      setError('Error setting up photo listener: ' + err.message);
       setLoading(false);
     }
   }, [isAdmin]);
+
+  // Filter photos based on current filter and search
+  const filteredPhotos = photos.filter(photo => {
+    // Text search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = 
+        (photo.caption && photo.caption.toLowerCase().includes(searchLower)) ||
+        (photo.uid && photo.uid.toLowerCase().includes(searchLower)) ||
+        (photo.placeAddress && photo.placeAddress.toLowerCase().includes(searchLower)) ||
+        (photo.placeName && photo.placeName.toLowerCase().includes(searchLower));
+      if (!matchesSearch) return false;
+    }
+
+    // Status filter
+    if (filter === 'flagged') {
+      return photo.flagged === true;
+    } else if (filter === 'recent') {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const photoDate = photo.timestamp?.toDate?.() || new Date(photo.timestamp);
+      return photoDate > oneDayAgo;
+    } else if (filter === 'private') {
+      return photo.privacy === 'private';
+    }
+    
+    return true; // 'all' filter
+  });
+
+  const handleDeletePhoto = async (photoId) => {
+    if (!window.confirm('Are you sure you want to delete this photo? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'photos', photoId));
+      setError('');
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      setError('Error deleting photo: ' + error.message);
+    }
+  };
+
+  const handleFlagPhoto = async (photoId, flagged) => {
+    try {
+      await updateDoc(doc(db, 'photos', photoId), {
+        flagged: flagged,
+        flaggedAt: flagged ? new Date() : null,
+        flaggedBy: flagged ? currentUser.email : null
+      });
+      setError('');
+    } catch (error) {
+      console.error('Error flagging photo:', error);
+      setError('Error updating photo: ' + error.message);
+    }
+  };
+
+  const formatDate = (timestamp) => {
+    try {
+      if (!timestamp) return 'No date';
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleString();
+    } catch (err) {
+      return 'Invalid date';
+    }
+  };
+
+  const formatUserId = (uid) => {
+    if (!uid) return 'Unknown User';
+    return uid.length > 15 ? uid.substring(0, 15) + '...' : uid;
+  };
+
+  const formatLocation = (photo) => {
+    if (photo.placeName) return photo.placeName;
+    if (photo.placeAddress) return photo.placeAddress;
+    if (photo.latitude && photo.longitude) {
+      return `${photo.latitude.toFixed(4)}, ${photo.longitude.toFixed(4)}`;
+    }
+    return 'No location';
+  };
+
+  const getPrivacyColor = (privacy) => {
+    if (privacy === 'private') return '#dc3545';
+    if (privacy === 'friends') return '#ffc107';
+    return '#28a745'; // public
+  };
 
   if (!isAdmin) {
     return (
@@ -98,18 +154,39 @@ const AdminPanel = ({ currentUser }) => {
     );
   }
 
+  if (loading) {
+    return (
+      <div style={{ 
+        padding: '40px 20px', 
+        textAlign: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#f8f9fa'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #e9ecef',
+          borderTop: '4px solid #007bff',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '20px auto'
+        }} />
+        <p style={{ color: '#6c757d' }}>Loading photos...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ 
       backgroundColor: '#f8f9fa',
       minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      padding: '20px'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
+      {/* Header */}
       <div style={{
         backgroundColor: '#fff',
         padding: '20px',
-        borderRadius: '8px',
-        marginBottom: '20px',
+        borderBottom: '1px solid #dee2e6',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         <h1 style={{ 
@@ -118,28 +195,17 @@ const AdminPanel = ({ currentUser }) => {
           fontSize: '28px',
           fontWeight: '600'
         }}>
-          Admin Panel Debug
+          Corkt Admin Panel
         </h1>
         
-        <div style={{
+        <div style={{ 
           marginBottom: '16px',
           color: '#6c757d',
           fontSize: '14px'
         }}>
           Logged in as: <strong>{userEmail}</strong>
         </div>
-
-        {/* Status */}
-        <div style={{
-          backgroundColor: loading ? '#fff3cd' : error ? '#f8d7da' : '#d4edda',
-          padding: '12px',
-          borderRadius: '6px',
-          marginBottom: '16px',
-          border: `1px solid ${loading ? '#ffeaa7' : error ? '#f5c6cb' : '#c3e6cb'}`
-        }}>
-          <strong>Status:</strong> {loading ? 'Loading photos...' : error ? 'Error occurred' : `Success - ${photos.length} photos loaded`}
-        </div>
-
+        
         {/* Error Display */}
         {error && (
           <div style={{
@@ -150,114 +216,323 @@ const AdminPanel = ({ currentUser }) => {
             marginBottom: '16px',
             border: '1px solid #f5c6cb'
           }}>
-            <strong>Error:</strong> {error}
+            {error}
           </div>
         )}
-
-        {/* Debug Info */}
-        <div style={{
-          backgroundColor: '#f8f9fa',
-          padding: '16px',
-          borderRadius: '6px',
-          marginBottom: '16px',
-          maxHeight: '200px',
-          overflowY: 'auto'
+        
+        {/* Search and Filters */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '12px', 
+          flexWrap: 'wrap',
+          alignItems: 'center'
         }}>
-          <h4 style={{ margin: '0 0 12px 0', color: '#343a40' }}>Debug Log:</h4>
-          {debugInfo.map((info, index) => (
-            <div key={index} style={{
-              fontSize: '12px',
-              color: '#6c757d',
-              marginBottom: '4px',
-              fontFamily: 'monospace'
-            }}>
-              {info}
-            </div>
-          ))}
+          <input
+            type="text"
+            placeholder="Search by caption, user ID, or location..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px',
+              flex: '1',
+              minWidth: '250px'
+            }}
+          />
+          
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '6px',
+              fontSize: '14px',
+              backgroundColor: '#fff'
+            }}
+          >
+            <option value="all">All Photos ({photos.length})</option>
+            <option value="recent">Recent (24h)</option>
+            <option value="flagged">Flagged ({photos.filter(p => p.flagged).length})</option>
+            <option value="private">Private Photos ({photos.filter(p => p.privacy === 'private').length})</option>
+          </select>
         </div>
+      </div>
 
-        {/* Photos Preview */}
-        {!loading && !error && photos.length > 0 && (
-          <div style={{
-            backgroundColor: '#f8f9fa',
-            padding: '16px',
-            borderRadius: '6px'
+      {/* Stats Bar */}
+      <div style={{
+        backgroundColor: '#fff',
+        padding: '16px 20px',
+        borderBottom: '1px solid #dee2e6',
+        display: 'flex',
+        gap: '24px',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ color: '#6c757d', fontSize: '14px' }}>
+          <strong style={{ color: '#343a40' }}>Total Photos:</strong> {photos.length}
+        </div>
+        <div style={{ color: '#6c757d', fontSize: '14px' }}>
+          <strong style={{ color: '#343a40' }}>Showing:</strong> {filteredPhotos.length}
+        </div>
+        <div style={{ color: '#6c757d', fontSize: '14px' }}>
+          <strong style={{ color: '#dc3545' }}>Flagged:</strong> {photos.filter(p => p.flagged).length}
+        </div>
+        <div style={{ color: '#6c757d', fontSize: '14px' }}>
+          <strong style={{ color: '#ffc107' }}>Private:</strong> {photos.filter(p => p.privacy === 'private').length}
+        </div>
+      </div>
+
+      {/* Photos Grid */}
+      <div style={{ padding: '20px' }}>
+        {filteredPhotos.length === 0 ? (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '60px 20px',
+            color: '#6c757d'
           }}>
-            <h4 style={{ margin: '0 0 12px 0', color: '#343a40' }}>Photos Found: {photos.length}</h4>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-              gap: '10px',
-              maxHeight: '300px',
-              overflowY: 'auto'
-            }}>
-              {photos.slice(0, 10).map((photo, index) => (
-                <div key={photo.id} style={{
+            <h3 style={{ marginBottom: '8px' }}>No photos found</h3>
+            <p>Try adjusting your search or filter criteria.</p>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+            gap: '20px'
+          }}>
+            {filteredPhotos.map((photo) => (
+              <div
+                key={photo.id}
+                style={{
                   backgroundColor: '#fff',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #dee2e6',
-                  fontSize: '12px'
-                }}>
-                  <div><strong>#{index + 1}</strong></div>
-                  <div>ID: {photo.id.substring(0, 8)}...</div>
-                  <div>User: {photo.userEmail ? photo.userEmail.substring(0, 15) + '...' : 'No email'}</div>
-                  <div>Has image: {photo.imageUrl || photo.photoURL ? '✅' : '❌'}</div>
-                  <div>Caption: {photo.caption ? photo.caption.substring(0, 20) + '...' : 'No caption'}</div>
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  border: photo.flagged ? '2px solid #dc3545' : '1px solid #dee2e6'
+                }}
+              >
+                {/* Photo */}
+                <div style={{ position: 'relative' }}>
+                  <img
+                    src={photo.imageUrl}
+                    alt="User photo"
+                    style={{
+                      width: '100%',
+                      height: '200px',
+                      objectFit: 'cover',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setSelectedPhoto(photo)}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                  <div style={{
+                    display: 'none',
+                    width: '100%',
+                    height: '200px',
+                    backgroundColor: '#f8f9fa',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#6c757d',
+                    fontSize: '14px'
+                  }}>
+                    Image failed to load
+                  </div>
+                  
+                  {/* Status badges */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    display: 'flex',
+                    gap: '4px'
+                  }}>
+                    {photo.flagged && (
+                      <div style={{
+                        backgroundColor: '#dc3545',
+                        color: '#fff',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        FLAGGED
+                      </div>
+                    )}
+                    {photo.privacy && (
+                      <div style={{
+                        backgroundColor: getPrivacyColor(photo.privacy),
+                        color: '#fff',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        {photo.privacy.toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ))}
-              {photos.length > 10 && (
-                <div style={{
-                  backgroundColor: '#e9ecef',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  textAlign: 'center',
-                  fontSize: '12px',
-                  color: '#6c757d'
-                }}>
-                  +{photos.length - 10} more photos
+
+                {/* Photo Info */}
+                <div style={{ padding: '16px' }}>
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ 
+                      fontWeight: '600', 
+                      color: '#343a40',
+                      fontSize: '14px',
+                      marginBottom: '4px'
+                    }}>
+                      User ID: {formatUserId(photo.uid)}
+                    </div>
+                    <div style={{ 
+                      color: '#6c757d', 
+                      fontSize: '12px'
+                    }}>
+                      {formatDate(photo.timestamp)}
+                    </div>
+                  </div>
+
+                  {photo.caption && (
+                    <p style={{
+                      margin: '0 0 12px 0',
+                      color: '#343a40',
+                      fontSize: '14px',
+                      lineHeight: '1.4',
+                      wordBreak: 'break-word'
+                    }}>
+                      {photo.caption.length > 100 ? 
+                        photo.caption.substring(0, 100) + '...' : 
+                        photo.caption
+                      }
+                    </p>
+                  )}
+
+                  <div style={{
+                    color: '#6c757d',
+                    fontSize: '12px',
+                    marginBottom: '12px'
+                  }}>
+                    📍 {formatLocation(photo)}
+                  </div>
+
+                  {photo.taggedUsers && photo.taggedUsers.length > 0 && (
+                    <div style={{
+                      color: '#6c757d',
+                      fontSize: '12px',
+                      marginBottom: '12px'
+                    }}>
+                      👥 Tagged: {photo.taggedUsers.length} user{photo.taggedUsers.length !== 1 ? 's' : ''}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '8px',
+                    flexWrap: 'wrap'
+                  }}>
+                    <button
+                      onClick={() => handleFlagPhoto(photo.id, !photo.flagged)}
+                      style={{
+                        padding: '6px 12px',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        backgroundColor: photo.flagged ? '#28a745' : '#ffc107',
+                        color: photo.flagged ? '#fff' : '#000'
+                      }}
+                    >
+                      {photo.flagged ? 'Unflag' : 'Flag'}
+                    </button>
+                    
+                    <button
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      style={{
+                        padding: '6px 12px',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        backgroundColor: '#dc3545',
+                        color: '#fff'
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* No Photos Message */}
-        {!loading && !error && photos.length === 0 && (
-          <div style={{
-            backgroundColor: '#fff3cd',
-            padding: '16px',
-            borderRadius: '6px',
-            border: '1px solid #ffeaa7'
-          }}>
-            <strong>No photos found in the database.</strong>
-            <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
-              This could mean:
-            </p>
-            <ul style={{ margin: '8px 0 0 16px', fontSize: '14px' }}>
-              <li>No photos have been uploaded yet</li>
-              <li>Photos are in a different collection</li>
-              <li>Database structure is different than expected</li>
-            </ul>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              border: '4px solid #e9ecef',
-              borderTop: '4px solid #007bff',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '20px auto'
-            }} />
-            <p style={{ color: '#6c757d' }}>Loading photos...</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {/* Photo Modal */}
+      {selectedPhoto && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <div
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: '12px',
+              maxWidth: '600px',
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedPhoto.imageUrl}
+              alt="Full size photo"
+              style={{
+                width: '100%',
+                maxHeight: '400px',
+                objectFit: 'contain'
+              }}
+            />
+            <div style={{ padding: '20px' }}>
+              <h3 style={{ marginBottom: '12px' }}>Photo Details</h3>
+              <p><strong>User ID:</strong> {selectedPhoto.uid}</p>
+              <p><strong>Caption:</strong> {selectedPhoto.caption || 'No caption'}</p>
+              <p><strong>Location:</strong> {formatLocation(selectedPhoto)}</p>
+              <p><strong>Privacy:</strong> {selectedPhoto.privacy || 'public'}</p>
+              <p><strong>Posted:</strong> {formatDate(selectedPhoto.timestamp)}</p>
+              {selectedPhoto.taggedUsers && selectedPhoto.taggedUsers.length > 0 && (
+                <p><strong>Tagged Users:</strong> {selectedPhoto.taggedUsers.join(', ')}</p>
+              )}
+              {selectedPhoto.latitude && selectedPhoto.longitude && (
+                <p><strong>Coordinates:</strong> {selectedPhoto.latitude}, {selectedPhoto.longitude}</p>
+              )}
+              {selectedPhoto.flagged && (
+                <p style={{ color: '#dc3545' }}>
+                  <strong>Flagged by:</strong> {selectedPhoto.flaggedBy} on {formatDate(selectedPhoto.flaggedAt)}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>
         {`
