@@ -10,6 +10,7 @@ import SearchPage from "./SearchPage";
 import CaptureComponent from "./CaptureComponent";
 import ProfilePage from "./ProfilePage";
 import ActivityFeed from "./ActivityFeed"; // ✅ NEW: Import ActivityFeed component
+import AdminPanel from "./AdminPanel"; // ✅ NEW: Import AdminPanel component
 import MobileBottomNavigation from "./MobileBottomNavigation";
 import { LoadScript } from "@react-google-maps/api";
 
@@ -229,6 +230,11 @@ export default function App() {
                     <Route
                       path="/activity"
                       element={<ActivityFeed currentUser={user} />}
+                    />
+                    {/* ✅ NEW: Admin panel route for content moderation */}
+                    <Route
+                      path="/admin"
+                      element={<AdminPanel currentUser={user} />}
                     />
                   </Routes>
                 </div>
