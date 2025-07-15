@@ -123,13 +123,52 @@ const AdminPanel = ({ currentUser }) => {
     return uid.length > 15 ? uid.substring(0, 15) + '...' : uid;
   };
 
+  // Format location to show City, State instead of coordinates
   const formatLocation = (photo) => {
+    // First try to get city/state from placeAddress
+    if (photo.placeAddress) {
+      // Extract city, state from full address (e.g., "123 Main St, New York, NY 10001")
+      const addressParts = photo.placeAddress.split(',').map(part => part.trim());
+      if (addressParts.length >= 3) {
+        // Return "City, State" (skip street address and zip)
+        return `${addressParts[addressParts.length - 3]}, ${addressParts[addressParts.length - 2]}`;
+      } else if (addressParts.length === 2) {
+        // Return "City, State"
+        return `${addressParts[0]}, ${addressParts[1]}`;
+      } else {
+        // Return full address if can't parse
+        return photo.placeAddress;
+      }
+    }
+    
+    // Fallback to place name
     if (photo.placeName) return photo.placeName;
-    if (photo.placeAddress) return photo.placeAddress;
+    
+    // Last resort: coordinates
     if (photo.latitude && photo.longitude) {
       return `${photo.latitude.toFixed(4)}, ${photo.longitude.toFixed(4)}`;
     }
+    
     return 'No location';
+  };
+
+  // Get detailed location info for photo modal
+  const getDetailedLocation = (photo) => {
+    let locationInfo = [];
+    
+    if (photo.placeName) {
+      locationInfo.push(`Place: ${photo.placeName}`);
+    }
+    
+    if (photo.placeAddress) {
+      locationInfo.push(`Address: ${photo.placeAddress}`);
+    }
+    
+    if (photo.latitude && photo.longitude) {
+      locationInfo.push(`Coordinates: ${photo.latitude.toFixed(6)}, ${photo.longitude.toFixed(6)}`);
+    }
+    
+    return locationInfo.length > 0 ? locationInfo.join(' • ') : 'No location data';
   };
 
   const getPrivacyColor = (privacy) => {
@@ -229,7 +268,7 @@ const AdminPanel = ({ currentUser }) => {
         }}>
           <input
             type="text"
-            placeholder="Search by caption, user ID, or location..."
+            placeholder="Search by caption, user ID, city, or place name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -515,14 +554,14 @@ const AdminPanel = ({ currentUser }) => {
               <h3 style={{ marginBottom: '12px' }}>Photo Details</h3>
               <p><strong>User ID:</strong> {selectedPhoto.uid}</p>
               <p><strong>Caption:</strong> {selectedPhoto.caption || 'No caption'}</p>
-              <p><strong>Location:</strong> {formatLocation(selectedPhoto)}</p>
+              <p><strong>Location:</strong> {getDetailedLocation(selectedPhoto)}</p>
               <p><strong>Privacy:</strong> {selectedPhoto.privacy || 'public'}</p>
               <p><strong>Posted:</strong> {formatDate(selectedPhoto.timestamp)}</p>
               {selectedPhoto.taggedUsers && selectedPhoto.taggedUsers.length > 0 && (
                 <p><strong>Tagged Users:</strong> {selectedPhoto.taggedUsers.join(', ')}</p>
               )}
-              {selectedPhoto.latitude && selectedPhoto.longitude && (
-                <p><strong>Coordinates:</strong> {selectedPhoto.latitude}, {selectedPhoto.longitude}</p>
+              {selectedPhoto.placeTypes && selectedPhoto.placeTypes.length > 0 && (
+                <p><strong>Place Types:</strong> {selectedPhoto.placeTypes.join(', ')}</p>
               )}
               {selectedPhoto.flagged && (
                 <p style={{ color: '#dc3545' }}>
