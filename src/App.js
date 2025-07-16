@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import Signup from "./Signup";
@@ -11,6 +11,7 @@ import CaptureComponent from "./CaptureComponent";
 import ProfilePage from "./ProfilePage";
 import ActivityFeed from "./ActivityFeed";
 import AdminPanel from "./AdminPanel";
+import AnalyticsDashboard from "./AnalyticsDashboard";
 import MobileBottomNavigation from "./MobileBottomNavigation";
 import { LoadScript } from "@react-google-maps/api";
 
@@ -31,6 +32,9 @@ export default function App() {
 
   // Calculate bottom padding based on environment
   const bottomPadding = isCodeSandbox ? "150px" : "90px";
+
+  // 📊 Admin check for analytics access
+  const isAdmin = user?.email === 'your-email@example.com'; // Replace with your actual email
 
   useEffect(() => {
     const auth = getAuth();
@@ -188,6 +192,95 @@ export default function App() {
               overflow: "hidden",
             }}
           >
+            {/* 📊 Admin Navigation Bar - Only visible to admins */}
+            {isAdmin && (
+              <div
+                style={{
+                  backgroundColor: "#17a2b8",
+                  color: "white",
+                  padding: "8px 16px",
+                  fontSize: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  zIndex: 1000
+                }}
+              >
+                <span style={{ fontWeight: "500" }}>👨‍💻 Admin Mode</span>
+                <div style={{ display: "flex", gap: "16px" }}>
+                  <a
+                    href="/admin"
+                    style={{
+                      color: "white",
+                      textDecoration: "none",
+                      fontSize: "12px",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      backgroundColor: window.location.pathname === "/admin" ? "rgba(255,255,255,0.2)" : "transparent",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      if (window.location.pathname !== "/admin") {
+                        e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (window.location.pathname !== "/admin") {
+                        e.target.style.backgroundColor = "transparent";
+                      }
+                    }}
+                  >
+                    ⚙️ Admin Panel
+                  </a>
+                  <a
+                    href="/analytics"
+                    style={{
+                      color: "white",
+                      textDecoration: "none",
+                      fontSize: "12px",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      backgroundColor: window.location.pathname === "/analytics" ? "rgba(255,255,255,0.2)" : "transparent",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      if (window.location.pathname !== "/analytics") {
+                        e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (window.location.pathname !== "/analytics") {
+                        e.target.style.backgroundColor = "transparent";
+                      }
+                    }}
+                  >
+                    📊 Analytics
+                  </a>
+                  <a
+                    href="/"
+                    style={{
+                      color: "white",
+                      textDecoration: "none",
+                      fontSize: "12px",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      backgroundColor: "transparent",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = "rgba(255,255,255,0.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    🏠 Back to App
+                  </a>
+                </div>
+              </div>
+            )}
+
             <main
               style={{
                 flex: 1,
@@ -229,6 +322,18 @@ export default function App() {
                   <Route
                     path="/admin"
                     element={<AdminPanel currentUser={user} />}
+                  />
+                  
+                  {/* 📊 Analytics Dashboard - Admin Only */}
+                  <Route
+                    path="/analytics"
+                    element={
+                      isAdmin ? (
+                        <AnalyticsDashboard />
+                      ) : (
+                        <Navigate to="/" replace />
+                      )
+                    }
                   />
                 </Routes>
               </div>
