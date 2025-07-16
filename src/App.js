@@ -176,14 +176,13 @@ export default function App() {
       <Router>
         <div
           style={{
-            height: "100vh",
+            minHeight: "100vh",
             backgroundColor: "#f8f9fa",
             color: "#343a40",
             fontFamily:
               '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
             display: "flex",
-            flexDirection: "column",
-            overflow: "hidden", // Prevent body scroll on mobile
+            flexDirection: "column"
           }}
         >
           {user ? (
@@ -248,11 +247,11 @@ export default function App() {
               className="auth-container"
               style={{
                 minHeight: "100vh",
+                height: "auto",
                 background: "#e3f2fd",
                 padding: "20px",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                overflowY: "auto",
-                WebkitOverflowScrolling: "touch"
+                paddingBottom: "40px",
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
               }}
             >
               {showLogin ? (
@@ -459,10 +458,28 @@ export default function App() {
             @media (max-height: 800px) {
               .auth-container {
                 padding: 10px !important;
+                padding-bottom: 60px !important;
               }
               .auth-card {
                 margin: 10px auto !important;
                 padding: 20px !important;
+              }
+            }
+
+            /* Ensure body can scroll for auth pages */
+            body {
+              overflow-y: auto !important;
+            }
+
+            /* Mobile auth page fixes */
+            @media (max-width: 480px) {
+              .auth-container {
+                padding: 10px !important;
+                padding-bottom: 50px !important;
+              }
+              .auth-card {
+                padding: 20px 15px !important;
+                margin: 10px auto !important;
               }
             }
           `}
