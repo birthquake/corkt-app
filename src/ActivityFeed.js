@@ -3,6 +3,42 @@ import { collection, query, where, orderBy, onSnapshot, limit } from 'firebase/f
 import { db } from './firebaseConfig';
 import ActivityItem from './ActivityItem';
 
+// Minimal SVG icon components - matching MobileBottomNavigation style
+const BellIcon = ({ color = "#6c757d", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+
+const BellOffIcon = ({ color = "#6c757d", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M6.87 6.87a6 6 0 0 1 8.13 8.13"/>
+    <path d="M19 17v-6a7 7 0 0 0-1-3.67"/>
+    <path d="M14.73 21a2 2 0 0 1-3.46 0"/>
+    <path d="M3 17h4l-1-4"/>
+    <path d="M14 3V1"/>
+    <path d="M10 3V1"/>
+    <line x1="2" y1="2" x2="22" y2="22"/>
+  </svg>
+);
+
+const AlertCircleIcon = ({ color = "#dc3545", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+);
+
+const RefreshIcon = ({ color = "#ffffff", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="23 4 23 10 17 10"/>
+    <polyline points="1 20 1 14 7 14"/>
+    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+  </svg>
+);
+
 const ActivityFeed = ({ currentUser }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,12 +109,22 @@ const ActivityFeed = ({ currentUser }) => {
           <h2 style={styles.title}>Activity</h2>
         </div>
         <div style={styles.errorContainer}>
+          <div style={styles.errorIconContainer}>
+            <AlertCircleIcon color="#dc3545" size={48} />
+          </div>
           <p style={styles.errorText}>{error}</p>
           <button 
             style={styles.retryButton}
             onClick={() => window.location.reload()}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#0056b3';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#007bff';
+            }}
           >
-            Try Again
+            <RefreshIcon color="#ffffff" size={16} />
+            <span style={{ marginLeft: '6px' }}>Try Again</span>
           </button>
         </div>
       </div>
@@ -92,7 +138,13 @@ const ActivityFeed = ({ currentUser }) => {
           <h2 style={styles.title}>Activity</h2>
         </div>
         <div style={styles.emptyContainer}>
-          <p style={styles.emptyText}>Please log in to see your activity</p>
+          <div style={styles.emptyIconContainer}>
+            <BellIcon color="#6c757d" size={48} />
+          </div>
+          <h3 style={styles.emptyTitle}>Please log in</h3>
+          <p style={styles.emptyText}>
+            Sign in to see your activity notifications
+          </p>
         </div>
       </div>
     );
@@ -107,7 +159,9 @@ const ActivityFeed = ({ currentUser }) => {
       <div style={styles.feedContainer}>
         {activities.length === 0 ? (
           <div style={styles.emptyContainer}>
-            <div style={styles.emptyIcon}>🔔</div>
+            <div style={styles.emptyIconContainer}>
+              <BellOffIcon color="#6c757d" size={48} />
+            </div>
             <h3 style={styles.emptyTitle}>No activity yet</h3>
             <p style={styles.emptyText}>
               When people like your photos or post nearby, you'll see it here
@@ -134,20 +188,22 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: '#f8f9fa',
     color: '#343a40',
-    paddingBottom: '80px', // Space for bottom nav
+    paddingBottom: '120px', // Increased space for bottom nav
+    maxWidth: '500px',
+    margin: '0 auto',
   },
   header: {
     padding: '20px 20px 10px 20px',
     borderBottom: '1px solid #e9ecef',
+    backgroundColor: '#ffffff',
     position: 'sticky',
     top: 0,
-    backgroundColor: '#f8f9fa',
     zIndex: 10,
   },
   title: {
     margin: 0,
     fontSize: '24px',
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#343a40',
   },
   feedContainer: {
@@ -172,6 +228,7 @@ const styles = {
   loadingText: {
     color: '#6c757d',
     fontSize: '16px',
+    margin: 0,
   },
   errorContainer: {
     display: 'flex',
@@ -179,12 +236,17 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '60px 20px',
+    textAlign: 'center',
+  },
+  errorIconContainer: {
+    marginBottom: '16px',
   },
   errorText: {
     color: '#dc3545',
     fontSize: '16px',
     marginBottom: '20px',
     textAlign: 'center',
+    margin: '0 0 20px 0',
   },
   retryButton: {
     backgroundColor: '#007bff',
@@ -192,8 +254,13 @@ const styles = {
     border: 'none',
     padding: '12px 24px',
     borderRadius: '8px',
-    fontSize: '16px',
+    fontSize: '14px',
+    fontWeight: '500',
     cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'background-color 0.2s ease',
   },
   emptyContainer: {
     display: 'flex',
@@ -203,22 +270,23 @@ const styles = {
     padding: '80px 20px',
     textAlign: 'center',
   },
-  emptyIcon: {
-    fontSize: '48px',
+  emptyIconContainer: {
     marginBottom: '20px',
-    opacity: 0.5,
+    opacity: 0.7,
   },
   emptyTitle: {
     fontSize: '20px',
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginBottom: '10px',
     color: '#343a40',
+    margin: '0 0 10px 0',
   },
   emptyText: {
     color: '#6c757d',
     fontSize: '16px',
     lineHeight: '1.5',
     maxWidth: '300px',
+    margin: 0,
   },
   activitiesList: {
     padding: '0',
