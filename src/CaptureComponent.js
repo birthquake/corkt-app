@@ -743,28 +743,7 @@ const CaptureComponent = ({ user }) => {
         </div>
       )}
 
-      {/* 📱 DEBUG TRIGGER BUTTON */}
-      <button
-        onClick={() => setShowDebugPanel(!showDebugPanel)}
-        style={{
-          position: "absolute",
-          top: "16px",
-          right: "16px",
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
-          color: "#00ff00",
-          border: "none",
-          borderRadius: "50%",
-          width: "40px",
-          height: "40px",
-          cursor: "pointer",
-          zIndex: 2500,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <BugIcon color="#00ff00" size={16} />
-      </button>
+      
 
       {/* Location error display */}
       {locationError && (
