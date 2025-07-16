@@ -668,7 +668,7 @@ const SearchPage = ({ photos, currentUser }) => {
       </div>
 
       {/* Search Content */}
-      <div style={{ padding: "16px" }}>
+      <div style={{ padding: "16px", paddingBottom: "120px" }}>
         {!debouncedSearchQuery.trim() ? (
           <div>
             <div
