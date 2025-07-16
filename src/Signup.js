@@ -265,282 +265,207 @@ const Signup = () => {
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#e3f2fd",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "20px",
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    }}>
-      <div style={{
-        background: "white",
-        borderRadius: "20px",
-        padding: "40px 30px",
-        boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-        width: "100%",
-        maxWidth: "400px"
-      }}>
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "30px" }}>
-          <h1 style={{
-            fontSize: "36px",
-            color: "#007bff",
-            fontWeight: "700",
-            margin: "0 0 8px 0"
+    <>
+      <form onSubmit={handleSignup}>
+        {/* Real Name Field */}
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{
+            display: "block",
+            color: "#1a1a1a",
+            fontWeight: "600",
+            marginBottom: "8px",
+            fontSize: "14px"
           }}>
-            Corkt
-          </h1>
-          <p style={{
-            color: "#6b7280",
-            fontSize: "16px",
-            margin: "0"
-          }}>
-            Create your account
+            Real Name
+          </label>
+          <input
+            id="realName"
+            type="text"
+            value={realName}
+            onChange={(e) => setRealName(e.target.value)}
+            placeholder="John Doe"
+            required
+            disabled={loading}
+            style={getInputStyle()}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+          />
+          <p style={{ margin: "6px 0 0 0", fontSize: "12px", color: "#6b7280" }}>
+            Your real name (visible to others)
           </p>
         </div>
 
-        <form onSubmit={handleSignup}>
-          {/* Real Name Field */}
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{
-              display: "block",
-              color: "#1a1a1a",
-              fontWeight: "600",
-              marginBottom: "8px",
-              fontSize: "14px"
-            }}>
-              Real Name
-            </label>
-            <input
-              id="realName"
-              type="text"
-              value={realName}
-              onChange={(e) => setRealName(e.target.value)}
-              placeholder="John Doe"
-              required
-              disabled={loading}
-              style={getInputStyle()}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-            <p style={{ margin: "6px 0 0 0", fontSize: "12px", color: "#6b7280" }}>
-              Your real name (visible to others)
-            </p>
-          </div>
-
-          {/* Screen Name Field */}
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{
-              display: "block",
-              color: "#1a1a1a",
-              fontWeight: "600",
-              marginBottom: "8px",
-              fontSize: "14px"
-            }}>
-              Screen Name
-            </label>
-            <input
-              id="screenName"
-              type="text"
-              value={screenName}
-              onChange={(e) => handleScreenNameChange(e.target.value)}
-              placeholder="john_doe_photo"
-              required
-              disabled={loading}
-              style={getScreenNameInputStyle()}
-            />
-            {getScreenNameFeedback()}
-          </div>
-
-          {/* Email Field */}
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{
-              display: "block",
-              color: "#1a1a1a",
-              fontWeight: "600",
-              marginBottom: "8px",
-              fontSize: "14px"
-            }}>
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-              disabled={loading}
-              style={getInputStyle()}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
-
-          {/* Password Field */}
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{
-              display: "block",
-              color: "#1a1a1a",
-              fontWeight: "600",
-              marginBottom: "8px",
-              fontSize: "14px"
-            }}>
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-              disabled={loading}
-              style={getInputStyle()}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
-
-          {/* Confirm Password Field */}
-          <div style={{ marginBottom: "24px" }}>
-            <label style={{
-              display: "block",
-              color: "#1a1a1a",
-              fontWeight: "600",
-              marginBottom: "8px",
-              fontSize: "14px"
-            }}>
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
-              required
-              disabled={loading}
-              style={getInputStyle()}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-            />
-          </div>
-
-          {/* Sign Up Button */}
-          <button
-            type="submit"
-            disabled={
-              loading || screenNameAvailable === false || screenNameChecking
-            }
-            style={{
-              width: "100%",
-              padding: "18px",
-              background: loading || screenNameAvailable === false || screenNameChecking 
-                ? "#9ca3af" : "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "12px",
-              fontSize: "16px",
-              fontWeight: "600",
-              cursor: loading || screenNameAvailable === false || screenNameChecking 
-                ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
-              marginBottom: "20px"
-            }}
-            onMouseEnter={(e) => {
-              if (!loading && screenNameAvailable !== false && !screenNameChecking) {
-                e.target.style.background = "#0056b3";
-                e.target.style.transform = "translateY(-2px)";
-                e.target.style.boxShadow = "0 8px 25px rgba(0,123,255,0.3)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading && screenNameAvailable !== false && !screenNameChecking) {
-                e.target.style.background = "#007bff";
-                e.target.style.transform = "translateY(0)";
-                e.target.style.boxShadow = "none";
-              }
-            }}
-          >
-            {loading ? "Creating Account..." : "Sign Up"}
-          </button>
-
-          {/* Divider */}
-          <div style={{
-            textAlign: "center",
-            color: "#6b7280",
-            margin: "24px 0",
-            position: "relative"
-          }}>
-            <div style={{
-              position: "absolute",
-              top: "50%",
-              left: "0",
-              right: "0",
-              height: "1px",
-              background: "#e5e7eb"
-            }}></div>
-            <span style={{
-              background: "white",
-              padding: "0 16px"
-            }}>
-              or
-            </span>
-          </div>
-
-          {/* Login Link */}
-          <div style={{
-            textAlign: "center",
-            color: "#6b7280",
+        {/* Screen Name Field */}
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{
+            display: "block",
+            color: "#1a1a1a",
+            fontWeight: "600",
+            marginBottom: "8px",
             fontSize: "14px"
           }}>
-            Already have an account?{" "}
-            <span style={{
-              color: "#007bff",
-              cursor: "pointer",
-              fontWeight: "600"
-            }}>
-              Log in
-            </span>
-          </div>
-        </form>
+            Screen Name
+          </label>
+          <input
+            id="screenName"
+            type="text"
+            value={screenName}
+            onChange={(e) => handleScreenNameChange(e.target.value)}
+            placeholder="john_doe_photo"
+            required
+            disabled={loading}
+            style={getScreenNameInputStyle()}
+          />
+          {getScreenNameFeedback()}
+        </div>
 
-        {/* Error Message */}
-        {error && (
-          <div style={{
-            marginTop: "20px",
-            padding: "12px",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            borderRadius: "8px",
-            color: "#dc2626",
-            fontSize: "14px",
-            textAlign: "center"
+        {/* Email Field */}
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{
+            display: "block",
+            color: "#1a1a1a",
+            fontWeight: "600",
+            marginBottom: "8px",
+            fontSize: "14px"
           }}>
-            {error}
-          </div>
-        )}
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            required
+            disabled={loading}
+            style={getInputStyle()}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+          />
+        </div>
 
-        {/* Success Message */}
-        {success && (
-          <div style={{
-            marginTop: "20px",
-            padding: "12px",
-            background: "#f0fdf4",
-            border: "1px solid #bbf7d0",
-            borderRadius: "8px",
-            color: "#166534",
-            fontSize: "14px",
-            textAlign: "center"
+        {/* Password Field */}
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{
+            display: "block",
+            color: "#1a1a1a",
+            fontWeight: "600",
+            marginBottom: "8px",
+            fontSize: "14px"
           }}>
-            Account created successfully! You can now start using Corkt.
-          </div>
-        )}
-      </div>
-    </div>
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            required
+            disabled={loading}
+            style={getInputStyle()}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+          />
+        </div>
+
+        {/* Confirm Password Field */}
+        <div style={{ marginBottom: "24px" }}>
+          <label style={{
+            display: "block",
+            color: "#1a1a1a",
+            fontWeight: "600",
+            marginBottom: "8px",
+            fontSize: "14px"
+          }}>
+            Confirm Password
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm your password"
+            required
+            disabled={loading}
+            style={getInputStyle()}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+          />
+        </div>
+
+        {/* Sign Up Button */}
+        <button
+          type="submit"
+          disabled={
+            loading || screenNameAvailable === false || screenNameChecking
+          }
+          style={{
+            width: "100%",
+            padding: "18px",
+            background: loading || screenNameAvailable === false || screenNameChecking 
+              ? "#9ca3af" : "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "12px",
+            fontSize: "16px",
+            fontWeight: "600",
+            cursor: loading || screenNameAvailable === false || screenNameChecking 
+              ? "not-allowed" : "pointer",
+            transition: "all 0.3s ease",
+            marginBottom: "20px"
+          }}
+          onMouseEnter={(e) => {
+            if (!loading && screenNameAvailable !== false && !screenNameChecking) {
+              e.target.style.background = "#0056b3";
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 8px 25px rgba(0,123,255,0.3)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!loading && screenNameAvailable !== false && !screenNameChecking) {
+              e.target.style.background = "#007bff";
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "none";
+            }
+          }}
+        >
+          {loading ? "Creating Account..." : "Sign Up"}
+        </button>
+      </form>
+
+      {/* Error Message */}
+      {error && (
+        <div style={{
+          marginTop: "20px",
+          padding: "12px",
+          background: "#fef2f2",
+          border: "1px solid #fecaca",
+          borderRadius: "8px",
+          color: "#dc2626",
+          fontSize: "14px",
+          textAlign: "center"
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Success Message */}
+      {success && (
+        <div style={{
+          marginTop: "20px",
+          padding: "12px",
+          background: "#f0fdf4",
+          border: "1px solid #bbf7d0",
+          borderRadius: "8px",
+          color: "#166534",
+          fontSize: "14px",
+          textAlign: "center"
+        }}>
+          Account created successfully! You can now start using Corkt.
+        </div>
+      )}
+    </>
   );
 };
 
