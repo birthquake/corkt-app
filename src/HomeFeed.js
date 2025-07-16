@@ -4,6 +4,7 @@ import { PhotoInteractionSummary } from "./ActionBar";
 import { useFollowing, filterPhotosByFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
 import MobilePhotoCard from "./MobilePhotoCard";
+import LocationDisplay from "./LocationDisplay"; // ✅ NEW: Import LocationDisplay component
 import analytics from "./analyticsService";
 
 // Minimal SVG icon components
@@ -712,7 +713,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         )}
       </div>
 
-      {/* Enhanced Photo Modal */}
+      {/* ✅ ENHANCED: Photo Modal with Improved Location Display */}
       {selectedPhoto && (
         <div
           style={{
@@ -915,22 +916,49 @@ const HomeFeed = ({ photos, currentUser }) => {
                   </p>
                 )}
 
-              {/* Time and location */}
+              {/* ✅ ENHANCED: Time and location with consistent formatting */}
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
+                  alignItems: "flex-start",
                   gap: "12px",
                   fontSize: "12px",
                   color: "#6c757d",
                   marginBottom: "16px",
+                  flexDirection: "column",
                 }}
               >
-                <span>📅 {formatTimeAgo(selectedPhoto.timestamp)}</span>
-                {selectedPhoto.latitude && selectedPhoto.longitude && (
-                  <span>
-                    📍 {selectedPhoto.latitude.toFixed(4)},{" "}
-                    {selectedPhoto.longitude.toFixed(4)}
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span>📅</span>
+                  <span>{formatTimeAgo(selectedPhoto.timestamp)}</span>
+                </div>
+
+                {/* ✅ NEW: Enhanced location display matching MobilePhotoCard logic */}
+                {selectedPhoto.placeName ? (
+                  // Show specific place name if available
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <span>📍</span>
+                    <span>{selectedPhoto.placeName}</span>
+                    {/* Show distance if current location available */}
+                    {currentLocation && selectedPhoto.latitude && selectedPhoto.longitude && (
+                      <span style={{ marginLeft: "8px", fontWeight: "500" }}>
+                        ({Math.round(calculateDistance(
+                          currentLocation.latitude,
+                          currentLocation.longitude,
+                          selectedPhoto.latitude,
+                          selectedPhoto.longitude
+                        ))}m away)
+                      </span>
+                    )}
+                  </div>
+                ) : selectedPhoto.latitude && selectedPhoto.longitude ? (
+                  // Fallback to LocationDisplay component for neighborhood/city/state
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <span>📍</span>
+                    <LocationDisplay
+                      latitude={selectedPhoto.latitude}
+                      longitude={selectedPhoto.longitude}
+                    />
                     {/* Show distance if current location available */}
                     {currentLocation && (
                       <span style={{ marginLeft: "8px", fontWeight: "500" }}>
@@ -942,8 +970,8 @@ const HomeFeed = ({ photos, currentUser }) => {
                         ))}m away)
                       </span>
                     )}
-                  </span>
-                )}
+                  </div>
+                ) : null}
               </div>
 
               {/* Photo interaction summary */}
