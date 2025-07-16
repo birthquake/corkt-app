@@ -6,7 +6,87 @@ import { storage, db } from "./firebaseConfig";
 import { getAuth } from "firebase/auth";
 import LocationPicker from "./LocationPicker";
 import { useUserSearch } from "./useUserData";
-import { extractHashtags } from "./hashtagService"; // ✅ NEW: Import hashtag service
+import { extractHashtags } from "./hashtagService";
+
+// Minimal SVG icon components - matching MobileBottomNavigation style
+const BugIcon = ({ color = "#00ff00", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M8 2h8"/>
+    <path d="M9 9V1.5a3.5 3.5 0 0 1 7 0V9"/>
+    <circle cx="13" cy="11" r="4"/>
+    <path d="M18 16.496V17a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-.504"/>
+    <path d="M13 15.5a3.5 3.5 0 0 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+    <path d="M9 9a5 5 0 0 0 10 0"/>
+  </svg>
+);
+
+const LocationIcon = ({ color = "#007bff", size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+    <circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+
+const AlertTriangleIcon = ({ color = "#ffc107", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
+const CameraIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
+
+const RefreshIcon = ({ color = "#007bff", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="23 4 23 10 17 10"/>
+    <polyline points="1 20 1 14 7 14"/>
+    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+  </svg>
+);
+
+const CheckCircleIcon = ({ color = "#28a745", size = 64 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+    <polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+);
+
+const GlobeIcon = ({ color = "#007bff", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+
+const UsersIcon = ({ color = "#007bff", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
+const TagIcon = ({ color = "#007bff", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+    <line x1="7" y1="7" x2="7.01" y2="7"/>
+  </svg>
+);
+
+const XIcon = ({ color = "#dc3545", size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
 
 const CaptureComponent = ({ user }) => {
   const videoRef = useRef(null);
@@ -492,12 +572,13 @@ const CaptureComponent = ({ user }) => {
         >
           <div
             style={{
-              fontSize: "64px",
               marginBottom: "20px",
               animation: "bounce 1s ease-in-out",
+              display: "flex",
+              justifyContent: "center",
             }}
           >
-            ✅
+            <CheckCircleIcon color="#28a745" size={64} />
           </div>
           <h2
             style={{
@@ -524,14 +605,29 @@ const CaptureComponent = ({ user }) => {
               color: "#007bff",
               fontSize: "14px",
               fontWeight: "500",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
             Privacy:{" "}
-            {uploadedPrivacy === "public"
-              ? "🌍 Public"
-              : uploadedPrivacy === "friends"
-              ? "👥 Friends"
-              : "🏷️ Tagged"}
+            {uploadedPrivacy === "public" ? (
+              <>
+                <GlobeIcon color="#007bff" size={16} />
+                Public
+              </>
+            ) : uploadedPrivacy === "friends" ? (
+              <>
+                <UsersIcon color="#007bff" size={16} />
+                Friends
+              </>
+            ) : (
+              <>
+                <TagIcon color="#007bff" size={16} />
+                Tagged
+              </>
+            )}
           </p>
           <div
             style={{
@@ -660,7 +756,6 @@ const CaptureComponent = ({ user }) => {
           borderRadius: "50%",
           width: "40px",
           height: "40px",
-          fontSize: "16px",
           cursor: "pointer",
           zIndex: 2500,
           display: "flex",
@@ -668,7 +763,7 @@ const CaptureComponent = ({ user }) => {
           justifyContent: "center",
         }}
       >
-        🐛
+        <BugIcon color="#00ff00" size={16} />
       </button>
 
       {/* Location error display */}
@@ -684,9 +779,13 @@ const CaptureComponent = ({ user }) => {
             color: "#721c24",
             position: "relative",
             zIndex: 1500,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
           }}
         >
-          📍 {locationError}
+          <LocationIcon color="#721c24" size={14} />
+          {locationError}
           <button
             onClick={getCurrentLocationAuto}
             style={{
@@ -718,9 +817,13 @@ const CaptureComponent = ({ user }) => {
             color: "#856404",
             position: "relative",
             zIndex: 1500,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
           }}
         >
-          📍 Getting location... (iOS may need permission)
+          <LocationIcon color="#856404" size={14} />
+          Getting location... (iOS may need permission)
           <button
             onClick={() => {
               alert(
@@ -794,8 +897,8 @@ const CaptureComponent = ({ user }) => {
                 }}
               >
                 <div style={{ textAlign: "center", padding: "20px" }}>
-                  <div style={{ fontSize: "48px", marginBottom: "16px" }}>
-                    ⚠️
+                  <div style={{ marginBottom: "16px" }}>
+                    <AlertTriangleIcon color="#ffffff" size={48} />
                   </div>
                   <h3 style={{ margin: "0 0 16px 0" }}>Camera Error</h3>
                   <p style={{ margin: "0 0 20px 0" }}>{error}</p>
@@ -836,8 +939,8 @@ const CaptureComponent = ({ user }) => {
                 }}
               >
                 <div style={{ textAlign: "center", padding: "20px" }}>
-                  <div style={{ fontSize: "64px", marginBottom: "20px" }}>
-                    📷
+                  <div style={{ marginBottom: "20px" }}>
+                    <CameraIcon color="#ffffff" size={64} />
                   </div>
                   <h3 style={{ margin: "0 0 8px 0" }}>Starting Camera</h3>
                   <p style={{ margin: "0", opacity: 0.8, fontSize: "14px" }}>
@@ -958,7 +1061,6 @@ const CaptureComponent = ({ user }) => {
                 width: "50px",
                 height: "50px",
                 color: "#007bff",
-                fontSize: "18px",
                 cursor: cameraActive ? "pointer" : "not-allowed",
                 display: "flex",
                 alignItems: "center",
@@ -966,7 +1068,7 @@ const CaptureComponent = ({ user }) => {
                 opacity: cameraActive ? 1 : 0.5,
               }}
             >
-              🔄
+              <RefreshIcon color="#007bff" size={18} />
             </button>
 
             <button
@@ -978,14 +1080,13 @@ const CaptureComponent = ({ user }) => {
                 width: "80px",
                 height: "80px",
                 cursor: "pointer",
-                fontSize: "24px",
                 color: "white",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              {cameraActive ? "📸" : "📷"}
+              <CameraIcon color="#ffffff" size={24} />
             </button>
 
             <div style={{ width: "50px" }}></div>
@@ -1020,14 +1121,17 @@ const CaptureComponent = ({ user }) => {
             <div style={{ marginBottom: "16px" }}>
               <label
                 style={{
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                   fontSize: "14px",
                   fontWeight: "500",
                   color: "#343a40",
                   marginBottom: "8px",
                 }}
               >
-                📍 Location {selectedLocation ? "✅" : "❌"}
+                <LocationIcon color="#343a40" size={14} />
+                Location {selectedLocation ? "✅" : "❌"}
               </label>
 
               {selectedLocation ? (
@@ -1049,12 +1153,16 @@ const CaptureComponent = ({ user }) => {
                         fontWeight: "600",
                         fontSize: "14px",
                         color: "#007bff",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
                       }}
                     >
+                      <LocationIcon color="#007bff" size={14} />
                       {selectedLocation.placeName ||
                         (selectedLocation === autoLocation
-                          ? "📍 Current Location"
-                          : "📍 Selected Location")}
+                          ? "Current Location"
+                          : "Selected Location")}
                     </p>
                     {selectedLocation.placeAddress && (
                       <p
@@ -1124,9 +1232,14 @@ const CaptureComponent = ({ user }) => {
                       borderRadius: "6px",
                       fontSize: "12px",
                       cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      margin: "0 auto",
                     }}
                   >
-                    📍 Get Location
+                    <LocationIcon color="#ffffff" size={14} />
+                    Get Location
                   </button>
                 </div>
               )}
@@ -1155,50 +1268,61 @@ const CaptureComponent = ({ user }) => {
                 {[
                   {
                     value: "public",
-                    label: "🌍 Public",
+                    label: "Public",
                     desc: "Anyone can see",
+                    icon: GlobeIcon,
                   },
                   {
                     value: "friends",
-                    label: "👥 Friends",
+                    label: "Friends",
                     desc: "Followers only",
+                    icon: UsersIcon,
                   },
                   {
                     value: "tagged",
-                    label: "🏷️ Tagged",
+                    label: "Tagged",
                     desc: "Selected users only",
+                    icon: TagIcon,
                   },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handlePrivacyChange(option.value)}
-                    style={{
-                      flex: 1,
-                      minWidth: "120px",
-                      padding: "12px 8px",
-                      backgroundColor:
-                        privacy === option.value ? "#007bff" : "#f8f9fa",
-                      color: privacy === option.value ? "white" : "#343a40",
-                      border:
-                        privacy === option.value ? "none" : "1px solid #e9ecef",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      textAlign: "center",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    <div>{option.label}</div>
-                    <div style={{ fontSize: "11px", opacity: 0.8 }}>
-                      {option.desc}
-                    </div>
-                  </button>
-                ))}
+                ].map((option) => {
+                  const IconComponent = option.icon;
+                  const isSelected = privacy === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => handlePrivacyChange(option.value)}
+                      style={{
+                        flex: 1,
+                        minWidth: "120px",
+                        padding: "12px 8px",
+                        backgroundColor: isSelected ? "#007bff" : "#f8f9fa",
+                        color: isSelected ? "white" : "#343a40",
+                        border: isSelected ? "none" : "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        textAlign: "center",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <IconComponent 
+                          color={isSelected ? "white" : "#007bff"} 
+                          size={16} 
+                        />
+                        {option.label}
+                      </div>
+                      <div style={{ fontSize: "11px", opacity: 0.8 }}>
+                        {option.desc}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1207,14 +1331,17 @@ const CaptureComponent = ({ user }) => {
               <div style={{ marginBottom: "16px" }}>
                 <label
                   style={{
-                    display: "block",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
                     fontSize: "14px",
                     fontWeight: "500",
                     color: "#343a40",
                     marginBottom: "8px",
                   }}
                 >
-                  🏷️ Tag Users (required)
+                  <TagIcon color="#343a40" size={14} />
+                  Tag Users (required)
                 </label>
 
                 {/* Tagged Users Display */}
@@ -1249,14 +1376,15 @@ const CaptureComponent = ({ user }) => {
                             style={{
                               backgroundColor: "transparent",
                               border: "none",
-                              color: "#dc3545",
-                              fontSize: "12px",
                               cursor: "pointer",
                               padding: "0",
                               lineHeight: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
                             }}
                           >
-                            ✕
+                            <XIcon color="#dc3545" size={12} />
                           </button>
                         </div>
                       ))}
