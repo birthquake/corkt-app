@@ -94,7 +94,6 @@ const HomeFeed = ({ photos, currentUser }) => {
       { lat: 39.9691, lng: -82.9977, radius: 200, name: 'Huntington Park' },
       { lat: 39.9634, lng: -82.9959, radius: 100, name: 'Natalie\'s Music Hall' },
       { lat: 39.9712, lng: -82.9943, radius: 150, name: 'Land-Grant Brewing' },
-      { lat: YOUR_CURRENT_LAT, lng: YOUR_CURRENT_LNG, radius: 100, name: 'Test Location' },
       // Add more venues as needed
     ];
 
