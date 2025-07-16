@@ -18,6 +18,74 @@ import { useFollowCounts, formatFollowCount } from "./useFollows";
 import SignOut from "./SignOut";
 import "./ProfilePage.css";
 
+// Minimal SVG icon components - matching MobileBottomNavigation style
+const EditIcon = ({ color = "#6c757d", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+);
+
+const PhotoIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    <circle cx="9" cy="9" r="2"/>
+    <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+  </svg>
+);
+
+const MapIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+    <line x1="8" y1="2" x2="8" y2="18"/>
+    <line x1="16" y1="6" x2="16" y2="22"/>
+  </svg>
+);
+
+const TrophyIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+    <path d="M4 22h16"/>
+    <path d="M10 14.66V17c0 .55.47.98.97 1.21C12.01 18.75 13 19.24 14 20c.64.52 1.39.52 2 0 1-.76 1.99-1.25 3.03-1.79.5-.23.97-.66.97-1.21v-2.34"/>
+    <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>
+  </svg>
+);
+
+const CloseIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
+
+const TrashIcon = ({ color = "#6c757d", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="3,6 5,6 21,6"/>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+    <line x1="10" y1="11" x2="10" y2="17"/>
+    <line x1="14" y1="11" x2="14" y2="17"/>
+  </svg>
+);
+
+const PhotoEmptyIcon = ({ color = "#6c757d", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    <circle cx="9" cy="9" r="2"/>
+    <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+    <line x1="9" y1="9" x2="21" y2="21"/>
+  </svg>
+);
+
+const MapEmptyIcon = ({ color = "#6c757d", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+    <line x1="8" y1="2" x2="8" y2="18"/>
+    <line x1="16" y1="6" x2="16" y2="22"/>
+    <line x1="2" y1="2" x2="22" y2="22"/>
+  </svg>
+);
+
 const ProfilePage = ({ currentUser, photos }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -625,7 +693,7 @@ const ProfilePage = ({ currentUser, photos }) => {
               }}
             >
               <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
-                🎨 Choose Your Avatar
+                Choose Your Avatar
               </h3>
               <p style={{ margin: 0, fontSize: "14px", color: "#6c757d" }}>
                 Choose from 32 unique avatars
@@ -751,11 +819,10 @@ const ProfilePage = ({ currentUser, photos }) => {
                   justifyContent: "center",
                   cursor: "pointer",
                   color: "white",
-                  fontSize: "12px",
                   border: "none",
                 }}
               >
-                🎨
+                <EditIcon color="white" size={12} />
               </button>
             )}
           </div>
@@ -961,33 +1028,41 @@ const ProfilePage = ({ currentUser, photos }) => {
         }}
       >
         {[
-          { id: "photos", label: "Photos", icon: "📸" },
-          { id: "map", label: "Map", icon: "🗺️" },
-          { id: "achievements", label: "Badges", icon: "🏆" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              flex: 1,
-              padding: "16px",
-              backgroundColor: "transparent",
-              border: "none",
-              borderBottom:
-                activeTab === tab.id
+          { id: "photos", label: "Photos", IconComponent: PhotoIcon },
+          { id: "map", label: "Map", IconComponent: MapIcon },
+          { id: "achievements", label: "Badges", IconComponent: TrophyIcon },
+        ].map((tab) => {
+          const isActive = activeTab === tab.id;
+          const iconColor = isActive ? "#007bff" : "#6c757d";
+          
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                flex: 1,
+                padding: "16px",
+                backgroundColor: "transparent",
+                border: "none",
+                borderBottom: isActive
                   ? "2px solid #007bff"
                   : "2px solid transparent",
-              color: activeTab === tab.id ? "#007bff" : "#6c757d",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-          >
-            <span style={{ marginRight: "4px" }}>{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
+                color: isActive ? "#007bff" : "#6c757d",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+              }}
+            >
+              <tab.IconComponent color={iconColor} size={16} />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab Content */}
@@ -1073,7 +1148,6 @@ const ProfilePage = ({ currentUser, photos }) => {
                           backgroundColor: "rgba(220, 53, 69, 0.9)",
                           color: "white",
                           border: "none",
-                          fontSize: "14px",
                           cursor: deleting ? "not-allowed" : "pointer",
                           display: "flex",
                           alignItems: "center",
@@ -1081,7 +1155,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                           opacity: deleting ? 0.6 : 1,
                         }}
                       >
-                        ✕
+                        <CloseIcon color="white" size={14} />
                       </button>
                     )}
                   </div>
@@ -1095,7 +1169,9 @@ const ProfilePage = ({ currentUser, photos }) => {
                   color: "#6c757d",
                 }}
               >
-                <div style={{ fontSize: "48px", marginBottom: "16px" }}>📸</div>
+                <div style={{ marginBottom: "16px" }}>
+                  <PhotoEmptyIcon color="#6c757d" size={48} />
+                </div>
                 <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
                   No photos yet
                 </h3>
@@ -1185,8 +1261,8 @@ const ProfilePage = ({ currentUser, photos }) => {
                         color: "#6c757d",
                       }}
                     >
-                      <div style={{ fontSize: "24px", marginBottom: "8px" }}>
-                        🗺️
+                      <div style={{ marginBottom: "8px" }}>
+                        <MapIcon color="#6c757d" size={24} />
                       </div>
                       <p style={{ margin: 0, fontSize: "14px" }}>
                         Loading map...
@@ -1214,7 +1290,9 @@ const ProfilePage = ({ currentUser, photos }) => {
                   color: "#6c757d",
                 }}
               >
-                <div style={{ fontSize: "48px", marginBottom: "16px" }}>🗺️</div>
+                <div style={{ marginBottom: "16px" }}>
+                  <MapEmptyIcon color="#6c757d" size={48} />
+                </div>
                 <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
                   No locations yet
                 </h3>
@@ -1333,7 +1411,9 @@ const ProfilePage = ({ currentUser, photos }) => {
               textAlign: "center",
             }}
           >
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🗑️</div>
+            <div style={{ marginBottom: "16px" }}>
+              <TrashIcon color="#dc3545" size={48} />
+            </div>
             <h3
               style={{
                 margin: "0 0 8px 0",
