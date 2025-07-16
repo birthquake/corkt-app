@@ -5,6 +5,53 @@ import { useFollowing, filterPhotosByFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
 import MobilePhotoCard from "./MobilePhotoCard";
 
+// Minimal SVG icon components
+const PublicIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+
+const FriendsIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
+const TaggedIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+    <line x1="7" y1="7" x2="7.01" y2="7"/>
+  </svg>
+);
+
+const MyPostsIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const GlobalIcon = ({ color = "#007bff", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+
+const LocalIcon = ({ color = "#28a745", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+    <circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+
 const HomeFeed = ({ photos, currentUser }) => {
   const [activeFilter, setActiveFilter] = useState("public");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -149,12 +196,32 @@ const HomeFeed = ({ photos, currentUser }) => {
     return nearbyPhotos;
   }, [currentLocation, calculateDistance, isGlobalMode]); // Added isGlobalMode to dependencies
 
-  // Filter options
+  // Updated filter options with icon components
   const filters = [
-    { id: "public", icon: "🌍", tooltip: "Public" },
-    { id: "friends", icon: "👥", tooltip: "Friends" },
-    { id: "tagged", icon: "🏷️", tooltip: "Tagged" },
-    { id: "mine", icon: "👤", tooltip: "My Posts" },
+    { 
+      id: "public", 
+      icon: PublicIcon, 
+      tooltip: "Public",
+      label: "Public"
+    },
+    { 
+      id: "friends", 
+      icon: FriendsIcon, 
+      tooltip: "Friends",
+      label: "Friends"
+    },
+    { 
+      id: "tagged", 
+      icon: TaggedIcon, 
+      tooltip: "Tagged",
+      label: "Tagged"
+    },
+    { 
+      id: "mine", 
+      icon: MyPostsIcon, 
+      tooltip: "My Posts",
+      label: "Mine"
+    },
   ];
 
   // 🚀 ENHANCED PHOTO FILTERING WITH LOCATION-BASED FILTERING FIRST
@@ -367,7 +434,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         </div>
       )}
 
-      {/* 🌍 UPDATED: Filter Tabs with Global/Local Toggle */}
+      {/* 🌍 UPDATED: Filter Tabs with Global/Local Toggle and Minimal Icons */}
       <div
         style={{
           backgroundColor: "#ffffff",
@@ -388,7 +455,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             padding: "0 16px",
           }}
         >
-          {/* 🌍 GLOBAL/LOCAL TOGGLE */}
+          {/* 🌍 GLOBAL/LOCAL TOGGLE with minimal icons */}
           <div
             style={{
               display: "flex",
@@ -416,9 +483,11 @@ const HomeFeed = ({ photos, currentUser }) => {
               }}
               title={`Switch to ${isGlobalMode ? 'local' : 'global'} mode`}
             >
-              <span style={{ fontSize: "14px" }}>
-                {isGlobalMode ? "🌍" : "📍"}
-              </span>
+              {isGlobalMode ? (
+                <GlobalIcon color="white" size={14} />
+              ) : (
+                <LocalIcon color="white" size={14} />
+              )}
               <span>
                 {isGlobalMode ? "Global" : "Local"}
               </span>
@@ -434,7 +503,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             }}
           />
 
-          {/* Existing Filter Tabs */}
+          {/* Updated Filter Tabs with minimal icons */}
           <div
             style={{
               display: "flex",
@@ -442,55 +511,60 @@ const HomeFeed = ({ photos, currentUser }) => {
               gap: "24px",
             }}
           >
-            {filters.map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveFilter(filter.id)}
-                title={filter.tooltip}
-                style={{
-                  width: "44px",
-                  height: "44px",
-                  backgroundColor: "transparent",
-                  color: activeFilter === filter.id ? "#007bff" : "#6c757d",
-                  border: "none",
-                  borderRadius: "50%",
-                  fontSize: "20px",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
-                }}
-                onMouseEnter={(e) => {
-                  if (activeFilter !== filter.id) {
-                    e.target.style.backgroundColor = "#f8f9fa";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeFilter !== filter.id) {
-                    e.target.style.backgroundColor = "transparent";
-                  }
-                }}
-              >
-                {filter.icon}
-                {/* Active indicator */}
-                {activeFilter === filter.id && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "-2px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      width: "6px",
-                      height: "6px",
-                      backgroundColor: "#007bff",
-                      borderRadius: "50%",
-                    }}
-                  />
-                )}
-              </button>
-            ))}
+            {filters.map((filter) => {
+              const IconComponent = filter.icon;
+              const isActive = activeFilter === filter.id;
+              const iconColor = isActive ? "#007bff" : "#6b7280";
+              
+              return (
+                <button
+                  key={filter.id}
+                  onClick={() => setActiveFilter(filter.id)}
+                  title={filter.tooltip}
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    backgroundColor: isActive ? "rgba(0, 123, 255, 0.08)" : "transparent",
+                    border: "none",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.target.style.backgroundColor = "#f8f9fa";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.target.style.backgroundColor = "transparent";
+                    }
+                  }}
+                >
+                  <IconComponent color={iconColor} size={20} />
+                  
+                  {/* Minimal active indicator */}
+                  {isActive && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "6px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: "4px",
+                        height: "4px",
+                        backgroundColor: "#007bff",
+                        borderRadius: "50%",
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -506,10 +580,10 @@ const HomeFeed = ({ photos, currentUser }) => {
             }}
           >
             <div style={{ fontSize: "48px", marginBottom: "16px" }}>
-              {activeFilter === "public" && "🌍"}
-              {activeFilter === "friends" && "👥"}
-              {activeFilter === "tagged" && "🏷️"}
-              {activeFilter === "mine" && "📸"}
+              {activeFilter === "public" && <PublicIcon color="#6c757d" size={48} />}
+              {activeFilter === "friends" && <FriendsIcon color="#6c757d" size={48} />}
+              {activeFilter === "tagged" && <TaggedIcon color="#6c757d" size={48} />}
+              {activeFilter === "mine" && <MyPostsIcon color="#6c757d" size={48} />}
             </div>
             {/* 🌍 UPDATED: Dynamic empty state messages */}
             <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
