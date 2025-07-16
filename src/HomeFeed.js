@@ -54,6 +54,13 @@ const LocalIcon = ({ color = "#28a745", size = 16 }) => (
   </svg>
 );
 
+const ClockIcon = ({ color = "#6c757d", size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12,6 12,12 16,14"/>
+  </svg>
+);
+
 const HomeFeed = ({ photos, currentUser }) => {
   const [activeFilter, setActiveFilter] = useState("public");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -192,6 +199,21 @@ const HomeFeed = ({ photos, currentUser }) => {
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in meters
+  }, []);
+
+  // ✅ NEW: Helper function to format distance in miles
+  const formatDistance = useCallback((distanceInMeters) => {
+    const distanceInMiles = distanceInMeters * 0.000621371; // Convert meters to miles
+    
+    if (distanceInMiles < 0.1) {
+      return `${Math.round(distanceInMeters)}m`; // Show meters for very short distances
+    } else if (distanceInMiles < 1) {
+      return `${(distanceInMiles * 5280).toFixed(0)}ft`; // Show feet for distances under 1 mile
+    } else if (distanceInMiles < 10) {
+      return `${distanceInMiles.toFixed(1)}mi`; // Show 1 decimal for distances under 10 miles
+    } else {
+      return `${Math.round(distanceInMiles)}mi`; // Show whole miles for longer distances
+    }
   }, []);
 
   // 🌍 UPDATED: DYNAMIC LOCATION-BASED FILTERING FUNCTION
@@ -916,7 +938,7 @@ const HomeFeed = ({ photos, currentUser }) => {
                   </p>
                 )}
 
-              {/* ✅ ENHANCED: Time and location with consistent formatting */}
+              {/* ✅ ENHANCED: Time and location with clean icons and miles */}
               <div
                 style={{
                   display: "flex",
@@ -928,32 +950,32 @@ const HomeFeed = ({ photos, currentUser }) => {
                   flexDirection: "column",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                  <span>📅</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <ClockIcon color="#6c757d" size={14} />
                   <span>{formatTimeAgo(selectedPhoto.timestamp)}</span>
                 </div>
 
                 {/* ✅ NEW: Enhanced location display matching MobilePhotoCard logic */}
                 {selectedPhoto.placeName ? (
                   // Show specific place name if available
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <span>📍</span>
                     <span>{selectedPhoto.placeName}</span>
                     {/* Show distance if current location available */}
                     {currentLocation && selectedPhoto.latitude && selectedPhoto.longitude && (
                       <span style={{ marginLeft: "8px", fontWeight: "500" }}>
-                        ({Math.round(calculateDistance(
+                        ({formatDistance(calculateDistance(
                           currentLocation.latitude,
                           currentLocation.longitude,
                           selectedPhoto.latitude,
                           selectedPhoto.longitude
-                        ))}m away)
+                        ))} away)
                       </span>
                     )}
                   </div>
                 ) : selectedPhoto.latitude && selectedPhoto.longitude ? (
                   // Fallback to LocationDisplay component for neighborhood/city/state
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <span>📍</span>
                     <LocationDisplay
                       latitude={selectedPhoto.latitude}
@@ -962,12 +984,12 @@ const HomeFeed = ({ photos, currentUser }) => {
                     {/* Show distance if current location available */}
                     {currentLocation && (
                       <span style={{ marginLeft: "8px", fontWeight: "500" }}>
-                        ({Math.round(calculateDistance(
+                        ({formatDistance(calculateDistance(
                           currentLocation.latitude,
                           currentLocation.longitude,
                           selectedPhoto.latitude,
                           selectedPhoto.longitude
-                        ))}m away)
+                        ))} away)
                       </span>
                     )}
                   </div>
