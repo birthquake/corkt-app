@@ -15,8 +15,8 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [realName, setRealName] = useState(""); // User's actual name
-  const [screenName, setScreenName] = useState(""); // Their chosen username/handle
+  const [realName, setRealName] = useState("");
+  const [screenName, setScreenName] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,6 @@ const Signup = () => {
         where("screenName", "==", screenName.toLowerCase())
       );
       const querySnapshot = await getDocs(q);
-
       setScreenNameAvailable(querySnapshot.empty);
     } catch (error) {
       console.error("Error checking screen name:", error);
@@ -53,12 +52,10 @@ const Signup = () => {
     setScreenName(value);
     setScreenNameAvailable(null);
 
-    // Clear previous timeout
     if (window.screenNameTimeout) {
       clearTimeout(window.screenNameTimeout);
     }
 
-    // Set new timeout
     window.screenNameTimeout = setTimeout(() => {
       checkScreenNameAvailability(value);
     }, 500);
@@ -120,7 +117,6 @@ const Signup = () => {
 
     const auth = getAuth();
     try {
-      // Double-check screen name availability before creating account
       await checkScreenNameAvailability(screenName);
       if (screenNameAvailable === false) {
         setError("This screen name was just taken. Please choose another.");
@@ -135,21 +131,19 @@ const Signup = () => {
       );
       const user = userCredential.user;
 
-      // Create user profile with both names
       const profileRef = doc(collection(db, "users"), user.uid);
       await setDoc(profileRef, {
         email: user.email,
         realName: realName.trim(),
-        screenName: screenName.toLowerCase().trim(), // Store lowercase for consistency
-        displayScreenName: screenName.trim(), // Store original case for display
+        screenName: screenName.toLowerCase().trim(),
+        displayScreenName: screenName.trim(),
         profilePicture: "",
         bio: "",
         createdAt: serverTimestamp(),
-        // Search-friendly fields
         searchTerms: [
           realName.toLowerCase().trim(),
           screenName.toLowerCase().trim(),
-          ...realName.toLowerCase().split(" "), // Split real name into words
+          ...realName.toLowerCase().split(" "),
         ].filter((term) => term.length > 0),
       });
 
@@ -165,7 +159,6 @@ const Signup = () => {
     } catch (err) {
       console.error("Signup error:", err);
 
-      // Handle specific Firebase auth errors
       switch (err.code) {
         case "auth/email-already-in-use":
           setError(
@@ -201,10 +194,7 @@ const Signup = () => {
       background: loading ? "#f9fafb" : "#fafafa",
       transition: "all 0.3s ease",
       boxSizing: "border-box",
-      outline: "none",
-      // iOS Safari fixes
-      WebkitAppearance: "none",
-      minHeight: "52px"
+      outline: "none"
     };
   };
 
@@ -243,35 +233,22 @@ const Signup = () => {
     return null;
   };
 
-  const getInputStyle = (hasError = false) => ({
+  const getInputStyle = () => ({
     width: "100%",
     padding: "16px",
-    border: `2px solid ${hasError ? "#ef4444" : "#e5e7eb"}`,
+    border: "2px solid #e5e7eb",
     borderRadius: "12px",
     fontSize: "16px",
     background: loading ? "#f9fafb" : "#fafafa",
     transition: "all 0.3s ease",
     boxSizing: "border-box",
-    outline: "none",
-    // iOS Safari fixes
-    WebkitAppearance: "none",
-    minHeight: "52px"
+    outline: "none"
   });
 
-  // iOS Safari friendly focus/blur handlers
   const handleInputFocus = (e) => {
     e.target.style.borderColor = "#007bff";
     e.target.style.background = "white";
     e.target.style.boxShadow = "0 0 0 3px rgba(0,123,255,0.1)";
-    
-    // iOS Safari fix: Small delay to prevent viewport issues
-    setTimeout(() => {
-      e.target.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "center",
-        inline: "nearest"
-      });
-    }, 100);
   };
 
   const handleInputBlur = (e) => {
@@ -281,18 +258,8 @@ const Signup = () => {
   };
 
   return (
-    <div style={{
-      // iOS Safari specific container fixes
-      minHeight: "auto",
-      overflow: "visible",
-      WebkitOverflowScrolling: "touch"
-    }}>
-      <form onSubmit={handleSignup} style={{
-        // Ensure form doesn't constrain height
-        minHeight: "auto",
-        overflow: "visible"
-      }}>
-        {/* Real Name Field */}
+    <>
+      <form onSubmit={handleSignup}>
         <div style={{ marginBottom: "20px" }}>
           <label style={{
             display: "block",
@@ -304,7 +271,6 @@ const Signup = () => {
             Real Name
           </label>
           <input
-            id="realName"
             type="text"
             value={realName}
             onChange={(e) => setRealName(e.target.value)}
@@ -320,7 +286,6 @@ const Signup = () => {
           </p>
         </div>
 
-        {/* Screen Name Field */}
         <div style={{ marginBottom: "20px" }}>
           <label style={{
             display: "block",
@@ -332,7 +297,6 @@ const Signup = () => {
             Screen Name
           </label>
           <input
-            id="screenName"
             type="text"
             value={screenName}
             onChange={(e) => handleScreenNameChange(e.target.value)}
@@ -340,13 +304,10 @@ const Signup = () => {
             required
             disabled={loading}
             style={getScreenNameInputStyle()}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
           />
           {getScreenNameFeedback()}
         </div>
 
-        {/* Email Field */}
         <div style={{ marginBottom: "20px" }}>
           <label style={{
             display: "block",
@@ -358,7 +319,6 @@ const Signup = () => {
             Email
           </label>
           <input
-            id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -371,7 +331,6 @@ const Signup = () => {
           />
         </div>
 
-        {/* Password Field */}
         <div style={{ marginBottom: "20px" }}>
           <label style={{
             display: "block",
@@ -383,7 +342,6 @@ const Signup = () => {
             Password
           </label>
           <input
-            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -396,7 +354,6 @@ const Signup = () => {
           />
         </div>
 
-        {/* Confirm Password Field */}
         <div style={{ marginBottom: "24px" }}>
           <label style={{
             display: "block",
@@ -408,7 +365,6 @@ const Signup = () => {
             Confirm Password
           </label>
           <input
-            id="confirmPassword"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -421,7 +377,6 @@ const Signup = () => {
           />
         </div>
 
-        {/* Sign Up Button */}
         <button
           type="submit"
           disabled={
@@ -440,20 +395,16 @@ const Signup = () => {
             cursor: loading || screenNameAvailable === false || screenNameChecking 
               ? "not-allowed" : "pointer",
             transition: "all 0.3s ease",
-            marginBottom: "40px", // Extra space for iOS
-            minHeight: "56px", // iOS Safari friendly button height
-            WebkitAppearance: "none" // iOS Safari fix
+            marginBottom: "20px"
           }}
         >
           {loading ? "Creating Account..." : "Sign Up"}
         </button>
       </form>
 
-      {/* Error Message */}
       {error && (
         <div style={{
           marginTop: "20px",
-          marginBottom: "20px",
           padding: "12px",
           background: "#fef2f2",
           border: "1px solid #fecaca",
@@ -466,11 +417,9 @@ const Signup = () => {
         </div>
       )}
 
-      {/* Success Message */}
       {success && (
         <div style={{
           marginTop: "20px",
-          marginBottom: "20px",
           padding: "12px",
           background: "#f0fdf4",
           border: "1px solid #bbf7d0",
@@ -482,10 +431,7 @@ const Signup = () => {
           Account created successfully! You can now start using Corkt.
         </div>
       )}
-
-      {/* iOS Safari spacing fix */}
-      <div style={{ height: "60px" }}></div>
-    </div>
+    </>
   );
 };
 
