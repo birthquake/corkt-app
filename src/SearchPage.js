@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // ✅ NEW: For URL hashtag searches
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   useOptimizedUsersData,
   useOptimizedUserSearch,
@@ -7,7 +7,72 @@ import {
 } from "./performanceHooks";
 import { useFollow, useFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
-import { getTrendingHashtags, formatTextWithHashtags } from "./hashtagService"; // ✅ NEW: Import hashtag utilities
+import { getTrendingHashtags, formatTextWithHashtags } from "./hashtagService";
+
+// Minimal SVG icon components - matching MobileBottomNavigation style
+const SearchIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="11" cy="11" r="8"/>
+    <path d="M21 21l-4.35-4.35"/>
+  </svg>
+);
+
+const PhotoIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    <circle cx="9" cy="9" r="2"/>
+    <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+  </svg>
+);
+
+const UsersIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
+const TrendingIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+  </svg>
+);
+
+const CloseIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+);
+
+const SearchNotFoundIcon = ({ color = "#6c757d", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="11" cy="11" r="8"/>
+    <path d="M21 21l-4.35-4.35"/>
+    <line x1="8" y1="11" x2="14" y2="11"/>
+  </svg>
+);
+
+const UsersNotFoundIcon = ({ color = "#6c757d", size = 48 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    <line x1="18" y1="6" x2="6" y2="18"/>
+  </svg>
+);
+
+const GalleryIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="3" y="3" width="7" height="7"/>
+    <rect x="14" y="3" width="7" height="7"/>
+    <rect x="14" y="14" width="7" height="7"/>
+    <rect x="3" y="14" width="7" height="7"/>
+  </svg>
+);
 
 // 🚀 NEW: Memoized User Card component for better performance
 const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
@@ -275,7 +340,7 @@ const SearchPage = ({ photos, currentUser }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("photos");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [trendingHashtags, setTrendingHashtags] = useState([]); // ✅ NEW: State for trending hashtags
+  const [trendingHashtags, setTrendingHashtags] = useState([]);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -506,11 +571,9 @@ const SearchPage = ({ photos, currentUser }) => {
             marginBottom: "16px",
           }}
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="#6c757d"
+          <SearchIcon
+            color="#6c757d"
+            size={20}
             style={{
               position: "absolute",
               left: "12px",
@@ -518,9 +581,7 @@ const SearchPage = ({ photos, currentUser }) => {
               transform: "translateY(-50%)",
               pointerEvents: "none",
             }}
-          >
-            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-          </svg>
+          />
           <input
             type="text"
             placeholder={
@@ -565,9 +626,17 @@ const SearchPage = ({ photos, currentUser }) => {
               fontWeight: "500",
               cursor: "pointer",
               transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            📸 Photos
+            <PhotoIcon 
+              color={activeTab === "photos" ? "white" : "#6c757d"} 
+              size={16} 
+            />
+            Photos
           </button>
           <button
             onClick={() => setActiveTab("users")}
@@ -583,9 +652,17 @@ const SearchPage = ({ photos, currentUser }) => {
               fontWeight: "500",
               cursor: "pointer",
               transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
             }}
           >
-            👥 Users
+            <UsersIcon 
+              color={activeTab === "users" ? "white" : "#6c757d"} 
+              size={16} 
+            />
+            Users
           </button>
         </div>
       </div>
@@ -594,16 +671,26 @@ const SearchPage = ({ photos, currentUser }) => {
       <div style={{ padding: "16px" }}>
         {!debouncedSearchQuery.trim() ? (
           <div>
-            <h3
+            <div
               style={{
-                margin: "0 0 16px 0",
-                fontSize: "18px",
-                fontWeight: "600",
-                color: "#343a40",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "16px",
               }}
             >
-              🔥 Trending Hashtags
-            </h3>
+              <TrendingIcon color="#007bff" size={20} />
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: "#343a40",
+                }}
+              >
+                Trending Hashtags
+              </h3>
+            </div>
 
             {trendingHashtags.length > 0 ? (
               <div
@@ -655,16 +742,26 @@ const SearchPage = ({ photos, currentUser }) => {
               </p>
             )}
 
-            <h3
+            <div
               style={{
-                margin: "0 0 16px 0",
-                fontSize: "18px",
-                fontWeight: "600",
-                color: "#343a40",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "16px",
               }}
             >
-              📸 Recent Photos
-            </h3>
+              <GalleryIcon color="#007bff" size={20} />
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: "#343a40",
+                }}
+              >
+                Recent Photos
+              </h3>
+            </div>
 
             <div
               style={{
@@ -728,8 +825,8 @@ const SearchPage = ({ photos, currentUser }) => {
                     color: "#6c757d",
                   }}
                 >
-                  <div style={{ fontSize: "48px", marginBottom: "16px" }}>
-                    🔍
+                  <div style={{ marginBottom: "16px" }}>
+                    <SearchNotFoundIcon color="#6c757d" size={48} />
                   </div>
                   <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
                     No photos found
@@ -801,7 +898,9 @@ const SearchPage = ({ photos, currentUser }) => {
                   color: "#6c757d",
                 }}
               >
-                <div style={{ fontSize: "48px", marginBottom: "16px" }}>👥</div>
+                <div style={{ marginBottom: "16px" }}>
+                  <UsersNotFoundIcon color="#6c757d" size={48} />
+                </div>
                 <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
                   No users found
                 </h3>
@@ -907,7 +1006,6 @@ const SearchPage = ({ photos, currentUser }) => {
                 style={{
                   background: "none",
                   border: "none",
-                  fontSize: "20px",
                   cursor: "pointer",
                   color: "#6c757d",
                   padding: "4px",
@@ -917,9 +1015,16 @@ const SearchPage = ({ photos, currentUser }) => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  transition: "background-color 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = "#f8f9fa";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = "transparent";
                 }}
               >
-                ✕
+                <CloseIcon color="#6c757d" size={20} />
               </button>
             </div>
 
