@@ -245,26 +245,30 @@ export default function App() {
           ) : (
             // NEW: Authentication screens - show only one at a time
             <div
+              className="auth-container"
               style={{
                 minHeight: "100vh",
                 background: "#e3f2fd",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
                 padding: "20px",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                overflowY: "auto",
+                WebkitOverflowScrolling: "touch"
               }}
             >
               {showLogin ? (
                 // Show Login component with working switch link
-                <div style={{
-                  background: "white",
-                  borderRadius: "20px",
-                  padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-                  width: "100%",
-                  maxWidth: "400px"
-                }}>
+                <div 
+                  className="auth-card"
+                  style={{
+                    background: "white",
+                    borderRadius: "20px",
+                    padding: "40px 30px",
+                    boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
+                    width: "100%",
+                    maxWidth: "400px",
+                    margin: "20px auto",
+                    minHeight: "auto"
+                  }}>
                   {/* Header */}
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
@@ -330,14 +334,18 @@ export default function App() {
                 </div>
               ) : (
                 // Show Signup component with working switch link
-                <div style={{
-                  background: "white",
-                  borderRadius: "20px",
-                  padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-                  width: "100%",
-                  maxWidth: "400px"
-                }}>
+                <div 
+                  className="auth-card"
+                  style={{
+                    background: "white",
+                    borderRadius: "20px",
+                    padding: "40px 30px",
+                    boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
+                    width: "100%",
+                    maxWidth: "400px",
+                    margin: "20px auto",
+                    minHeight: "auto"
+                  }}>
                   {/* Header */}
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
@@ -444,6 +452,17 @@ export default function App() {
               .login-container {
                 padding-top: 10px !important;
                 padding-bottom: 10px !important;
+              }
+            }
+
+            /* Fix for signup form scrolling */
+            @media (max-height: 800px) {
+              .auth-container {
+                padding: 10px !important;
+              }
+              .auth-card {
+                margin: 10px auto !important;
+                padding: 20px !important;
               }
             }
           `}
