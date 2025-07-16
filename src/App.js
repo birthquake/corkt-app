@@ -9,26 +9,27 @@ import HomeFeed from "./HomeFeed";
 import SearchPage from "./SearchPage";
 import CaptureComponent from "./CaptureComponent";
 import ProfilePage from "./ProfilePage";
-import ActivityFeed from "./ActivityFeed"; // ✅ NEW: Import ActivityFeed component
-import AdminPanel from "./AdminPanel"; // ✅ NEW: Import AdminPanel component
+import ActivityFeed from "./ActivityFeed";
+import AdminPanel from "./AdminPanel";
 import MobileBottomNavigation from "./MobileBottomNavigation";
 import { LoadScript } from "@react-google-maps/api";
 
-// ✅ FIXED: Define libraries that need to be loaded
+// Define libraries that need to be loaded
 const googleMapsLibraries = ["places"];
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [photos, setPhotos] = useState([]);
+  const [showLogin, setShowLogin] = useState(true); // NEW: State to toggle between login/signup
 
-  // ✅ NEW: Detect CodeSandbox environment for navigation adjustments
+  // Detect CodeSandbox environment for navigation adjustments
   const isCodeSandbox =
     window.location.hostname.includes("csb.app") ||
     window.location.hostname.includes("codesandbox.io") ||
     window.parent !== window;
 
-  // ✅ NEW: Calculate bottom padding based on environment
+  // Calculate bottom padding based on environment
   const bottomPadding = isCodeSandbox ? "150px" : "90px"; // Extra 60px for CodeSandbox
 
   useEffect(() => {
@@ -187,11 +188,11 @@ export default function App() {
         >
           {user ? (
             <>
-              {/* ✅ FIXED: Main content area - dynamic padding for CodeSandbox */}
+              {/* Main content area - dynamic padding for CodeSandbox */}
               <main
                 style={{
                   flex: 1,
-                  paddingBottom: bottomPadding, // ✅ FIXED: Dynamic padding based on environment
+                  paddingBottom: bottomPadding, // Dynamic padding based on environment
                   overflow: "hidden",
                   position: "relative",
                   backgroundColor: "#f8f9fa", // Ensure solid background
@@ -226,12 +227,10 @@ export default function App() {
                         <ProfilePage currentUser={user} photos={photos} />
                       }
                     />
-                    {/* ✅ UPDATED: Real activity feed instead of placeholder */}
                     <Route
                       path="/activity"
                       element={<ActivityFeed currentUser={user} />}
                     />
-                    {/* ✅ NEW: Admin panel route for content moderation */}
                     <Route
                       path="/admin"
                       element={<AdminPanel currentUser={user} />}
@@ -240,102 +239,169 @@ export default function App() {
                 </div>
               </main>
 
-              {/* ✅ FIXED: Mobile-optimized bottom navigation with CodeSandbox detection */}
+              {/* Mobile-optimized bottom navigation with CodeSandbox detection */}
               <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
             </>
           ) : (
-            // 🎯 MOBILE-FIXED LOGIN SCREEN
+            // NEW: Authentication screens - show only one at a time
             <div
               style={{
                 minHeight: "100vh",
-                padding: "20px",
-                background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+                background: "#e3f2fd",
                 display: "flex",
-                flexDirection: "column",
-                // 🎯 MOBILE FIX: Allow scrolling instead of centering
-                paddingTop: "40px",
-                paddingBottom: "40px",
-                overflowY: "auto",
-                // 🎯 MOBILE: Ensure proper viewport behavior
-                WebkitOverflowScrolling: "touch",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "20px",
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
               }}
             >
-              <div
-                style={{
-                  backgroundColor: "#ffffff",
-                  padding: "30px 20px", // 🎯 MOBILE: Reduced padding
+              {showLogin ? (
+                // Show Login component with working switch link
+                <div style={{
+                  background: "white",
                   borderRadius: "20px",
-                  maxWidth: "400px",
+                  padding: "40px 30px",
+                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
                   width: "100%",
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                  border: "1px solid #e9ecef",
-                  // 🎯 MOBILE FIX: Center horizontally but allow vertical scroll
-                  margin: "auto",
-                  marginTop: "20px",
-                  marginBottom: "20px",
-                  // 🎯 MOBILE: Ensure it doesn't exceed viewport
-                  maxHeight: "calc(100vh - 120px)",
-                  overflowY: "auto",
-                }}
-              >
-                <div style={{ textAlign: "center", marginBottom: "24px" }}>
-                  <h1
-                    style={{
-                      fontSize: "28px", // 🎯 MOBILE: Smaller title
-                      fontWeight: "300",
-                      margin: "0 0 8px 0",
+                  maxWidth: "400px"
+                }}>
+                  {/* Header */}
+                  <div style={{ textAlign: "center", marginBottom: "30px" }}>
+                    <h1 style={{
+                      fontSize: "36px",
                       color: "#007bff",
-                      letterSpacing: "2px",
-                    }}
-                  >
-                    Corkt
-                  </h1>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#6c757d",
-                      fontSize: "14px", // 🎯 MOBILE: Smaller subtitle
-                    }}
-                  >
-                    Share your moments
-                  </p>
-                </div>
+                      fontWeight: "700",
+                      margin: "0 0 8px 0"
+                    }}>
+                      Corkt
+                    </h1>
+                    <p style={{
+                      color: "#6b7280",
+                      fontSize: "16px",
+                      margin: "0"
+                    }}>
+                      Share your moments
+                    </p>
+                  </div>
 
-                <Signup />
+                  <Login />
 
-                <div
-                  style={{
-                    margin: "20px 0", // 🎯 MOBILE: Reduced margin
+                  {/* Divider */}
+                  <div style={{
                     textAlign: "center",
-                    color: "#6c757d",
-                    position: "relative",
-                  }}
-                >
-                  <div
-                    style={{
+                    color: "#6b7280",
+                    margin: "24px 0",
+                    position: "relative"
+                  }}>
+                    <div style={{
                       position: "absolute",
                       top: "50%",
-                      left: 0,
-                      right: 0,
+                      left: "0",
+                      right: "0",
                       height: "1px",
-                      backgroundColor: "#e9ecef",
-                    }}
-                  />
-                  <span
-                    style={{
-                      backgroundColor: "#ffffff",
-                      padding: "0 15px", // 🎯 MOBILE: Reduced padding
-                      fontSize: "12px", // 🎯 MOBILE: Smaller text
-                      position: "relative",
-                      zIndex: 1,
-                    }}
-                  >
-                    or
-                  </span>
-                </div>
+                      background: "#e5e7eb"
+                    }}></div>
+                    <span style={{
+                      background: "white",
+                      padding: "0 16px"
+                    }}>
+                      or
+                    </span>
+                  </div>
 
-                <Login />
-              </div>
+                  {/* Switch to Signup */}
+                  <div style={{
+                    textAlign: "center",
+                    color: "#6b7280",
+                    fontSize: "14px"
+                  }}>
+                    Don't have an account?{" "}
+                    <span 
+                      onClick={() => setShowLogin(false)}
+                      style={{
+                        color: "#007bff",
+                        cursor: "pointer",
+                        fontWeight: "600"
+                      }}
+                    >
+                      Sign up
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                // Show Signup component with working switch link
+                <div style={{
+                  background: "white",
+                  borderRadius: "20px",
+                  padding: "40px 30px",
+                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
+                  width: "100%",
+                  maxWidth: "400px"
+                }}>
+                  {/* Header */}
+                  <div style={{ textAlign: "center", marginBottom: "30px" }}>
+                    <h1 style={{
+                      fontSize: "36px",
+                      color: "#007bff",
+                      fontWeight: "700",
+                      margin: "0 0 8px 0"
+                    }}>
+                      Corkt
+                    </h1>
+                    <p style={{
+                      color: "#6b7280",
+                      fontSize: "16px",
+                      margin: "0"
+                    }}>
+                      Create your account
+                    </p>
+                  </div>
+
+                  <Signup />
+
+                  {/* Divider */}
+                  <div style={{
+                    textAlign: "center",
+                    color: "#6b7280",
+                    margin: "24px 0",
+                    position: "relative"
+                  }}>
+                    <div style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "0",
+                      right: "0",
+                      height: "1px",
+                      background: "#e5e7eb"
+                    }}></div>
+                    <span style={{
+                      background: "white",
+                      padding: "0 16px"
+                    }}>
+                      or
+                    </span>
+                  </div>
+
+                  {/* Switch to Login */}
+                  <div style={{
+                    textAlign: "center",
+                    color: "#6b7280",
+                    fontSize: "14px"
+                  }}>
+                    Already have an account?{" "}
+                    <span 
+                      onClick={() => setShowLogin(true)}
+                      style={{
+                        color: "#007bff",
+                        cursor: "pointer",
+                        fontWeight: "600"
+                      }}
+                    >
+                      Log in
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -372,7 +438,7 @@ export default function App() {
               }
             }
 
-            /* 🎯 MOBILE LOGIN FIXES */
+            /* Mobile login fixes */
             @media (max-height: 600px) {
               /* For shorter screens like landscape mobile */
               .login-container {
