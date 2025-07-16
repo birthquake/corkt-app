@@ -249,9 +249,11 @@ export default function App() {
                 minHeight: "100vh",
                 height: "auto",
                 background: "#e3f2fd",
-                padding: "20px",
-                paddingBottom: "40px",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                padding: "20px 20px 80px 20px",
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                position: "relative",
+                width: "100%",
+                boxSizing: "border-box"
               }}
             >
               {showLogin ? (
@@ -261,12 +263,13 @@ export default function App() {
                   style={{
                     background: "white",
                     borderRadius: "20px",
-                    padding: "40px 30px",
+                    padding: "40px 30px 60px 30px",
                     boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
                     width: "100%",
                     maxWidth: "400px",
-                    margin: "20px auto",
-                    minHeight: "auto"
+                    margin: "20px auto 40px auto",
+                    minHeight: "auto",
+                    position: "relative"
                   }}>
                   {/* Header */}
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
@@ -338,12 +341,13 @@ export default function App() {
                   style={{
                     background: "white",
                     borderRadius: "20px",
-                    padding: "40px 30px",
+                    padding: "40px 30px 60px 30px",
                     boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
                     width: "100%",
                     maxWidth: "400px",
-                    margin: "20px auto",
-                    minHeight: "auto"
+                    margin: "20px auto 40px auto",
+                    minHeight: "auto",
+                    position: "relative"
                   }}>
                   {/* Header */}
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
@@ -454,32 +458,44 @@ export default function App() {
               }
             }
 
+            /* Ensure body can scroll for auth pages */
+            html, body {
+              height: auto !important;
+              overflow-y: auto !important;
+              -webkit-overflow-scrolling: touch;
+            }
+
+            /* Remove any height constraints on auth pages */
+            .auth-container {
+              height: auto !important;
+              max-height: none !important;
+              overflow: visible !important;
+            }
+
+            .auth-card {
+              height: auto !important;
+              max-height: none !important;
+            }
+
             /* Fix for signup form scrolling */
             @media (max-height: 800px) {
               .auth-container {
-                padding: 10px !important;
-                padding-bottom: 60px !important;
+                padding: 10px 10px 100px 10px !important;
               }
               .auth-card {
-                margin: 10px auto !important;
-                padding: 20px !important;
+                margin: 10px auto 50px auto !important;
+                padding: 20px 20px 40px 20px !important;
               }
-            }
-
-            /* Ensure body can scroll for auth pages */
-            body {
-              overflow-y: auto !important;
             }
 
             /* Mobile auth page fixes */
             @media (max-width: 480px) {
               .auth-container {
-                padding: 10px !important;
-                padding-bottom: 50px !important;
+                padding: 10px 10px 100px 10px !important;
               }
               .auth-card {
-                padding: 20px 15px !important;
-                margin: 10px auto !important;
+                padding: 20px 15px 40px 15px !important;
+                margin: 10px auto 50px auto !important;
               }
             }
           `}
