@@ -1,6 +1,41 @@
 import React, { useState, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 
+// Minimal SVG icon components
+const HomeIcon = ({ color = "#6c757d", size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9,22 9,12 15,12 15,22"/>
+  </svg>
+);
+
+const SearchIcon = ({ color = "#6c757d", size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="11" cy="11" r="8"/>
+    <path d="M21 21l-4.35-4.35"/>
+  </svg>
+);
+
+const CameraIcon = ({ color = "#6c757d", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
+
+const HeartIcon = ({ color = "#6c757d", size = 22, filled = false }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : "none"} stroke={color} strokeWidth="2">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+);
+
+const ProfileIcon = ({ color = "#6c757d", size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
 const MobileBottomNavigation = ({ hasNewNotifications = false }) => {
   const location = useLocation();
   const [pressedButton, setPressedButton] = useState(null);
@@ -25,39 +60,34 @@ const MobileBottomNavigation = ({ hasNewNotifications = false }) => {
     {
       id: "home",
       path: "/",
-      icon: "🏠",
+      icon: HomeIcon,
       tooltip: "Home",
-      activeIcon: "🏠",
     },
     {
       id: "search",
       path: "/search",
-      icon: "🔍",
+      icon: SearchIcon,
       tooltip: "Search",
-      activeIcon: "🔍",
     },
     {
       id: "capture",
       path: "/capture",
-      icon: "📸",
+      icon: CameraIcon,
       tooltip: "Camera",
-      activeIcon: "📸",
       isSpecial: true, // This will be the prominent center button
     },
     {
       id: "activity",
       path: "/activity",
-      icon: "❤️",
+      icon: HeartIcon,
       tooltip: "Activity",
-      activeIcon: "💖",
       hasNotification: hasNewNotifications,
     },
     {
       id: "profile",
       path: "/profile",
-      icon: "👤",
+      icon: ProfileIcon,
       tooltip: "Profile",
-      activeIcon: "👤",
     },
   ];
 
@@ -96,20 +126,9 @@ const MobileBottomNavigation = ({ hasNewNotifications = false }) => {
       textDecoration: "none",
       width: "48px",
       height: "48px",
-      borderRadius: "50%",
-      backgroundColor: active ? "rgba(0,123,255,0.1)" : "transparent",
-      color: active ? "#007bff" : "#6c757d",
+      borderRadius: "12px", // Slightly rounded for modern look
+      backgroundColor: active ? "rgba(0,123,255,0.08)" : "transparent",
       transform: pressed ? "scale(0.9)" : "scale(1)",
-      transition: "all 0.15s ease",
-    };
-  };
-
-  const getIconStyle = (item) => {
-    const active = isActive(item.path);
-
-    return {
-      fontSize: item.isSpecial ? "24px" : "22px",
-      color: item.isSpecial ? "white" : active ? "#007bff" : "#6c757d",
       transition: "all 0.15s ease",
     };
   };
@@ -152,7 +171,7 @@ const MobileBottomNavigation = ({ hasNewNotifications = false }) => {
           backdropFilter: "blur(10px)",
           WebkitBackdropFilter: "blur(10px)",
           borderTop: "1px solid rgba(0, 0, 0, 0.08)",
-          padding: "12px 0 24px 0", // Adjusted padding for icon-only design
+          padding: "12px 0 24px 0",
           zIndex: 1000,
           boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.08)",
         }}
@@ -161,63 +180,78 @@ const MobileBottomNavigation = ({ hasNewNotifications = false }) => {
           style={{
             display: "flex",
             justifyContent: "space-around",
-            alignItems: "center", // Center align since no text labels
+            alignItems: "center",
             maxWidth: "500px",
             margin: "0 auto",
             paddingBottom: "env(safe-area-inset-bottom)", // iOS safe area
           }}
         >
-          {navItems.map((item) => (
-            <Link
-              key={item.id}
-              to={item.path}
-              title={item.tooltip} // Tooltip for accessibility
-              style={getButtonStyle(item)}
-              onTouchStart={() => handleTouchStart(item.id)}
-              onTouchEnd={handleTouchEnd}
-              onMouseDown={() => handleTouchStart(item.id)}
-              onMouseUp={handleTouchEnd}
-              onMouseLeave={handleTouchEnd}
-            >
-              {/* Notification Badge */}
-              {item.hasNotification && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: item.isSpecial ? "4px" : "8px",
-                    right: item.isSpecial ? "4px" : "8px",
-                    width: "8px",
-                    height: "8px",
-                    backgroundColor: "#ff3040",
-                    borderRadius: "50%",
-                    border: "2px solid white",
-                    animation: "pulse 2s infinite",
-                  }}
-                />
-              )}
+          {navItems.map((item) => {
+            const IconComponent = item.icon;
+            const active = isActive(item.path);
+            
+            // Color logic for each icon
+            const getIconColor = () => {
+              if (item.isSpecial) return "white"; // Camera is always white
+              return active ? "#007bff" : "#6b7280"; // Active blue, inactive gray
+            };
 
-              {/* Icon */}
-              <div style={getIconStyle(item)}>
-                {isActive(item.path) ? item.activeIcon : item.icon}
-              </div>
+            const iconSize = item.isSpecial ? 24 : 22;
 
-              {/* Active Indicator Dot - only for regular buttons */}
-              {isActive(item.path) && !item.isSpecial && (
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "-6px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: "4px",
-                    height: "4px",
-                    backgroundColor: "#007bff",
-                    borderRadius: "50%",
-                  }}
+            return (
+              <Link
+                key={item.id}
+                to={item.path}
+                title={item.tooltip}
+                style={getButtonStyle(item)}
+                onTouchStart={() => handleTouchStart(item.id)}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={() => handleTouchStart(item.id)}
+                onMouseUp={handleTouchEnd}
+                onMouseLeave={handleTouchEnd}
+              >
+                {/* Notification Badge */}
+                {item.hasNotification && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: item.isSpecial ? "4px" : "8px",
+                      right: item.isSpecial ? "4px" : "8px",
+                      width: "8px",
+                      height: "8px",
+                      backgroundColor: "#ff3040",
+                      borderRadius: "50%",
+                      border: "2px solid white",
+                      animation: "pulse 2s infinite",
+                    }}
+                  />
+                )}
+
+                {/* Icon */}
+                <IconComponent 
+                  color={getIconColor()} 
+                  size={iconSize}
+                  filled={item.id === "activity" && active} // Fill heart when active
                 />
-              )}
-            </Link>
-          ))}
+
+                {/* Active Indicator Dot - only for regular buttons */}
+                {active && !item.isSpecial && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "-6px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "4px",
+                      height: "4px",
+                      backgroundColor: "#007bff",
+                      borderRadius: "50%",
+                    }}
+                  />
+                )}
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
