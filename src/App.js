@@ -174,103 +174,106 @@ export default function App() {
       }
     >
       <Router>
-        <div
-          style={{
-            minHeight: "100vh",
-            backgroundColor: "#f8f9fa",
-            color: "#343a40",
-            fontFamily:
-              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            display: "flex",
-            flexDirection: "column"
-          }}
-        >
-          {user ? (
-            <>
-              {/* Main content area - dynamic padding for CodeSandbox */}
-              <main
+        {user ? (
+          // Authenticated user - main app with constrained height
+          <div
+            style={{
+              height: "100vh",
+              backgroundColor: "#f8f9fa",
+              color: "#343a40",
+              fontFamily:
+                '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden", // Prevent body scroll on mobile
+            }}
+          >
+            {/* Main content area - dynamic padding for CodeSandbox */}
+            <main
+              style={{
+                flex: 1,
+                paddingBottom: bottomPadding, // Dynamic padding based on environment
+                overflow: "hidden",
+                position: "relative",
+                backgroundColor: "#f8f9fa", // Ensure solid background
+              }}
+            >
+              <div
                 style={{
-                  flex: 1,
-                  paddingBottom: bottomPadding, // Dynamic padding based on environment
-                  overflow: "hidden",
-                  position: "relative",
-                  backgroundColor: "#f8f9fa", // Ensure solid background
+                  height: "100%",
+                  overflow: "auto",
+                  WebkitOverflowScrolling: "touch",
+                  overscrollBehavior: "contain",
                 }}
               >
-                <div
-                  style={{
-                    height: "100%",
-                    overflow: "auto",
-                    WebkitOverflowScrolling: "touch",
-                    overscrollBehavior: "contain",
-                  }}
-                >
-                  <Routes>
-                    <Route
-                      path="/"
-                      element={<HomeFeed photos={photos} currentUser={user} />}
-                    />
-                    <Route
-                      path="/search"
-                      element={
-                        <SearchPage photos={photos} currentUser={user} />
-                      }
-                    />
-                    <Route
-                      path="/capture"
-                      element={<CaptureComponent user={user} />}
-                    />
-                    <Route
-                      path="/profile"
-                      element={
-                        <ProfilePage currentUser={user} photos={photos} />
-                      }
-                    />
-                    <Route
-                      path="/activity"
-                      element={<ActivityFeed currentUser={user} />}
-                    />
-                    <Route
-                      path="/admin"
-                      element={<AdminPanel currentUser={user} />}
-                    />
-                  </Routes>
-                </div>
-              </main>
+                <Routes>
+                  <Route
+                    path="/"
+                    element={<HomeFeed photos={photos} currentUser={user} />}
+                  />
+                  <Route
+                    path="/search"
+                    element={
+                      <SearchPage photos={photos} currentUser={user} />
+                    }
+                  />
+                  <Route
+                    path="/capture"
+                    element={<CaptureComponent user={user} />}
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProfilePage currentUser={user} photos={photos} />
+                    }
+                  />
+                  <Route
+                    path="/activity"
+                    element={<ActivityFeed currentUser={user} />}
+                  />
+                  <Route
+                    path="/admin"
+                    element={<AdminPanel currentUser={user} />}
+                  />
+                </Routes>
+              </div>
+            </main>
 
-              {/* Mobile-optimized bottom navigation with CodeSandbox detection */}
-              <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
-            </>
-          ) : (
-            // NEW: Authentication screens - show only one at a time
+            {/* Mobile-optimized bottom navigation with CodeSandbox detection */}
+            <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
+          </div>
+        ) : (
+          // Authentication screens - completely free from height constraints
+          <div
+            style={{
+              backgroundColor: "#e3f2fd",
+              minHeight: "100vh",
+              width: "100%",
+              padding: "0",
+              margin: "0",
+              position: "relative",
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+            }}
+          >
             <div
-              className="auth-container"
               style={{
-                minHeight: "100vh",
-                height: "auto",
-                background: "#e3f2fd",
-                padding: "20px 20px 80px 20px",
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                position: "relative",
+                padding: "40px 20px 120px 20px",
+                maxWidth: "500px",
+                margin: "0 auto",
                 width: "100%",
                 boxSizing: "border-box"
               }}
             >
               {showLogin ? (
-                // Show Login component with working switch link
-                <div 
-                  className="auth-card"
-                  style={{
-                    background: "white",
-                    borderRadius: "20px",
-                    padding: "40px 30px 60px 30px",
-                    boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-                    width: "100%",
-                    maxWidth: "400px",
-                    margin: "20px auto 40px auto",
-                    minHeight: "auto",
-                    position: "relative"
-                  }}>
+                // Login Card
+                <div style={{
+                  background: "white",
+                  borderRadius: "20px",
+                  padding: "40px 30px",
+                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
+                  width: "100%",
+                  margin: "0 auto 40px auto"
+                }}>>
                   {/* Header */}
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
@@ -335,20 +338,15 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                // Show Signup component with working switch link
-                <div 
-                  className="auth-card"
-                  style={{
-                    background: "white",
-                    borderRadius: "20px",
-                    padding: "40px 30px 60px 30px",
-                    boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-                    width: "100%",
-                    maxWidth: "400px",
-                    margin: "20px auto 40px auto",
-                    minHeight: "auto",
-                    position: "relative"
-                  }}>
+                // Signup Card
+                <div style={{
+                  background: "white",
+                  borderRadius: "20px",
+                  padding: "40px 30px",
+                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
+                  width: "100%",
+                  margin: "0 auto 40px auto"
+                }}>>
                   {/* Header */}
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
@@ -414,8 +412,9 @@ export default function App() {
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+        
 
         {/* Global mobile optimizations */}
         <style>
