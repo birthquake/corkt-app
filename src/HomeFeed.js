@@ -4,6 +4,7 @@ import { PhotoInteractionSummary } from "./ActionBar";
 import { useFollowing, filterPhotosByFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
 import MobilePhotoCard from "./MobilePhotoCard";
+import analytics from "./analyticsService";
 
 // Minimal SVG icon components
 const PublicIcon = ({ color = "#6c757d", size = 20 }) => (
@@ -62,8 +63,13 @@ const HomeFeed = ({ photos, currentUser }) => {
   const [locationError, setLocationError] = useState(null);
   const [locationLoading, setLocationLoading] = useState(true);
 
-  // 🌍 NEW: Global/Local toggle state
+  // 🌍 Global/Local toggle state
   const [isGlobalMode, setIsGlobalMode] = useState(true); // Default to global mode
+
+  // 📊 Analytics tracking state
+  const [modeSessionStart, setModeSessionStart] = useState(Date.now());
+  const [photosViewedInSession, setPhotosViewedInSession] = useState(0);
+  const [photosPostedInSession, setPhotosPostedInSession] = useState(0);
 
   // Get following list for friends filter and privacy checking
   const { followingList, loading: followingLoading } = useFollowing(
@@ -77,6 +83,40 @@ const HomeFeed = ({ photos, currentUser }) => {
 
   const { usersData, loading: usersLoading } =
     useOptimizedUsersData(uniqueUserIds);
+
+  // 📊 Simple venue detection function
+  const detectVenue = useCallback((location) => {
+    if (!location) return null;
+    
+    const KNOWN_VENUES = [
+      { lat: 39.9685, lng: -82.9923, radius: 100, name: 'Fox in the Snow - Italian Village' },
+      { lat: 39.9612, lng: -82.9988, radius: 150, name: 'North Market' },
+      { lat: 39.9691, lng: -82.9977, radius: 200, name: 'Huntington Park' },
+      { lat: 39.9634, lng: -82.9959, radius: 100, name: 'Natalie\'s Music Hall' },
+      { lat: 39.9712, lng: -82.9943, radius: 150, name: 'Land-Grant Brewing' },
+      // Add more venues as needed
+    ];
+
+    for (const venue of KNOWN_VENUES) {
+      const distance = calculateDistance(
+        location.latitude,
+        location.longitude,
+        venue.lat,
+        venue.lng
+      );
+      if (distance <= venue.radius) {
+        return venue.name;
+      }
+    }
+    return null;
+  }, []);
+
+  // 📊 Track app open on component mount
+  useEffect(() => {
+    if (currentLocation) {
+      analytics.trackAppOpen(currentLocation, detectVenue(currentLocation));
+    }
+  }, [currentLocation, detectVenue]);
 
   // 🆕 GET CURRENT LOCATION ON COMPONENT MOUNT
   useEffect(() => {
@@ -194,7 +234,41 @@ const HomeFeed = ({ photos, currentUser }) => {
 
     console.log(`📍 Location filtering (${modeText}): ${photosToFilter.length} total → ${nearbyPhotos.length} nearby`);
     return nearbyPhotos;
-  }, [currentLocation, calculateDistance, isGlobalMode]); // Added isGlobalMode to dependencies
+  }, [currentLocation, calculateDistance, isGlobalMode]);
+
+  // 📊 Enhanced toggle handler with analytics
+  const handleModeToggle = useCallback(() => {
+    const previousMode = isGlobalMode;
+    const newMode = !isGlobalMode;
+    const venueDetected = detectVenue(currentLocation);
+
+    // Track the mode toggle
+    analytics.trackModeToggle(
+      previousMode ? 'global' : 'local',
+      newMode ? 'global' : 'local',
+      currentLocation,
+      venueDetected
+    );
+
+    // Track session data for previous mode
+    if (venueDetected) {
+      const sessionDuration = Math.round((Date.now() - modeSessionStart) / 1000);
+      analytics.trackVenueSession(
+        { name: venueDetected, type: 'venue' },
+        currentLocation,
+        previousMode ? 'global' : 'local',
+        sessionDuration,
+        photosViewedInSession,
+        photosPostedInSession
+      );
+    }
+
+    // Update state
+    setIsGlobalMode(newMode);
+    setModeSessionStart(Date.now());
+    setPhotosViewedInSession(0);
+    setPhotosPostedInSession(0);
+  }, [isGlobalMode, currentLocation, modeSessionStart, photosViewedInSession, photosPostedInSession, detectVenue]);
 
   // Updated filter options with icon components
   const filters = [
@@ -304,24 +378,47 @@ const HomeFeed = ({ photos, currentUser }) => {
     console.log(`✅ HomeFeed: Final result - ${filtered.length} photos after all filtering`);
     return filtered;
   }, [
-    photos.map((p) => `${p.id}-${p.privacy}-${p.latitude}-${p.longitude}`).join(","), // Include location in dependency
+    photos.map((p) => `${p.id}-${p.privacy}-${p.latitude}-${p.longitude}`).join(","),
     activeFilter,
     currentUser?.uid,
     followingList.join(","),
-    currentLocation, // Re-filter when location changes
+    currentLocation,
     filterPhotosByLocation,
-    isGlobalMode // Re-filter when mode changes
+    isGlobalMode
   ]);
 
-  // 🆕 Enhanced photo modal with index tracking for future swipe support
-  const openPhotoModal = useCallback(
-    (photo) => {
-      const photoIndex = filteredPhotos.findIndex((p) => p.id === photo.id);
-      setSelectedPhoto(photo);
-      setSelectedPhotoIndex(photoIndex);
-    },
-    [filteredPhotos]
-  );
+  // 📊 Enhanced photo modal with analytics
+  const openPhotoModal = useCallback((photo) => {
+    const photoIndex = filteredPhotos.findIndex((p) => p.id === photo.id);
+    setSelectedPhoto(photo);
+    setSelectedPhotoIndex(photoIndex);
+
+    // Track photo interaction
+    analytics.trackPhotoInteraction(
+      'view',
+      photo.latitude && photo.longitude ? { latitude: photo.latitude, longitude: photo.longitude } : null,
+      currentLocation,
+      isGlobalMode ? 'global' : 'local'
+    );
+
+    // Increment photos viewed in current session
+    setPhotosViewedInSession(prev => prev + 1);
+  }, [filteredPhotos, currentLocation, isGlobalMode]);
+
+  // 📊 Track photo posting (call this when users post photos)
+  const trackPhotoPost = useCallback((photoLocation) => {
+    const venueDetected = detectVenue(currentLocation);
+    
+    analytics.trackPhotoInteraction(
+      'post',
+      photoLocation,
+      currentLocation,
+      isGlobalMode ? 'global' : 'local'
+    );
+
+    // Increment photos posted in current session
+    setPhotosPostedInSession(prev => prev + 1);
+  }, [currentLocation, isGlobalMode, detectVenue]);
 
   const closePhotoModal = useCallback(() => {
     setSelectedPhoto(null);
@@ -370,6 +467,18 @@ const HomeFeed = ({ photos, currentUser }) => {
     }
   };
 
+  // 📊 Analytics summary for development (remove in production)
+  const showAnalyticsSummary = () => {
+    const venueDetected = detectVenue(currentLocation);
+    if (venueDetected) {
+      const venueAnalytics = analytics.getVenueAnalytics(venueDetected);
+      console.log('📊 Venue Analytics for', venueDetected, ':', venueAnalytics);
+    }
+    // Show general analytics
+    console.log('📊 Total Events:', analytics.events.length);
+    console.log('📊 Recent Events:', analytics.events.slice(-10));
+  };
+
   return (
     <div
       style={{
@@ -380,7 +489,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         paddingTop: "16px",
       }}
     >
-      {/* 🆕 LOCATION STATUS INDICATOR */}
+      {/* 🆕 SIMPLIFIED LOCATION STATUS INDICATORS */}
       {locationError && (
         <div style={{
           backgroundColor: "#f8d7da",
@@ -391,10 +500,7 @@ const HomeFeed = ({ photos, currentUser }) => {
           fontSize: "12px",
           color: "#721c24"
         }}>
-          📍 Location error: {locationError}
-          <div style={{ fontSize: "10px", marginTop: "4px", opacity: 0.8 }}>
-            Without location, all photos will be shown regardless of distance
-          </div>
+          📍 Location unavailable - showing all photos
         </div>
       )}
 
@@ -412,29 +518,11 @@ const HomeFeed = ({ photos, currentUser }) => {
           gap: "8px"
         }}>
           <div style={{ animation: "spin 1s linear infinite" }}>📍</div>
-          Getting your location for nearby photo filtering...
+          Getting location...
         </div>
       )}
 
-      {/* 🌍 UPDATED: Dynamic status message */}
-      {currentLocation && (
-        <div style={{
-          backgroundColor: "#d4edda",
-          border: "1px solid #c3e6cb",
-          borderRadius: "8px",
-          padding: "8px 16px",
-          margin: "0 16px 16px 16px",
-          fontSize: "12px",
-          color: "#155724"
-        }}>
-          📍 Showing photos {isGlobalMode ? "globally (within 50,000km)" : "nearby (within 25m)"}
-          <div style={{ fontSize: "10px", marginTop: "4px", opacity: 0.8 }}>
-            Location: {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
-          </div>
-        </div>
-      )}
-
-      {/* 🌍 UPDATED: Filter Tabs with Global/Local Toggle and Minimal Icons */}
+      {/* 🌍 Filter Tabs with Global/Local Toggle and Minimal Icons */}
       <div
         style={{
           backgroundColor: "#ffffff",
@@ -455,7 +543,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             padding: "0 16px",
           }}
         >
-          {/* 🌍 GLOBAL/LOCAL TOGGLE with minimal icons */}
+          {/* 🌍 GLOBAL/LOCAL TOGGLE with analytics */}
           <div
             style={{
               display: "flex",
@@ -465,7 +553,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             }}
           >
             <button
-              onClick={() => setIsGlobalMode(!isGlobalMode)}
+              onClick={handleModeToggle}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -585,10 +673,9 @@ const HomeFeed = ({ photos, currentUser }) => {
               {activeFilter === "tagged" && <TaggedIcon color="#6c757d" size={48} />}
               {activeFilter === "mine" && <MyPostsIcon color="#6c757d" size={48} />}
             </div>
-            {/* 🌍 UPDATED: Dynamic empty state messages */}
             <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
               {currentLocation 
-                ? (isGlobalMode ? "No photos found globally" : "No nearby photos")
+                ? (isGlobalMode ? "No photos found" : "No nearby photos")
                 : (activeFilter === "public" && "No photos yet")}
               {!currentLocation && activeFilter === "friends" && followingList.length === 0
                 ? "No followed users"
@@ -602,12 +689,11 @@ const HomeFeed = ({ photos, currentUser }) => {
                     ? "No photos found matching your current filters"
                     : "Take a photo here or move to a location where photos were shared"
                   )
-                : "Enable location to see photos near you, or check location permissions"}
+                : "Enable location to see photos near you"}
             </p>
           </div>
         ) : (
           <div>
-            {/* 🆕 Enhanced photo cards with mobile interactions */}
             {filteredPhotos.map((photo) => {
               const userInfo = getUserInfo(photo);
 
@@ -626,7 +712,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         )}
       </div>
 
-      {/* Enhanced Photo Modal with FIXED mobile positioning */}
+      {/* Enhanced Photo Modal */}
       {selectedPhoto && (
         <div
           style={{
@@ -896,6 +982,26 @@ const HomeFeed = ({ photos, currentUser }) => {
           </div>
         </div>
       )}
+
+      {/* 📊 Analytics test button (remove in production) */}
+      <button
+        onClick={showAnalyticsSummary}
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+          padding: "8px 12px",
+          backgroundColor: "#17a2b8",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          fontSize: "12px",
+          cursor: "pointer",
+          zIndex: 1000
+        }}
+      >
+        📊 Analytics
+      </button>
 
       <style>
         {`
