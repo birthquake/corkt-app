@@ -201,7 +201,10 @@ const Signup = () => {
       background: loading ? "#f9fafb" : "#fafafa",
       transition: "all 0.3s ease",
       boxSizing: "border-box",
-      outline: "none"
+      outline: "none",
+      // iOS Safari fixes
+      WebkitAppearance: "none",
+      minHeight: "52px"
     };
   };
 
@@ -249,13 +252,26 @@ const Signup = () => {
     background: loading ? "#f9fafb" : "#fafafa",
     transition: "all 0.3s ease",
     boxSizing: "border-box",
-    outline: "none"
+    outline: "none",
+    // iOS Safari fixes
+    WebkitAppearance: "none",
+    minHeight: "52px"
   });
 
+  // iOS Safari friendly focus/blur handlers
   const handleInputFocus = (e) => {
     e.target.style.borderColor = "#007bff";
     e.target.style.background = "white";
     e.target.style.boxShadow = "0 0 0 3px rgba(0,123,255,0.1)";
+    
+    // iOS Safari fix: Small delay to prevent viewport issues
+    setTimeout(() => {
+      e.target.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "center",
+        inline: "nearest"
+      });
+    }, 100);
   };
 
   const handleInputBlur = (e) => {
@@ -265,8 +281,17 @@ const Signup = () => {
   };
 
   return (
-    <>
-      <form onSubmit={handleSignup}>
+    <div style={{
+      // iOS Safari specific container fixes
+      minHeight: "auto",
+      overflow: "visible",
+      WebkitOverflowScrolling: "touch"
+    }}>
+      <form onSubmit={handleSignup} style={{
+        // Ensure form doesn't constrain height
+        minHeight: "auto",
+        overflow: "visible"
+      }}>
         {/* Real Name Field */}
         <div style={{ marginBottom: "20px" }}>
           <label style={{
@@ -315,6 +340,8 @@ const Signup = () => {
             required
             disabled={loading}
             style={getScreenNameInputStyle()}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
           />
           {getScreenNameFeedback()}
         </div>
@@ -413,21 +440,9 @@ const Signup = () => {
             cursor: loading || screenNameAvailable === false || screenNameChecking 
               ? "not-allowed" : "pointer",
             transition: "all 0.3s ease",
-            marginBottom: "20px"
-          }}
-          onMouseEnter={(e) => {
-            if (!loading && screenNameAvailable !== false && !screenNameChecking) {
-              e.target.style.background = "#0056b3";
-              e.target.style.transform = "translateY(-2px)";
-              e.target.style.boxShadow = "0 8px 25px rgba(0,123,255,0.3)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!loading && screenNameAvailable !== false && !screenNameChecking) {
-              e.target.style.background = "#007bff";
-              e.target.style.transform = "translateY(0)";
-              e.target.style.boxShadow = "none";
-            }
+            marginBottom: "40px", // Extra space for iOS
+            minHeight: "56px", // iOS Safari friendly button height
+            WebkitAppearance: "none" // iOS Safari fix
           }}
         >
           {loading ? "Creating Account..." : "Sign Up"}
@@ -438,6 +453,7 @@ const Signup = () => {
       {error && (
         <div style={{
           marginTop: "20px",
+          marginBottom: "20px",
           padding: "12px",
           background: "#fef2f2",
           border: "1px solid #fecaca",
@@ -454,6 +470,7 @@ const Signup = () => {
       {success && (
         <div style={{
           marginTop: "20px",
+          marginBottom: "20px",
           padding: "12px",
           background: "#f0fdf4",
           border: "1px solid #bbf7d0",
@@ -465,7 +482,10 @@ const Signup = () => {
           Account created successfully! You can now start using Corkt.
         </div>
       )}
-    </>
+
+      {/* iOS Safari spacing fix */}
+      <div style={{ height: "60px" }}></div>
+    </div>
   );
 };
 
