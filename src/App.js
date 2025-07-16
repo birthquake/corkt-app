@@ -34,7 +34,7 @@ export default function App() {
   const bottomPadding = isCodeSandbox ? "150px" : "90px";
 
   // 📊 Admin check for analytics access
-  const isAdmin = user?.email === 'your-email@example.com'; // Replace with your actual email
+  const isAdmin = user?.email === 'corktapp@gmail.com'; // Replace with your actual email
 
   useEffect(() => {
     const auth = getAuth();
