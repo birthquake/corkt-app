@@ -21,7 +21,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [photos, setPhotos] = useState([]);
-  const [showLogin, setShowLogin] = useState(true); // NEW: State to toggle between login/signup
+  const [showLogin, setShowLogin] = useState(true);
 
   // Detect CodeSandbox environment for navigation adjustments
   const isCodeSandbox =
@@ -30,7 +30,7 @@ export default function App() {
     window.parent !== window;
 
   // Calculate bottom padding based on environment
-  const bottomPadding = isCodeSandbox ? "150px" : "90px"; // Extra 60px for CodeSandbox
+  const bottomPadding = isCodeSandbox ? "150px" : "90px";
 
   useEffect(() => {
     const auth = getAuth();
@@ -175,7 +175,7 @@ export default function App() {
     >
       <Router>
         {user ? (
-          // Authenticated user - main app with constrained height
+          // Authenticated user - main app
           <div
             style={{
               height: "100vh",
@@ -185,17 +185,16 @@ export default function App() {
                 '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               display: "flex",
               flexDirection: "column",
-              overflow: "hidden", // Prevent body scroll on mobile
+              overflow: "hidden",
             }}
           >
-            {/* Main content area - dynamic padding for CodeSandbox */}
             <main
               style={{
                 flex: 1,
-                paddingBottom: bottomPadding, // Dynamic padding based on environment
+                paddingBottom: bottomPadding,
                 overflow: "hidden",
                 position: "relative",
-                backgroundColor: "#f8f9fa", // Ensure solid background
+                backgroundColor: "#f8f9fa",
               }}
             >
               <div
@@ -213,9 +212,7 @@ export default function App() {
                   />
                   <Route
                     path="/search"
-                    element={
-                      <SearchPage photos={photos} currentUser={user} />
-                    }
+                    element={<SearchPage photos={photos} currentUser={user} />}
                   />
                   <Route
                     path="/capture"
@@ -223,9 +220,7 @@ export default function App() {
                   />
                   <Route
                     path="/profile"
-                    element={
-                      <ProfilePage currentUser={user} photos={photos} />
-                    }
+                    element={<ProfilePage currentUser={user} photos={photos} />}
                   />
                   <Route
                     path="/activity"
@@ -238,43 +233,28 @@ export default function App() {
                 </Routes>
               </div>
             </main>
-
-            {/* Mobile-optimized bottom navigation with CodeSandbox detection */}
             <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
           </div>
         ) : (
-          // Authentication screens - completely free from height constraints
-          <div
-            style={{
-              backgroundColor: "#e3f2fd",
-              minHeight: "100vh",
-              width: "100%",
-              padding: "0",
-              margin: "0",
-              position: "relative",
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-            }}
-          >
-            <div
-              style={{
-                padding: "40px 20px 120px 20px",
-                maxWidth: "500px",
-                margin: "0 auto",
-                width: "100%",
-                boxSizing: "border-box"
-              }}
-            >
+          // SIMPLE AUTH LAYOUT - No complex containers
+          <div style={{ 
+            background: "#e3f2fd", 
+            minHeight: "100vh",
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          }}>
+            <div style={{ 
+              maxWidth: "450px", 
+              margin: "0 auto", 
+              padding: "40px 20px 200px 20px" 
+            }}>
               {showLogin ? (
-                // Login Card
                 <div style={{
                   background: "white",
                   borderRadius: "20px",
                   padding: "40px 30px",
                   boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-                  width: "100%",
-                  margin: "0 auto 40px auto"
-                }}>>
-                  {/* Header */}
+                  marginBottom: "40px"
+                }}>
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
                       fontSize: "36px",
@@ -295,7 +275,6 @@ export default function App() {
 
                   <Login />
 
-                  {/* Divider */}
                   <div style={{
                     textAlign: "center",
                     color: "#6b7280",
@@ -318,7 +297,6 @@ export default function App() {
                     </span>
                   </div>
 
-                  {/* Switch to Signup */}
                   <div style={{
                     textAlign: "center",
                     color: "#6b7280",
@@ -338,16 +316,13 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                // Signup Card
                 <div style={{
                   background: "white",
                   borderRadius: "20px",
                   padding: "40px 30px",
                   boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-                  width: "100%",
-                  margin: "0 auto 40px auto"
-                }}>>
-                  {/* Header */}
+                  marginBottom: "40px"
+                }}>
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
                       fontSize: "36px",
@@ -368,7 +343,6 @@ export default function App() {
 
                   <Signup />
 
-                  {/* Divider */}
                   <div style={{
                     textAlign: "center",
                     color: "#6b7280",
@@ -391,7 +365,6 @@ export default function App() {
                     </span>
                   </div>
 
-                  {/* Switch to Login */}
                   <div style={{
                     textAlign: "center",
                     color: "#6b7280",
@@ -414,9 +387,7 @@ export default function App() {
             </div>
           </div>
         )}
-        
 
-        {/* Global mobile optimizations */}
         <style>
           {`
             @keyframes spin {
@@ -424,77 +395,23 @@ export default function App() {
               100% { transform: rotate(360deg); }
             }
 
-            /* Mobile-specific touch optimizations */
             * {
               -webkit-tap-highlight-color: transparent;
             }
 
-            /* Smooth transitions for mobile */
             a, button {
               transition: all 0.15s ease;
             }
 
-            /* Better mobile scrolling */
             .mobile-scroll {
               -webkit-overflow-scrolling: touch;
               overscroll-behavior: contain;
             }
 
-            /* iOS Safari specific fixes */
             @supports (-webkit-touch-callout: none) {
               .ios-fix {
                 -webkit-appearance: none;
                 border-radius: 0;
-              }
-            }
-
-            /* Mobile login fixes */
-            @media (max-height: 600px) {
-              /* For shorter screens like landscape mobile */
-              .login-container {
-                padding-top: 10px !important;
-                padding-bottom: 10px !important;
-              }
-            }
-
-            /* Ensure body can scroll for auth pages */
-            html, body {
-              height: auto !important;
-              overflow-y: auto !important;
-              -webkit-overflow-scrolling: touch;
-            }
-
-            /* Remove any height constraints on auth pages */
-            .auth-container {
-              height: auto !important;
-              max-height: none !important;
-              overflow: visible !important;
-            }
-
-            .auth-card {
-              height: auto !important;
-              max-height: none !important;
-            }
-
-            /* Fix for signup form scrolling */
-            @media (max-height: 800px) {
-              .auth-container {
-                padding: 10px 10px 100px 10px !important;
-              }
-              .auth-card {
-                margin: 10px auto 50px auto !important;
-                padding: 20px 20px 40px 20px !important;
-              }
-            }
-
-            /* Mobile auth page fixes */
-            @media (max-width: 480px) {
-              .auth-container {
-                padding: 10px 10px 100px 10px !important;
-              }
-              .auth-card {
-                padding: 20px 15px 40px 15px !important;
-                margin: 10px auto 50px auto !important;
               }
             }
           `}
