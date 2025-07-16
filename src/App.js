@@ -236,24 +236,22 @@ export default function App() {
             <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
           </div>
         ) : (
-          // SIMPLE AUTH LAYOUT - No complex containers
-          <div style={{ 
-            background: "#e3f2fd", 
-            minHeight: "100vh",
+          // iOS-friendly auth section
+          <div style={{
+            background: "#e3f2fd",
+            padding: "20px 20px 300px 20px", // HUGE bottom padding for iOS
             fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }}>
-            <div style={{ 
-              maxWidth: "450px", 
-              margin: "0 auto", 
-              padding: "40px 20px 200px 20px" 
+            <div style={{
+              maxWidth: "400px",
+              margin: "0 auto"
             }}>
               {showLogin ? (
                 <div style={{
                   background: "white",
                   borderRadius: "20px",
                   padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-                  marginBottom: "40px"
+                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)"
                 }}>
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
@@ -320,8 +318,7 @@ export default function App() {
                   background: "white",
                   borderRadius: "20px",
                   padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)",
-                  marginBottom: "40px"
+                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)"
                 }}>
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
@@ -395,24 +392,34 @@ export default function App() {
               100% { transform: rotate(360deg); }
             }
 
+            /* iOS WebKit fixes */
+            html, body {
+              height: auto !important;
+              min-height: 100vh !important;
+              overflow-y: auto !important;
+              -webkit-overflow-scrolling: touch !important;
+            }
+
+            /* Remove tap highlights */
             * {
               -webkit-tap-highlight-color: transparent;
             }
 
+            /* Smooth transitions */
             a, button {
               transition: all 0.15s ease;
             }
 
-            .mobile-scroll {
-              -webkit-overflow-scrolling: touch;
-              overscroll-behavior: contain;
+            /* iOS input fixes */
+            input {
+              -webkit-appearance: none !important;
+              border-radius: 12px !important;
             }
 
-            @supports (-webkit-touch-callout: none) {
-              .ios-fix {
-                -webkit-appearance: none;
-                border-radius: 0;
-              }
+            /* Ensure no height constraints on root */
+            #root {
+              height: auto !important;
+              min-height: 100vh !important;
             }
           `}
         </style>
