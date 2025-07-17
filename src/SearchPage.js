@@ -8,6 +8,7 @@ import {
 import { useFollow, useFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
 import { getTrendingHashtags, formatTextWithHashtags } from "./hashtagService";
+import LocationDisplay from "./LocationDisplay"; // ✅ NEW: Import LocationDisplay component
 
 // Minimal SVG icon components - matching MobileBottomNavigation style
 const SearchIcon = ({ color = "#6c757d", size = 20 }) => (
@@ -71,6 +72,14 @@ const GalleryIcon = ({ color = "#6c757d", size = 20 }) => (
     <rect x="14" y="3" width="7" height="7"/>
     <rect x="14" y="14" width="7" height="7"/>
     <rect x="3" y="14" width="7" height="7"/>
+  </svg>
+);
+
+// ✅ NEW: Clean clock icon for time display
+const ClockIcon = ({ color = "#6c757d", size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12,6 12,12 16,14"/>
   </svg>
 );
 
@@ -342,8 +351,67 @@ const SearchPage = ({ photos, currentUser }) => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [trendingHashtags, setTrendingHashtags] = useState([]);
 
+  // ✅ NEW: Location state for distance calculations
+  const [currentLocation, setCurrentLocation] = useState(null);
+
   const location = useLocation();
   const navigate = useNavigate();
+
+  // ✅ NEW: Get current location for distance calculations
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 30000
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCurrentLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: Date.now()
+        });
+      },
+      (error) => {
+        console.warn("📍 SearchPage: Location error:", error);
+      },
+      options
+    );
+  }, []);
+
+  // ✅ NEW: Distance calculation function
+  const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in meters
+  }, []);
+
+  // ✅ NEW: Helper function to format distance in miles
+  const formatDistance = useCallback((distanceInMeters) => {
+    const distanceInMiles = distanceInMeters * 0.000621371; // Convert meters to miles
+    
+    if (distanceInMiles < 0.1) {
+      return `${Math.round(distanceInMeters)}m`; // Show meters for very short distances
+    } else if (distanceInMiles < 1) {
+      return `${(distanceInMiles * 5280).toFixed(0)}ft`; // Show feet for distances under 1 mile
+    } else if (distanceInMiles < 10) {
+      return `${distanceInMiles.toFixed(1)}mi`; // Show 1 decimal for distances under 10 miles
+    } else {
+      return `${Math.round(distanceInMiles)}mi`; // Show whole miles for longer distances
+    }
+  }, []);
 
   // ✅ NEW: Handle hashtag search from URL parameters or MobilePhotoCard clicks
   useEffect(() => {
@@ -913,7 +981,7 @@ const SearchPage = ({ photos, currentUser }) => {
         )}
       </div>
 
-      {/* ✅ ENHANCED: Photo Modal with clickable hashtags in captions */}
+      {/* ✅ ENHANCED: Photo Modal with clean icons and improved location display */}
       {selectedPhoto && (
         <div
           style={{
@@ -1100,22 +1168,63 @@ const SearchPage = ({ photos, currentUser }) => {
                   </p>
                 )}
 
-              <p
+              {/* ✅ ENHANCED: Time and location with clean icons and miles */}
+              <div
                 style={{
-                  margin: "0 0 16px 0",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "12px",
                   fontSize: "12px",
                   color: "#6c757d",
+                  marginBottom: "16px",
+                  flexDirection: "column",
                 }}
               >
-                📅 {formatTimeAgo(selectedPhoto.timestamp)}
-                {selectedPhoto.latitude && selectedPhoto.longitude && (
-                  <>
-                    {" "}
-                    • 📍 {selectedPhoto.latitude.toFixed(4)},{" "}
-                    {selectedPhoto.longitude.toFixed(4)}
-                  </>
-                )}
-              </p>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <ClockIcon color="#6c757d" size={14} />
+                  <span>{formatTimeAgo(selectedPhoto.timestamp)}</span>
+                </div>
+
+                {/* ✅ NEW: Enhanced location display matching HomeFeed logic */}
+                {selectedPhoto.placeName ? (
+                  // Show specific place name if available
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>📍</span>
+                    <span>{selectedPhoto.placeName}</span>
+                    {/* Show distance if current location available */}
+                    {currentLocation && selectedPhoto.latitude && selectedPhoto.longitude && (
+                      <span style={{ marginLeft: "8px", fontWeight: "500" }}>
+                        ({formatDistance(calculateDistance(
+                          currentLocation.latitude,
+                          currentLocation.longitude,
+                          selectedPhoto.latitude,
+                          selectedPhoto.longitude
+                        ))} away)
+                      </span>
+                    )}
+                  </div>
+                ) : selectedPhoto.latitude && selectedPhoto.longitude ? (
+                  // Fallback to LocationDisplay component for neighborhood/city/state
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>📍</span>
+                    <LocationDisplay
+                      latitude={selectedPhoto.latitude}
+                      longitude={selectedPhoto.longitude}
+                    />
+                    {/* Show distance if current location available */}
+                    {currentLocation && (
+                      <span style={{ marginLeft: "8px", fontWeight: "500" }}>
+                        ({formatDistance(calculateDistance(
+                          currentLocation.latitude,
+                          currentLocation.longitude,
+                          selectedPhoto.latitude,
+                          selectedPhoto.longitude
+                        ))} away)
+                      </span>
+                    )}
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             {/* Fixed Bottom Button */}
