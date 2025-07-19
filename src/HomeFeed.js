@@ -6,6 +6,7 @@ import { useFollowing, filterPhotosByFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
 import MobilePhotoCard from "./MobilePhotoCard";
 import LocationDisplay from "./LocationDisplay"; // ✅ NEW: Import LocationDisplay component
+import PullToRefresh from "./PullToRefresh"; // ✅ NEW: Import PullToRefresh
 import analytics from "./analyticsService";
 
 // Minimal SVG icon components
@@ -81,6 +82,9 @@ const HomeFeed = ({ photos, currentUser }) => {
   const [photosViewedInSession, setPhotosViewedInSession] = useState(0);
   const [photosPostedInSession, setPhotosPostedInSession] = useState(0);
 
+  // ✅ NEW: Pull-to-refresh state
+  const [refreshing, setRefreshing] = useState(false);
+
   // Get following list for friends filter and privacy checking
   const { followingList, loading: followingLoading } = useFollowing(
     currentUser?.uid
@@ -93,6 +97,28 @@ const HomeFeed = ({ photos, currentUser }) => {
 
   const { usersData, loading: usersLoading } =
     useOptimizedUsersData(uniqueUserIds);
+
+  // ✅ NEW: Handle pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    console.log("🔄 Pull-to-refresh triggered");
+    setRefreshing(true);
+    
+    try {
+      // Simulate refresh delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // You can add actual refresh logic here, such as:
+      // - Refetch photos
+      // - Update location  
+      // - Reload user data
+      
+      console.log("✅ Refresh completed");
+    } catch (error) {
+      console.error("❌ Refresh failed:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   // ✅ NEW: Handle user click to navigate to profile
   const handleUserClick = useCallback((userId) => {
@@ -693,61 +719,72 @@ const HomeFeed = ({ photos, currentUser }) => {
         </div>
       </div>
 
-      {/* Feed Content */}
-      <div style={{ padding: "16px" }}>
-        {filteredPhotos.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "60px 20px",
-              color: "#6c757d",
-            }}
-          >
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>
-              {activeFilter === "public" && <PublicIcon color="#6c757d" size={48} />}
-              {activeFilter === "friends" && <FriendsIcon color="#6c757d" size={48} />}
-              {activeFilter === "tagged" && <TaggedIcon color="#6c757d" size={48} />}
-              {activeFilter === "mine" && <MyPostsIcon color="#6c757d" size={48} />}
+      {/* ✅ NEW: Pull-to-Refresh Wrapper around Feed Content */}
+      <PullToRefresh
+        onRefresh={handleRefresh}
+        disabled={refreshing}
+        refreshThreshold={80}
+        maxPullDistance={120}
+      >
+        {/* Feed Content */}
+        <div style={{ padding: "16px" }}>
+          {filteredPhotos.length === 0 ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                color: "#6c757d",
+              }}
+            >
+              <div style={{ fontSize: "48px", marginBottom: "16px" }}>
+                {activeFilter === "public" && <PublicIcon color="#6c757d" size={48} />}
+                {activeFilter === "friends" && <FriendsIcon color="#6c757d" size={48} />}
+                {activeFilter === "tagged" && <TaggedIcon color="#6c757d" size={48} />}
+                {activeFilter === "mine" && <MyPostsIcon color="#6c757d" size={48} />}
+              </div>
+              <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
+                {currentLocation 
+                  ? (isGlobalMode ? "No photos found" : "No nearby photos")
+                  : (activeFilter === "public" && "No photos yet")}
+                {!currentLocation && activeFilter === "friends" && followingList.length === 0
+                  ? "No followed users"
+                  : !currentLocation && activeFilter === "friends" && "No photos from friends"}
+                {!currentLocation && activeFilter === "tagged" && "No tagged photos"}
+                {!currentLocation && activeFilter === "mine" && "No photos posted"}
+              </h3>
+              <p style={{ margin: 0, fontSize: "14px" }}>
+                {currentLocation 
+                  ? (isGlobalMode 
+                      ? "No photos found matching your current filters"
+                      : "Take a photo here or move to a location where photos were shared"
+                    )
+                  : "Enable location to see photos near you"}
+              </p>
+              <p style={{ margin: "16px 0 0 0", fontSize: "12px", color: "#007bff" }}>
+                Pull down to refresh
+              </p>
             </div>
-            <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
-              {currentLocation 
-                ? (isGlobalMode ? "No photos found" : "No nearby photos")
-                : (activeFilter === "public" && "No photos yet")}
-              {!currentLocation && activeFilter === "friends" && followingList.length === 0
-                ? "No followed users"
-                : !currentLocation && activeFilter === "friends" && "No photos from friends"}
-              {!currentLocation && activeFilter === "tagged" && "No tagged photos"}
-              {!currentLocation && activeFilter === "mine" && "No photos posted"}
-            </h3>
-            <p style={{ margin: 0, fontSize: "14px" }}>
-              {currentLocation 
-                ? (isGlobalMode 
-                    ? "No photos found matching your current filters"
-                    : "Take a photo here or move to a location where photos were shared"
-                  )
-                : "Enable location to see photos near you"}
-            </p>
-          </div>
-        ) : (
-          <div>
-            {filteredPhotos.map((photo) => {
-              const userInfo = getUserInfo(photo);
+          ) : (
+            <div>
+              {filteredPhotos.map((photo) => {
+                const userInfo = getUserInfo(photo);
 
-              return (
-                <MobilePhotoCard
-                  key={photo.id}
-                  photo={photo}
-                  userInfo={userInfo}
-                  currentUser={currentUser}
-                  onPhotoClick={openPhotoModal}
-                  onUserClick={handleUserClick} // ✅ NEW: Pass the user click handler
-                  showUserInfo={true}
-                />
-              );
-            })}
-          </div>
-        )}
-      </div>
+                return (
+                  <MobilePhotoCard
+                    key={photo.id}
+                    photo={photo}
+                    userInfo={userInfo}
+                    currentUser={currentUser}
+                    onPhotoClick={openPhotoModal}
+                    onUserClick={handleUserClick} // ✅ NEW: Pass the user click handler
+                    showUserInfo={true}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </PullToRefresh>
 
       {/* ✅ ENHANCED: Photo Modal with Improved Location Display and Clickable User */}
       {selectedPhoto && (
