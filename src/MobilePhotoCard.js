@@ -10,6 +10,7 @@ const MobilePhotoCard = ({
   userInfo,
   currentUser,
   onPhotoClick,
+  onUserClick, // ✅ NEW: Callback for user clicks
   onHashtagClick, // ✅ NEW: Callback for hashtag clicks (optional)
   showUserInfo = true,
 }) => {
@@ -28,6 +29,15 @@ const MobilePhotoCard = ({
   const [lastTap, setLastTap] = useState(0);
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const heartAnimationRef = useRef(null);
+
+  // ✅ NEW: Handle user click navigation
+  const handleUserClick = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onUserClick && photo.uid) {
+      onUserClick(photo.uid);
+    }
+  }, [onUserClick, photo.uid]);
 
   // ✅ ENHANCED: Handle hashtag clicks with navigation to search
   const handleHashtagClick = useCallback((hashtag) => {
@@ -177,7 +187,7 @@ const MobilePhotoCard = ({
         border: "1px solid #f0f0f0",
       }}
     >
-      {/* User Header */}
+      {/* ✅ UPDATED: Clickable User Header */}
       {showUserInfo && (
         <div
           style={{
@@ -186,6 +196,21 @@ const MobilePhotoCard = ({
             alignItems: "center",
             gap: "12px",
             borderBottom: "1px solid #f8f9fa",
+            cursor: onUserClick ? "pointer" : "default", // ✅ NEW: Show pointer cursor when clickable
+            transition: "background-color 0.2s ease", // ✅ NEW: Smooth hover transition
+          }}
+          onClick={handleUserClick} // ✅ NEW: Make entire header clickable
+          onMouseEnter={(e) => {
+            // ✅ NEW: Hover effect
+            if (onUserClick) {
+              e.target.style.backgroundColor = "#f8f9fa";
+            }
+          }}
+          onMouseLeave={(e) => {
+            // ✅ NEW: Remove hover effect
+            if (onUserClick) {
+              e.target.style.backgroundColor = "transparent";
+            }
           }}
         >
           {userInfo.profilePicture ? (
@@ -224,7 +249,7 @@ const MobilePhotoCard = ({
                 style={{
                   fontWeight: "600",
                   fontSize: "14px",
-                  color: "#1a1a1a",
+                  color: onUserClick ? "#007bff" : "#1a1a1a", // ✅ NEW: Blue color when clickable
                 }}
               >
                 {userInfo.displayName}
@@ -376,7 +401,7 @@ const MobilePhotoCard = ({
         {/* REMOVED: Comment Button and Share Button */}
       </div>
 
-      {/* ✅ ENHANCED: Caption with Clickable Hashtags */}
+      {/* ✅ ENHANCED: Caption with Clickable Hashtags and Clickable Username */}
       {photo.caption && (
         <div style={{ padding: "0 16px 16px" }}>
           <p
@@ -387,7 +412,17 @@ const MobilePhotoCard = ({
               color: "#262626",
             }}
           >
-            <span style={{ fontWeight: "600" }}>{userInfo.displayName}</span>{" "}
+            <span 
+              style={{ 
+                fontWeight: "600",
+                cursor: onUserClick ? "pointer" : "default", // ✅ NEW: Clickable username in caption
+                color: onUserClick ? "#007bff" : "#262626", // ✅ NEW: Blue color when clickable
+                transition: "color 0.2s ease"
+              }}
+              onClick={handleUserClick} // ✅ NEW: Make username in caption clickable
+            >
+              {userInfo.displayName}
+            </span>{" "}
             {formatTextWithHashtags(photo.caption, handleHashtagClick)}
           </p>
         </div>
