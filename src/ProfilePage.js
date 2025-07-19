@@ -15,7 +15,7 @@ import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "./firebaseConfig";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { getDisplayName, getScreenName } from "./useUserData";
-import { useFollowCounts, formatFollowCount } from "./useFollows";
+import { useFollowCounts, formatFollowCount, useFollow } from "./useFollows";
 import SignOut from "./SignOut";
 import "./ProfilePage.css";
 
@@ -118,6 +118,12 @@ const ProfilePage = ({ currentUser, photos }) => {
   // ✅ NEW: Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === currentUser?.uid;
   const profileUserId = userId || currentUser?.uid;
+
+  // ✅ NEW: Follow functionality for other users' profiles
+  const { isFollowing, actionLoading: followLoading, toggleFollow } = useFollow(
+    isOwnProfile ? null : profileUserId, 
+    currentUser?.uid
+  );
 
   // 🎨 EXPANDED: More avatar variety with different styles
   const stockAvatars = [
@@ -1031,8 +1037,18 @@ const ProfilePage = ({ currentUser, photos }) => {
                 color: "#343a40",
               }}
             >
-              {userData?.username || "Username"}
+              {getDisplayName(userData, currentUser?.uid) || "User"}
             </h2>
+            {/* ✅ NEW: Show screen name for other users */}
+            {!isOwnProfile && userData && (
+              <p style={{
+                margin: "0 0 8px 0",
+                fontSize: "14px",
+                color: "#6c757d",
+              }}>
+                @{getScreenName(userData)}
+              </p>
+            )}
             <p
               style={{
                 margin: 0,
@@ -1108,22 +1124,42 @@ const ProfilePage = ({ currentUser, photos }) => {
             </div>
           )
         ) : (
-          // Other user's profile - show follow button (placeholder for future implementation)
+          // Other user's profile - show follow/unfollow button
           <div style={{ display: "flex", gap: "8px" }}>
             <button
+              onClick={toggleFollow}
+              disabled={followLoading}
               style={{
                 flex: 1,
                 padding: "8px 16px",
-                backgroundColor: "#007bff",
+                backgroundColor: isFollowing ? "#6c757d" : "#007bff",
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
                 fontSize: "14px",
                 fontWeight: "500",
-                cursor: "pointer",
+                cursor: followLoading ? "not-allowed" : "pointer",
+                opacity: followLoading ? 0.6 : 1,
+                transition: "all 0.2s ease",
               }}
             >
-              Follow {/* TODO: Implement follow functionality */}
+              {followLoading ? (
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      border: "2px solid transparent",
+                      borderTop: "2px solid white",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                    }}
+                  />
+                  {isFollowing ? "Unfollowing..." : "Following..."}
+                </span>
+              ) : (
+                isFollowing ? "Following" : "Follow"
+              )}
             </button>
           </div>
         )}
@@ -1288,7 +1324,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                 <p style={{ margin: 0, fontSize: "14px" }}>
                   {isOwnProfile 
                     ? "Start capturing memories to see them here!"
-                    : `${userData?.username || "This user"} hasn't shared any photos yet.`
+                    : `${getDisplayName(userData, currentUser?.uid) || "This user"} hasn't shared any photos yet.`
                   }
                 </p>
               </div>
@@ -1412,7 +1448,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                 <p style={{ margin: 0, fontSize: "14px" }}>
                   {isOwnProfile 
                     ? "Take photos with location to see them on your map!"
-                    : `${userData?.username || "This user"} hasn't shared any photos with location data yet.`
+                    : `${getDisplayName(userData, currentUser?.uid) || "This user"} hasn't shared any photos with location data yet.`
                   }
                 </p>
               </div>
@@ -1615,6 +1651,15 @@ const ProfilePage = ({ currentUser, photos }) => {
           </div>
         </div>
       )}
+
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 };
