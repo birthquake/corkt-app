@@ -311,8 +311,9 @@ export default function App() {
                     path="/capture"
                     element={<CaptureComponent user={user} />}
                   />
+                  {/* Updated profile route to handle user-specific profiles */}
                   <Route
-                    path="/profile"
+                    path="/profile/:userId?"
                     element={<ProfilePage currentUser={user} photos={photos} />}
                   />
                   <Route
