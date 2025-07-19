@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-// Enhanced LocationPicker component with VISUAL DEBUGGING for iOS
+// Enhanced LocationPicker component with SMART VENUE DETECTION
 const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
@@ -99,7 +99,7 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
       );
       setCurrentLocation(location);
 
-      // Fetch initial nearby places (very close)
+      // Fetch initial nearby places with smart detection
       await fetchNearbyPlacesCompatible(location);
     } catch (err) {
       console.error("📍 Location error:", err);
@@ -123,22 +123,155 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
     }
   };
 
-  // FIXED: More compatible Places API implementation with 1-block radius
+  // ✅ NEW: Smart venue detection - if few results, search for large venues
   const fetchNearbyPlacesCompatible = async (location) => {
     try {
-      console.log("🔍 Fetching very nearby places (100m)...");
+      console.log("🔍 Starting smart venue detection...");
 
-      // Try the legacy PlacesService first (more reliable in CodeSandbox)
-      await fetchNearbyPlacesLegacy(location);
+      // Step 1: Primary search (100m for exact location)
+      const primaryResults = await fetchNearbyPlacesLegacy(location, 100);
+      console.log(`📍 Primary search (100m): ${primaryResults.length} results`);
+
+      // Step 2: Smart detection - if < 3 results, search for large venues
+      if (primaryResults.length < 3) {
+        console.log("🏢 Few results found, searching for large venues...");
+        const venueResults = await fetchLargeVenues(location);
+        console.log(`🏟️ Venue search: ${venueResults.length} results`);
+
+        // Combine results, marking venue results
+        const combinedResults = [
+          ...primaryResults,
+          ...venueResults.map(venue => ({ ...venue, isLargeVenue: true }))
+        ];
+
+        // Remove duplicates based on place_id
+        const uniqueResults = combinedResults.filter((place, index, self) =>
+          index === self.findIndex(p => p.id === place.id)
+        );
+
+        console.log(`✅ Smart detection complete: ${uniqueResults.length} total results`);
+        setNearbyPlaces(uniqueResults);
+      } else {
+        console.log("✅ Sufficient results found, using primary search only");
+        setNearbyPlaces(primaryResults);
+      }
     } catch (err) {
-      console.error("🔍 Error fetching nearby places:", err);
+      console.error("🔍 Error in smart venue detection:", err);
       setNearbyPlaces([]);
-      // Don't show error - just continue with current location option
     }
   };
 
-  // IMPROVED: Use legacy PlacesService with 1-block radius (~100m)
-  const fetchNearbyPlacesLegacy = async (location) => {
+  // ✅ NEW: Search specifically for large venues (airports, malls, stadiums, etc.)
+  const fetchLargeVenues = async (location) => {
+    return new Promise((resolve, reject) => {
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        reject(new Error("Google Places API not available"));
+        return;
+      }
+
+      const service = new window.google.maps.places.PlacesService(
+        document.createElement("div")
+      );
+
+      // Search for large venue types with bigger radius
+      const venueTypes = [
+        'airport',
+        'shopping_mall', 
+        'stadium',
+        'university',
+        'hospital',
+        'amusement_park',
+        'zoo',
+        'transit_station',
+        'train_station',
+        'subway_station'
+      ];
+
+      let allVenueResults = [];
+      let completedSearches = 0;
+
+      // Search each venue type
+      venueTypes.forEach(venueType => {
+        const request = {
+          location: new window.google.maps.LatLng(
+            location.latitude,
+            location.longitude
+          ),
+          radius: 800, // Larger radius for large venues only
+          type: venueType
+        };
+
+        service.nearbySearch(request, (results, status) => {
+          completedSearches++;
+
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+            const processedVenues = results
+              .slice(0, 3) // Max 3 per venue type
+              .map((place, index) => {
+                const distance = calculateDistance(
+                  location.latitude,
+                  location.longitude,
+                  place.geometry?.location?.lat() || location.latitude,
+                  place.geometry?.location?.lng() || location.longitude
+                );
+
+                return {
+                  id: place.place_id || `venue_${venueType}_${index}`,
+                  name: place.name || "Unknown Venue",
+                  address: place.vicinity || place.formatted_address || "",
+                  location: {
+                    latitude: place.geometry?.location?.lat() || location.latitude,
+                    longitude: place.geometry?.location?.lng() || location.longitude,
+                  },
+                  types: place.types || [],
+                  rating: place.rating || null,
+                  ratingCount: place.user_ratings_total || 0,
+                  priceLevel: place.price_level || null,
+                  businessStatus: place.business_status || "OPERATIONAL",
+                  distance: distance,
+                  venueType: venueType, // Mark the venue type
+                  photoUrl:
+                    place.photos && place.photos[0]
+                      ? place.photos[0].getUrl({ maxWidth: 100, maxHeight: 100 })
+                      : null,
+                };
+              })
+              .filter(venue => 
+                venue.businessStatus !== "CLOSED_PERMANENTLY" && 
+                venue.distance <= 800 // Within 800m for large venues
+              );
+
+            allVenueResults = [...allVenueResults, ...processedVenues];
+          }
+
+          // When all searches complete
+          if (completedSearches === venueTypes.length) {
+            // Remove duplicates and sort by distance
+            const uniqueVenues = allVenueResults
+              .filter((venue, index, self) =>
+                index === self.findIndex(v => v.id === venue.id)
+              )
+              .sort((a, b) => a.distance - b.distance)
+              .slice(0, 10); // Max 10 venue results
+
+            console.log(`🏟️ Large venue search found ${uniqueVenues.length} venues`);
+            resolve(uniqueVenues);
+          }
+        });
+      });
+
+      // Fallback timeout
+      setTimeout(() => {
+        if (completedSearches < venueTypes.length) {
+          console.log("⏰ Venue search timeout, returning partial results");
+          resolve(allVenueResults.slice(0, 10));
+        }
+      }, 5000);
+    });
+  };
+
+  // UPDATED: Original nearby search with configurable radius
+  const fetchNearbyPlacesLegacy = async (location, radius = 100) => {
     return new Promise((resolve, reject) => {
       if (!window.google || !window.google.maps || !window.google.maps.places) {
         reject(new Error("Google Places API not available"));
@@ -154,21 +287,21 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
           location.latitude,
           location.longitude
         ),
-        radius: 100, // FIXED: 1 block radius (~100 meters)
+        radius: radius,
         type: undefined, // Remove type filter to get more results
       };
 
-      console.log("🔍 1-block Places API request:", request);
+      console.log(`🔍 Places API request (${radius}m):`, request);
 
       service.nearbySearch(request, (results, status) => {
-        console.log("🔍 Places API Status:", status);
-        console.log("🔍 Places API Results:", results);
+        console.log(`🔍 Places API Status (${radius}m):`, status);
+        console.log(`🔍 Places API Results (${radius}m):`, results);
 
         if (
           status === window.google.maps.places.PlacesServiceStatus.OK &&
           results
         ) {
-          console.log(`🏢 Found ${results.length} places within 1 block`);
+          console.log(`🏢 Found ${results.length} places within ${radius}m`);
           // Process ALL results, not just specific types
           const processedPlaces = results
             .slice(0, 15) // Take top 15 results
@@ -201,39 +334,25 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
             .filter(
               (place) =>
                 place.businessStatus !== "CLOSED_PERMANENTLY" &&
-                place.distance <= 100 // FIXED: Within 100m (1 block) only
+                place.distance <= radius
             )
             // Sort by distance
             .sort((a, b) => a.distance - b.distance);
 
-          setNearbyPlaces(processedPlaces);
-          console.log("✅ Processed places within 1 block:", processedPlaces);
-          resolve();
+          console.log(`✅ Processed ${processedPlaces.length} places within ${radius}m`);
+          resolve(processedPlaces);
         } else {
-          console.error("🔍 Places API failed:", status);
+          console.error(`🔍 Places API failed (${radius}m):`, status);
 
           // Log specific error details
           if (
             status ===
             window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS
           ) {
-            console.log("ℹ️ No places found within 100m (1 block)");
-          } else if (
-            status ===
-            window.google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT
-          ) {
-            console.log("⚠️ API quota exceeded");
-          } else if (
-            status ===
-            window.google.maps.places.PlacesServiceStatus.REQUEST_DENIED
-          ) {
-            console.log(
-              "❌ API request denied - check API key and permissions"
-            );
+            console.log(`ℹ️ No places found within ${radius}m`);
           }
 
-          setNearbyPlaces([]);
-          reject(new Error(`Places API failed: ${status}`));
+          resolve([]); // Return empty array instead of rejecting
         }
       });
     });
@@ -385,8 +504,25 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
     }
   };
 
-  // Get icon for place type
-  const getPlaceIcon = (types) => {
+  // ✅ UPDATED: Enhanced icon mapping for large venues
+  const getPlaceIcon = (types, isLargeVenue = false, venueType = null) => {
+    // Special icons for large venues
+    if (isLargeVenue && venueType) {
+      const venueIconMap = {
+        airport: "✈️",
+        shopping_mall: "🛒",
+        stadium: "🏟️",
+        university: "🎓",
+        hospital: "🏥",
+        amusement_park: "🎢",
+        zoo: "🦁",
+        transit_station: "🚉",
+        train_station: "🚂",
+        subway_station: "🚇"
+      };
+      if (venueIconMap[venueType]) return venueIconMap[venueType];
+    }
+
     if (!types || types.length === 0) return "📍";
 
     const typeIconMap = {
@@ -422,6 +558,8 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
       book_store: "📖",
       grocery_or_supermarket: "🛒",
       point_of_interest: "📍",
+      airport: "✈️",
+      stadium: "🏟️",
     };
 
     // Find the first matching type
@@ -540,29 +678,7 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
             Tap any location to use it
           </p>
         </div>
-        {/* 🔧 TEMPORARY DEBUG INFO (for iOS testing) - COLLAPSED */}
-        {/*} {debugInfo.length > 0 && (
-          <div
-            style={{
-              padding: "6px 12px",
-              backgroundColor: "#f8f9fa",
-              borderBottom: "1px solid #e9ecef",
-              fontSize: "9px",
-              fontFamily: "monospace",
-              maxHeight: "30px",
-              overflow: "hidden",
-              textAlign: "center",
-            }}
-          >
-            <div style={{ color: "#28a745", fontWeight: "bold" }}>
-              🔧 DEBUG:{" "}
-              {debugInfo[debugInfo.length - 1]?.includes("Found")
-                ? "✅ Places API Working"
-                : "⚠️ Check Console"}
-            </div>
-          </div>
-        )}
-        */}
+
         {/* Content */}
         <div
           style={{
@@ -631,7 +747,7 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
                     type="text"
                     value={manualSearch}
                     onChange={(e) => setManualSearch(e.target.value)}
-                    placeholder="Type to search nearby places (100m)..."
+                    placeholder="Type to search nearby places..."
                     style={{
                       width: "100%",
                       padding: "12px 12px 12px 44px",
@@ -687,7 +803,7 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
                       textAlign: "center",
                     }}
                   >
-                    No places found matching "{manualSearch}" within 100m
+                    No places found matching "{manualSearch}"
                   </p>
                 )}
               </div>
@@ -748,7 +864,7 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
                 </div>
               )}
 
-              {/* Nearby Places */}
+              {/* ✅ UPDATED: Nearby Places with Large Venue Labels */}
               {nearbyPlaces.length > 0 ? (
                 <div>
                   <h4
@@ -774,8 +890,8 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
                         onClick={() => handlePlaceSelect(place)}
                         style={{
                           padding: "12px",
-                          backgroundColor: "#f8f9fa",
-                          border: "1px solid #e9ecef",
+                          backgroundColor: place.isLargeVenue ? "#fff9c4" : "#f8f9fa",
+                          border: place.isLargeVenue ? "1px solid #ffc107" : "1px solid #e9ecef",
                           borderRadius: "8px",
                           cursor: "pointer",
                           transition: "all 0.2s ease",
@@ -795,19 +911,36 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
                               textAlign: "center",
                             }}
                           >
-                            {getPlaceIcon(place.types)}
+                            {getPlaceIcon(place.types, place.isLargeVenue, place.venueType)}
                           </div>
                           <div style={{ flex: 1 }}>
-                            <p
-                              style={{
-                                margin: "0 0 4px 0",
-                                fontWeight: "600",
-                                fontSize: "14px",
-                                color: "#343a40",
-                              }}
-                            >
-                              {place.name}
-                            </p>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontWeight: "600",
+                                  fontSize: "14px",
+                                  color: "#343a40",
+                                }}
+                              >
+                                {place.name}
+                              </p>
+                              {/* ✅ NEW: Large venue indicator */}
+                              {place.isLargeVenue && (
+                                <span
+                                  style={{
+                                    backgroundColor: "#ffc107",
+                                    color: "#000",
+                                    fontSize: "10px",
+                                    padding: "2px 6px",
+                                    borderRadius: "4px",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  VENUE
+                                </span>
+                              )}
+                            </div>
                             <div
                               style={{
                                 display: "flex",
@@ -872,8 +1005,7 @@ const LocationPicker = ({ onLocationSelect, onClose, isVisible }) => {
                       🔍
                     </div>
                     <p style={{ margin: 0, fontSize: "14px" }}>
-                      No places found within 100m. Try a more specific search or
-                      use your current location.
+                      No places found nearby. Try a search or use your current location.
                     </p>
                   </div>
                 )
