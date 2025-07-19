@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ NEW: Import useNavigate
 import { useOptimizedUsersData } from "./performanceHooks";
 import { PhotoInteractionSummary } from "./ActionBar";
 import { useFollowing, filterPhotosByFollowing } from "./useFollows";
@@ -62,6 +63,7 @@ const ClockIcon = ({ color = "#6c757d", size = 14 }) => (
 );
 
 const HomeFeed = ({ photos, currentUser }) => {
+  const navigate = useNavigate(); // ✅ NEW: Initialize navigation hook
   const [activeFilter, setActiveFilter] = useState("public");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
@@ -91,6 +93,17 @@ const HomeFeed = ({ photos, currentUser }) => {
 
   const { usersData, loading: usersLoading } =
     useOptimizedUsersData(uniqueUserIds);
+
+  // ✅ NEW: Handle user click to navigate to profile
+  const handleUserClick = useCallback((userId) => {
+    if (userId === currentUser?.uid) {
+      // Navigate to own profile without userId parameter
+      navigate('/profile');
+    } else {
+      // Navigate to other user's profile with userId parameter
+      navigate(`/profile/${userId}`);
+    }
+  }, [navigate, currentUser?.uid]);
 
   // 📊 Simple venue detection function
   const detectVenue = useCallback((location) => {
@@ -727,6 +740,7 @@ const HomeFeed = ({ photos, currentUser }) => {
                   userInfo={userInfo}
                   currentUser={currentUser}
                   onPhotoClick={openPhotoModal}
+                  onUserClick={handleUserClick} // ✅ NEW: Pass the user click handler
                   showUserInfo={true}
                 />
               );
@@ -735,7 +749,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         )}
       </div>
 
-      {/* ✅ ENHANCED: Photo Modal with Improved Location Display */}
+      {/* ✅ ENHANCED: Photo Modal with Improved Location Display and Clickable User */}
       {selectedPhoto && (
         <div
           style={{
@@ -766,7 +780,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+            {/* Modal Header - ✅ UPDATED: Make user info clickable */}
             <div
               style={{
                 padding: "16px 20px",
@@ -778,7 +792,13 @@ const HomeFeed = ({ photos, currentUser }) => {
               }}
             >
               <div
-                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "12px",
+                  cursor: "pointer" // ✅ NEW: Show clickable cursor
+                }}
+                onClick={() => handleUserClick(selectedPhoto.uid)} // ✅ NEW: Make user info clickable
               >
                 {getUserInfo(selectedPhoto).profilePicture ? (
                   <img
@@ -899,7 +919,7 @@ const HomeFeed = ({ photos, currentUser }) => {
                 </div>
               )}
 
-              {/* Caption */}
+              {/* Caption - ✅ UPDATED: Make username clickable in caption */}
               {selectedPhoto.caption && (
                 <p
                   style={{
@@ -909,7 +929,14 @@ const HomeFeed = ({ photos, currentUser }) => {
                     color: "#343a40",
                   }}
                 >
-                  <span style={{ fontWeight: "600" }}>
+                  <span 
+                    style={{ 
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      color: "#007bff"
+                    }}
+                    onClick={() => handleUserClick(selectedPhoto.uid)} // ✅ NEW: Make username in caption clickable
+                  >
                     {getUserInfo(selectedPhoto).displayName}
                   </span>{" "}
                   {selectedPhoto.caption}
@@ -928,7 +955,11 @@ const HomeFeed = ({ photos, currentUser }) => {
                   >
                     with{" "}
                     {selectedPhoto.taggedUsers.map((taggedUser, index) => (
-                      <span key={taggedUser.uid}>
+                      <span 
+                        key={taggedUser.uid}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleUserClick(taggedUser.uid)} // ✅ NEW: Make tagged usernames clickable
+                      >
                         @{taggedUser.displayScreenName}
                         {index < selectedPhoto.taggedUsers.length - 1
                           ? ", "
