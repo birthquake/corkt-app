@@ -1,6 +1,23 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ NEW: Import useNavigate
 
 const ActivityItem = ({ activity, currentUser }) => {
+  const navigate = useNavigate(); // ✅ NEW: Initialize navigation hook
+
+  // ✅ NEW: Handle user click to navigate to profile
+  const handleUserClick = (e, userId) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent activity tap from firing
+    
+    if (userId === currentUser?.uid) {
+      // Navigate to own profile without userId parameter
+      navigate('/profile');
+    } else {
+      // Navigate to other user's profile with userId parameter
+      navigate(`/profile/${userId}`);
+    }
+  };
+
   // Format timestamp to relative time (e.g., "2h ago")
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
@@ -21,15 +38,48 @@ const ActivityItem = ({ activity, currentUser }) => {
     return activityTime.toLocaleDateString();
   };
 
-  // Get activity message based on type
+  // ✅ UPDATED: Get activity message with clickable username
   const getActivityMessage = () => {
+    const actorName = activity.actorName || 'Someone';
+    const actorId = activity.actorId; // Assuming this field exists
+    
     switch (activity.type) {
       case 'like':
-        return `${activity.actorName} liked your photo`;
+        return (
+          <span>
+            <span 
+              style={styles.clickableUsername}
+              onClick={(e) => handleUserClick(e, actorId)}
+            >
+              {actorName}
+            </span>
+            {' liked your photo'}
+          </span>
+        );
       case 'new_photo_nearby':
-        return `${activity.actorName} posted a photo ${activity.distance}m away`;
+        return (
+          <span>
+            <span 
+              style={styles.clickableUsername}
+              onClick={(e) => handleUserClick(e, actorId)}
+            >
+              {actorName}
+            </span>
+            {` posted a photo ${activity.distance}m away`}
+          </span>
+        );
       default:
-        return 'New activity';
+        return (
+          <span>
+            <span 
+              style={styles.clickableUsername}
+              onClick={(e) => handleUserClick(e, actorId)}
+            >
+              {actorName}
+            </span>
+            {' has new activity'}
+          </span>
+        );
     }
   };
 
@@ -59,8 +109,11 @@ const ActivityItem = ({ activity, currentUser }) => {
       }}
       onClick={handleActivityTap}
     >
-      {/* Actor Avatar */}
-      <div style={styles.avatarContainer}>
+      {/* ✅ UPDATED: Clickable Actor Avatar */}
+      <div 
+        style={styles.avatarContainer}
+        onClick={(e) => handleUserClick(e, activity.actorId)} // ✅ NEW: Make avatar clickable
+      >
         {activity.actorAvatar ? (
           <img 
             src={activity.actorAvatar} 
@@ -114,6 +167,7 @@ const styles = {
   avatarContainer: {
     marginRight: '12px',
     flexShrink: 0,
+    cursor: 'pointer', // ✅ NEW: Show pointer cursor for clickable avatar
   },
   avatar: {
     width: '44px',
@@ -121,6 +175,7 @@ const styles = {
     borderRadius: '22px',
     objectFit: 'cover',
     border: '2px solid #e9ecef',
+    transition: 'transform 0.2s ease', // ✅ NEW: Smooth hover effect
   },
   defaultAvatar: {
     width: '44px',
@@ -134,6 +189,7 @@ const styles = {
     fontWeight: 'bold',
     color: '#fff',
     border: '2px solid #e9ecef',
+    transition: 'transform 0.2s ease', // ✅ NEW: Smooth hover effect
   },
   content: {
     flex: 1,
@@ -153,6 +209,18 @@ const styles = {
     color: '#343a40',
     fontWeight: '500',
     lineHeight: '1.3',
+  },
+  // ✅ NEW: Style for clickable usernames
+  clickableUsername: {
+    color: '#007bff',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    transition: 'color 0.2s ease',
+    ':hover': {
+      color: '#0056b3',
+      textDecoration: 'underline',
+    },
   },
   timestamp: {
     fontSize: '13px',
