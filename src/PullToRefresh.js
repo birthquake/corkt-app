@@ -3,8 +3,8 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 const PullToRefresh = ({
   children,
   onRefresh,
-  refreshThreshold = 60, // ✅ Lower for iOS
-  maxPullDistance = 100, // ✅ Lower for iOS
+  refreshThreshold = 60,
+  maxPullDistance = 100,
   disabled = false,
 }) => {
   const [pullDistance, setPullDistance] = useState(0);
@@ -17,68 +17,47 @@ const PullToRefresh = ({
   const canPullRef = useRef(false);
   const rafRef = useRef(null);
 
-  // ✅ iOS Safari: Aggressive native pull-to-refresh prevention
+  // ✅ FIXED: Much less aggressive approach - only set container properties
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // iOS Safari specific overrides
-    const preventNativeRefresh = (e) => {
-      // Only prevent if we're handling the pull
-      if (canPullRef.current && isPulling) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        return false;
-      }
-    };
-
-    // iOS Safari: Set multiple properties to prevent native refresh
+    // Only set properties on our container, not the entire document
     container.style.overscrollBehavior = 'none';
     container.style.overscrollBehaviorY = 'none';
     container.style.WebkitOverscrollBehavior = 'none';
     container.style.WebkitOverscrollBehaviorY = 'none';
-    
-    // iOS Safari: Try to prevent native refresh at document level
-    document.addEventListener('touchstart', preventNativeRefresh, { passive: false });
-    document.addEventListener('touchmove', preventNativeRefresh, { passive: false });
-    document.addEventListener('touchend', preventNativeRefresh, { passive: false });
 
-    // iOS Safari: Prevent page bounce
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
-    document.body.style.overflow = 'hidden';
+    // ✅ REMOVED: All the aggressive document.body manipulation
+    // No more messing with document.body.style.position = 'fixed'!
 
     return () => {
-      document.removeEventListener('touchstart', preventNativeRefresh);
-      document.removeEventListener('touchmove', preventNativeRefresh);
-      document.removeEventListener('touchend', preventNativeRefresh);
-      
-      // Restore body styles
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
-      document.body.style.overflow = '';
+      // Clean up only our container
+      if (container) {
+        container.style.overscrollBehavior = '';
+        container.style.overscrollBehaviorY = '';
+        container.style.WebkitOverscrollBehavior = '';
+        container.style.WebkitOverscrollBehaviorY = '';
+      }
     };
-  }, [isPulling]);
+  }, []);
 
-  // ✅ iOS Safari: More reliable scroll detection
+  // ✅ Reliable scroll detection
   const checkScrollPosition = useCallback(() => {
     const container = containerRef.current;
     if (!container) return false;
     
     const scrollTop = container.scrollTop;
-    const isAtTop = scrollTop <= 3; // Very small buffer for iOS
+    const isAtTop = scrollTop <= 3;
     
-    console.log(`📱 iOS Safari - Scroll: ${scrollTop}, AtTop: ${isAtTop}`);
+    console.log(`📱 Scroll: ${scrollTop}, AtTop: ${isAtTop}`);
     return isAtTop;
   }, []);
 
-  // ✅ iOS Safari: Simplified touch start
+  // ✅ Simplified touch start
   const handleTouchStart = useCallback((e) => {
     if (disabled || isRefreshing) {
-      console.log('❌ iOS Safari - Touch blocked:', { disabled, isRefreshing });
+      console.log('❌ Touch blocked:', { disabled, isRefreshing });
       return;
     }
 
@@ -91,7 +70,7 @@ const PullToRefresh = ({
     const isAtTop = checkScrollPosition();
     canPullRef.current = isAtTop;
     
-    console.log(`👆 iOS Safari - Touch Start: Y=${touch.clientY}, CanPull=${isAtTop}`);
+    console.log(`👆 Touch Start: Y=${touch.clientY}, CanPull=${isAtTop}`);
     
     // Reset states
     setPullDistance(0);
@@ -99,7 +78,7 @@ const PullToRefresh = ({
     setShouldTriggerRefresh(false);
   }, [disabled, isRefreshing, checkScrollPosition]);
 
-  // ✅ iOS Safari: Optimized touch move with RAF
+  // ✅ FIXED: Less aggressive touch move handling
   const handleTouchMove = useCallback((e) => {
     if (disabled || isRefreshing) return;
 
@@ -113,7 +92,7 @@ const PullToRefresh = ({
       const touch = e.touches[0];
       const deltaY = touch.clientY - touchStartRef.current.y;
       
-      console.log(`👆 iOS Safari - Touch Move: deltaY=${deltaY}, canPull=${canPullRef.current}`);
+      console.log(`👆 Touch Move: deltaY=${deltaY}, canPull=${canPullRef.current}`);
 
       // Only handle downward pulls
       if (deltaY <= 0) {
@@ -131,30 +110,28 @@ const PullToRefresh = ({
         const isAtTop = checkScrollPosition();
         if (isAtTop) {
           canPullRef.current = true;
-          console.log('🎯 iOS Safari - Started pulling');
+          console.log('🎯 Started pulling');
         } else {
           return;
         }
       }
 
-      // iOS Safari: Aggressive prevention
-      if (deltaY > 10 && canPullRef.current) {
+      // ✅ FIXED: Less aggressive prevention - only when actively pulling
+      if (deltaY > 20 && canPullRef.current) {
         try {
           e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
           
           if (!isPulling) {
             setIsPulling(true);
-            console.log('🎯 iOS Safari - Pull state activated');
+            console.log('🎯 Pull state activated');
           }
         } catch (error) {
-          console.log('⚠️ iOS Safari - preventDefault failed:', error.message);
+          console.log('⚠️ preventDefault failed:', error.message);
         }
       }
 
       // Calculate pull distance
-      let calculatedDistance = deltaY * 0.7; // More responsive for iOS
+      let calculatedDistance = deltaY * 0.7;
       calculatedDistance = Math.min(calculatedDistance, maxPullDistance);
 
       setPullDistance(calculatedDistance);
@@ -168,7 +145,7 @@ const PullToRefresh = ({
         }
       }
 
-      console.log(`📏 iOS Safari - Distance: ${calculatedDistance}, Trigger: ${shouldTrigger}`);
+      console.log(`📏 Distance: ${calculatedDistance}, Trigger: ${shouldTrigger}`);
     });
   }, [
     disabled,
@@ -180,7 +157,7 @@ const PullToRefresh = ({
     checkScrollPosition,
   ]);
 
-  // ✅ iOS Safari: Enhanced touch end
+  // ✅ Enhanced touch end
   const handleTouchEnd = useCallback(async () => {
     if (disabled || isRefreshing) return;
 
@@ -189,38 +166,38 @@ const PullToRefresh = ({
       cancelAnimationFrame(rafRef.current);
     }
 
-    console.log(`👆 iOS Safari - Touch End: trigger=${shouldTriggerRefresh}, distance=${pullDistance}`);
+    console.log(`👆 Touch End: trigger=${shouldTriggerRefresh}, distance=${pullDistance}`);
 
     canPullRef.current = false;
 
     if (shouldTriggerRefresh && pullDistance >= refreshThreshold) {
-      console.log('🔄 iOS Safari - TRIGGERING REFRESH!');
+      console.log('🔄 TRIGGERING REFRESH!');
       
       setIsRefreshing(true);
       setShouldTriggerRefresh(false);
 
       try {
         if (onRefresh) {
-          console.log('📞 iOS Safari - Calling onRefresh');
+          console.log('📞 Calling onRefresh');
           await onRefresh();
-          console.log('✅ iOS Safari - Refresh completed');
+          console.log('✅ Refresh completed');
         }
 
         if (navigator.vibrate) {
           navigator.vibrate([50, 50, 50]);
         }
       } catch (error) {
-        console.error('❌ iOS Safari - Refresh error:', error);
+        console.error('❌ Refresh error:', error);
       } finally {
         setTimeout(() => {
           setIsRefreshing(false);
           setPullDistance(0);
           setIsPulling(false);
-          console.log('🏁 iOS Safari - Reset complete');
-        }, 300); // Shorter delay for iOS
+          console.log('🏁 Reset complete');
+        }, 300);
       }
     } else {
-      console.log('↩️ iOS Safari - Snapping back');
+      console.log('↩️ Snapping back');
       setPullDistance(0);
       setIsPulling(false);
       setShouldTriggerRefresh(false);
@@ -234,7 +211,7 @@ const PullToRefresh = ({
     onRefresh,
   ]);
 
-  // ✅ iOS Safari: Cleanup RAF on unmount
+  // ✅ Cleanup RAF on unmount
   useEffect(() => {
     return () => {
       if (rafRef.current) {
@@ -243,10 +220,10 @@ const PullToRefresh = ({
     };
   }, []);
 
-  // ✅ iOS Safari: Simpler indicator style
+  // ✅ Simpler indicator style
   const getRefreshIndicatorStyle = () => {
     const progress = Math.min(pullDistance / refreshThreshold, 1);
-    const opacity = Math.min(progress * 2, 1); // Show earlier on iOS
+    const opacity = Math.min(progress * 2, 1);
     const scale = Math.min(0.7 + progress * 0.3, 1);
 
     return {
@@ -271,12 +248,11 @@ const PullToRefresh = ({
         position: "relative",
         height: "100%",
         overflow: "hidden",
-        // iOS Safari: Additional containment
-        WebkitTransform: "translateZ(0)",
-        transform: "translateZ(0)",
+        // ✅ FIXED: Remove aggressive transform properties
+        width: "100%", // Ensure it doesn't overflow
       }}
     >
-      {/* ✅ iOS Safari: Simplified refresh indicator */}
+      {/* ✅ Simplified refresh indicator */}
       <div
         style={{
           position: "absolute",
@@ -299,7 +275,7 @@ const PullToRefresh = ({
               border: "2px solid #e9ecef",
               borderTop: "2px solid #007bff",
               borderRadius: "50%",
-              animation: "iosSpin 1s linear infinite",
+              animation: "pullSpin 1s linear infinite",
             }}
           />
         ) : (
@@ -339,11 +315,12 @@ const PullToRefresh = ({
         )}
       </div>
 
-      {/* ✅ iOS Safari: Enhanced container */}
+      {/* ✅ FIXED: Enhanced container with proper width constraints */}
       <div
         ref={containerRef}
         style={{
           height: "100%",
+          width: "100%", // ✅ FIXED: Ensure proper width
           overflow: "auto",
           WebkitOverflowScrolling: "touch",
           overscrollBehavior: "none",
@@ -351,8 +328,7 @@ const PullToRefresh = ({
           WebkitOverscrollBehavior: "none",
           WebkitOverscrollBehaviorY: "none",
           touchAction: "pan-y",
-          WebkitTransform: "translateZ(0)", // Force hardware acceleration
-          transform: "translateZ(0)",
+          // ✅ REMOVED: Aggressive transform properties
           ...getContainerStyle(),
         }}
         onTouchStart={handleTouchStart}
@@ -365,21 +341,12 @@ const PullToRefresh = ({
 
       <style>
         {`
-          @keyframes iosSpin {
+          @keyframes pullSpin {
             0% { transform: translateX(-50%) rotate(0deg); }
             100% { transform: translateX(-50%) rotate(360deg); }
           }
           
-          /* iOS Safari: Additional overrides */
-          html {
-            overscroll-behavior: none !important;
-            -webkit-overscroll-behavior: none !important;
-          }
-          
-          body {
-            overscroll-behavior: none !important;
-            -webkit-overscroll-behavior: none !important;
-          }
+          /* ✅ REMOVED: Aggressive global overrides that break layout */
         `}
       </style>
     </div>
