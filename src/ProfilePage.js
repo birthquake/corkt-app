@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom"; // ✅ NEW: Import useParams
 import { getAuth } from "firebase/auth";
 import {
   doc,
@@ -86,7 +87,15 @@ const MapEmptyIcon = ({ color = "#6c757d", size = 48 }) => (
   </svg>
 );
 
+const BackIcon = ({ color = "#6c757d", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M19 12H5"/>
+    <path d="M12 19l-7-7 7-7"/>
+  </svg>
+);
+
 const ProfilePage = ({ currentUser, photos }) => {
+  const { userId } = useParams(); // ✅ NEW: Get userId from URL params
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -105,6 +114,10 @@ const ProfilePage = ({ currentUser, photos }) => {
   const [editMode, setEditMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // ✅ NEW: Determine if viewing own profile or another user's profile
+  const isOwnProfile = !userId || userId === currentUser?.uid;
+  const profileUserId = userId || currentUser?.uid;
 
   // 🎨 EXPANDED: More avatar variety with different styles
   const stockAvatars = [
@@ -155,12 +168,12 @@ const ProfilePage = ({ currentUser, photos }) => {
     "https://api.dicebear.com/7.x/big-smile/svg?seed=Sunny&backgroundColor=ffd93d",
   ];
 
-  // Get follow counts for current user
+  // ✅ UPDATED: Get follow counts for the profile being viewed
   const {
     followersCount,
     followingCount,
     loading: followCountsLoading,
-  } = useFollowCounts(currentUser?.uid);
+  } = useFollowCounts(profileUserId);
 
   // 🔧 FIX: Body scroll lock when modal opens
   useEffect(() => {
@@ -199,17 +212,26 @@ const ProfilePage = ({ currentUser, photos }) => {
     checkMapsLoaded();
   }, []);
 
+  // ✅ UPDATED: Effect that responds to userId changes
   useEffect(() => {
-    if (currentUser) {
+    if (profileUserId) {
       fetchUserData();
       filterUserPhotos();
+    }
+  }, [profileUserId, photos, currentUser]);
+
+  // ✅ UPDATED: Calculate achievements for the profile being viewed
+  useEffect(() => {
+    if (profileUserId && userPhotos.length >= 0) {
       calculateAchievements();
     }
-  }, [currentUser, photos, followersCount]);
+  }, [profileUserId, userPhotos, followersCount]);
 
+  // ✅ UPDATED: Fetch user data for the specified user
   const fetchUserData = async () => {
     try {
-      const userDocRef = doc(db, "users", currentUser.uid);
+      setLoading(true);
+      const userDocRef = doc(db, "users", profileUserId);
       const userSnapshot = await getDoc(userDocRef);
 
       if (userSnapshot.exists()) {
@@ -221,22 +243,29 @@ const ProfilePage = ({ currentUser, photos }) => {
         });
         setProfileImage(userData.profilePicture || stockAvatars[0]);
       } else {
-        // Create default user profile with first stock avatar
-        const defaultUserData = {
-          email: currentUser.email,
-          username: `User${currentUser.uid.slice(0, 6)}`,
-          profilePicture: stockAvatars[0],
-          bio: "",
-          createdAt: new Date(),
-        };
+        // ✅ NEW: Handle case where user doesn't exist
+        if (isOwnProfile) {
+          // Create default user profile for current user with first stock avatar
+          const defaultUserData = {
+            email: currentUser.email,
+            username: `User${currentUser.uid.slice(0, 6)}`,
+            profilePicture: stockAvatars[0],
+            bio: "",
+            createdAt: new Date(),
+          };
 
-        await updateDoc(userDocRef, defaultUserData);
-        setUserData(defaultUserData);
-        setFormData({
-          username: defaultUserData.username,
-          bio: defaultUserData.bio,
-        });
-        setProfileImage(stockAvatars[0]);
+          await updateDoc(userDocRef, defaultUserData);
+          setUserData(defaultUserData);
+          setFormData({
+            username: defaultUserData.username,
+            bio: defaultUserData.bio,
+          });
+          setProfileImage(stockAvatars[0]);
+        } else {
+          // User doesn't exist
+          setError("User not found");
+          setUserData(null);
+        }
       }
     } catch (err) {
       console.error("Error fetching user data:", err.message);
@@ -246,21 +275,23 @@ const ProfilePage = ({ currentUser, photos }) => {
     }
   };
 
+  // ✅ UPDATED: Filter photos for the user being viewed
   const filterUserPhotos = () => {
-    const myPhotos = photos.filter((photo) => photo.uid === currentUser?.uid);
-    setUserPhotos(myPhotos);
+    const userSpecificPhotos = photos.filter((photo) => photo.uid === profileUserId);
+    setUserPhotos(userSpecificPhotos);
   };
 
+  // ✅ UPDATED: Calculate achievements for the user being viewed
   const calculateAchievements = () => {
-    const myPhotos = photos.filter((photo) => photo.uid === currentUser?.uid);
-    const photosWithLocation = myPhotos.filter(
+    const userSpecificPhotos = photos.filter((photo) => photo.uid === profileUserId);
+    const photosWithLocation = userSpecificPhotos.filter(
       (photo) => photo.latitude && photo.longitude
     );
 
     const achievements = [];
 
     // Photo count achievements
-    if (myPhotos.length >= 1)
+    if (userSpecificPhotos.length >= 1)
       achievements.push({
         id: "first_photo",
         title: "First Photo",
@@ -268,7 +299,7 @@ const ProfilePage = ({ currentUser, photos }) => {
         icon: "📸",
         unlocked: true,
       });
-    if (myPhotos.length >= 10)
+    if (userSpecificPhotos.length >= 10)
       achievements.push({
         id: "photographer",
         title: "Photographer",
@@ -276,7 +307,7 @@ const ProfilePage = ({ currentUser, photos }) => {
         icon: "📷",
         unlocked: true,
       });
-    if (myPhotos.length >= 50)
+    if (userSpecificPhotos.length >= 50)
       achievements.push({
         id: "pro_shooter",
         title: "Pro Shooter",
@@ -331,7 +362,7 @@ const ProfilePage = ({ currentUser, photos }) => {
 
     // Streak achievements
     const photosByDate = {};
-    myPhotos.forEach((photo) => {
+    userSpecificPhotos.forEach((photo) => {
       if (photo.timestamp) {
         const date = photo.timestamp.toDate
           ? photo.timestamp.toDate()
@@ -396,7 +427,7 @@ const ProfilePage = ({ currentUser, photos }) => {
         title: "Century Club",
         description: "Share 100 photos",
         icon: "💯",
-        unlocked: myPhotos.length >= 100,
+        unlocked: userSpecificPhotos.length >= 100,
       },
       {
         id: "world_explorer",
@@ -417,7 +448,7 @@ const ProfilePage = ({ currentUser, photos }) => {
         title: "Legend",
         description: "Share 500 photos",
         icon: "👑",
-        unlocked: myPhotos.length >= 500,
+        unlocked: userSpecificPhotos.length >= 500,
       }
     );
 
@@ -429,8 +460,10 @@ const ProfilePage = ({ currentUser, photos }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // 🎨 Avatar selection with debugging
+  // 🎨 Avatar selection with debugging (only for own profile)
   const handleAvatarSelect = async (avatarUrl) => {
+    if (!isOwnProfile) return; // ✅ NEW: Prevent editing other users' profiles
+
     try {
       console.log("🎨 Avatar update attempt:");
       console.log("User ID:", currentUser.uid);
@@ -458,6 +491,8 @@ const ProfilePage = ({ currentUser, photos }) => {
   };
 
   const handleSave = async () => {
+    if (!isOwnProfile) return; // ✅ NEW: Prevent editing other users' profiles
+
     try {
       const userDocRef = doc(db, "users", currentUser.uid);
       await updateDoc(userDocRef, {
@@ -473,8 +508,10 @@ const ProfilePage = ({ currentUser, photos }) => {
     }
   };
 
-  // Delete photo functionality
+  // Delete photo functionality (only for own photos)
   const deletePhoto = async (photo) => {
+    if (!isOwnProfile) return; // ✅ NEW: Prevent deleting other users' photos
+
     setDeleting(true);
     try {
       if (photo.imageUrl) {
@@ -513,11 +550,13 @@ const ProfilePage = ({ currentUser, photos }) => {
   };
 
   const toggleEditMode = () => {
+    if (!isOwnProfile) return; // ✅ NEW: Prevent editing other users' profiles
     setEditMode(!editMode);
     setDeleteConfirm(null);
   };
 
   const handleDeleteClick = (photo) => {
+    if (!isOwnProfile) return; // ✅ NEW: Prevent deleting other users' photos
     setDeleteConfirm(photo);
   };
 
@@ -629,6 +668,29 @@ const ProfilePage = ({ currentUser, photos }) => {
           paddingTop: "56px",
         }}
       >
+        {/* ✅ NEW: Back button for error state */}
+        {!isOwnProfile && (
+          <button
+            onClick={() => window.history.back()}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "20px",
+              padding: "8px 16px",
+              backgroundColor: "transparent",
+              color: "#007bff",
+              border: "1px solid #007bff",
+              borderRadius: "8px",
+              fontSize: "14px",
+              cursor: "pointer",
+              margin: "0 auto 20px auto",
+            }}
+          >
+            <BackIcon color="#007bff" size={16} />
+            Back
+          </button>
+        )}
         Error: {error}
       </div>
     );
@@ -644,8 +706,32 @@ const ProfilePage = ({ currentUser, photos }) => {
         paddingBottom: "120px",
       }}
     >
-      {/* 🔧 FIXED: Avatar Picker Modal */}
-      {showAvatarPicker && (
+      {/* ✅ NEW: Back button for viewing other users' profiles */}
+      {!isOwnProfile && (
+        <div style={{ padding: "0 16px 16px 16px" }}>
+          <button
+            onClick={() => window.history.back()}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              backgroundColor: "transparent",
+              color: "#007bff",
+              border: "1px solid #007bff",
+              borderRadius: "8px",
+              fontSize: "14px",
+              cursor: "pointer",
+            }}
+          >
+            <BackIcon color="#007bff" size={16} />
+            Back
+          </button>
+        </div>
+      )}
+
+      {/* 🔧 FIXED: Avatar Picker Modal (only show for own profile) */}
+      {showAvatarPicker && isOwnProfile && (
         <div
           className="modal-backdrop avatar-modal-backdrop"
           style={{
@@ -803,7 +889,8 @@ const ProfilePage = ({ currentUser, photos }) => {
                 border: "3px solid #007bff",
               }}
             />
-            {isEditing && (
+            {/* ✅ UPDATED: Only show edit button for own profile */}
+            {isEditing && isOwnProfile && (
               <button
                 onClick={() => setShowAvatarPicker(true)}
                 style={{
@@ -897,7 +984,8 @@ const ProfilePage = ({ currentUser, photos }) => {
         </div>
 
         {/* Profile Info */}
-        {isEditing ? (
+        {/* ✅ UPDATED: Only allow editing for own profile */}
+        {isEditing && isOwnProfile ? (
           <div style={{ marginBottom: "20px" }}>
             <input
               type="text"
@@ -953,16 +1041,76 @@ const ProfilePage = ({ currentUser, photos }) => {
                 lineHeight: "1.4",
               }}
             >
-              {userData?.bio || "No bio yet."}
+              {userData?.bio || `${isOwnProfile ? "No bio yet." : "No bio."}`}
             </p>
           </div>
         )}
 
-        {/* Edit Profile / Sign Out Buttons */}
-        {isEditing ? (
+        {/* ✅ UPDATED: Different buttons for own profile vs other users */}
+        {isOwnProfile ? (
+          // Own profile - show edit/sign out buttons
+          isEditing ? (
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={handleSave}
+                style={{
+                  flex: 1,
+                  padding: "8px 16px",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                }}
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                style={{
+                  flex: 1,
+                  padding: "8px 16px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <button
+                onClick={() => setIsEditing(true)}
+                style={{
+                  flex: 1,
+                  padding: "8px 16px",
+                  backgroundColor: "transparent",
+                  color: "#007bff",
+                  border: "1px solid #007bff",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                }}
+              >
+                Edit Profile
+              </button>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <SignOut />
+              </div>
+            </div>
+          )
+        ) : (
+          // Other user's profile - show follow button (placeholder for future implementation)
           <div style={{ display: "flex", gap: "8px" }}>
             <button
-              onClick={handleSave}
               style={{
                 flex: 1,
                 padding: "8px 16px",
@@ -975,46 +1123,8 @@ const ProfilePage = ({ currentUser, photos }) => {
                 cursor: "pointer",
               }}
             >
-              Save
+              Follow {/* TODO: Implement follow functionality */}
             </button>
-            <button
-              onClick={() => setIsEditing(false)}
-              style={{
-                flex: 1,
-                padding: "8px 16px",
-                backgroundColor: "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button
-              onClick={() => setIsEditing(true)}
-              style={{
-                flex: 1,
-                padding: "8px 16px",
-                backgroundColor: "transparent",
-                color: "#007bff",
-                border: "1px solid #007bff",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-              }}
-            >
-              Edit Profile
-            </button>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <SignOut />
-            </div>
           </div>
         )}
       </div>
@@ -1069,8 +1179,8 @@ const ProfilePage = ({ currentUser, photos }) => {
       <div style={{ padding: "16px" }}>
         {activeTab === "photos" && (
           <div>
-            {/* Edit Photos Button */}
-            {userPhotos.length > 0 && (
+            {/* ✅ UPDATED: Only show edit button for own profile */}
+            {userPhotos.length > 0 && isOwnProfile && (
               <div style={{ marginBottom: "16px", textAlign: "right" }}>
                 <button
                   onClick={toggleEditMode}
@@ -1133,8 +1243,8 @@ const ProfilePage = ({ currentUser, photos }) => {
                       }}
                     />
 
-                    {/* Delete button in edit mode */}
-                    {editMode && (
+                    {/* ✅ UPDATED: Only show delete button for own profile in edit mode */}
+                    {editMode && isOwnProfile && (
                       <button
                         onClick={() => handleDeleteClick(photo)}
                         disabled={deleting}
@@ -1173,10 +1283,13 @@ const ProfilePage = ({ currentUser, photos }) => {
                   <PhotoEmptyIcon color="#6c757d" size={48} />
                 </div>
                 <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
-                  No photos yet
+                  {isOwnProfile ? "No photos yet" : "No photos"}
                 </h3>
                 <p style={{ margin: 0, fontSize: "14px" }}>
-                  Start capturing memories to see them here!
+                  {isOwnProfile 
+                    ? "Start capturing memories to see them here!"
+                    : `${userData?.username || "This user"} hasn't shared any photos yet.`
+                  }
                 </p>
               </div>
             )}
@@ -1200,8 +1313,8 @@ const ProfilePage = ({ currentUser, photos }) => {
                       fullscreenControl: false,
                     }}
                   >
-                    {/* User's current location marker */}
-                    {userCurrentLocation && (
+                    {/* ✅ UPDATED: Only show current location for own profile */}
+                    {userCurrentLocation && isOwnProfile && (
                       <Marker
                         position={userCurrentLocation}
                         icon={{
@@ -1294,10 +1407,13 @@ const ProfilePage = ({ currentUser, photos }) => {
                   <MapEmptyIcon color="#6c757d" size={48} />
                 </div>
                 <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
-                  No locations yet
+                  {isOwnProfile ? "No locations yet" : "No locations"}
                 </h3>
                 <p style={{ margin: 0, fontSize: "14px" }}>
-                  Take photos with location to see them on your map!
+                  {isOwnProfile 
+                    ? "Take photos with location to see them on your map!"
+                    : `${userData?.username || "This user"} hasn't shared any photos with location data yet.`
+                  }
                 </p>
               </div>
             )}
@@ -1384,8 +1500,8 @@ const ProfilePage = ({ currentUser, photos }) => {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
+      {/* ✅ UPDATED: Delete Confirmation Modal (only for own profile) */}
+      {deleteConfirm && isOwnProfile && (
         <div
           style={{
             position: "fixed",
