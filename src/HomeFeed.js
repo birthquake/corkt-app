@@ -521,10 +521,10 @@ const HomeFeed = ({ photos, currentUser }) => {
   return (
     <div
       style={{
-       // maxWidth: "500px", //temporarily removed
-       // margin: "0 auto", //temporarily removed
+       // maxWidth: "500px", 
+       // margin: "0 auto", 
         backgroundColor: "#f8f9fa",
-        minHeight: "100%",  // ⚠️ CHANGED: Remove viewport units for Safari
+        minHeight: "100vh",  
         paddingTop: "16px",
       }}
     >
@@ -567,8 +567,8 @@ const HomeFeed = ({ photos, currentUser }) => {
           backgroundColor: "#ffffff",
           borderBottom: "1px solid #e9ecef",
           padding: "12px 0",
-          // position: "sticky",  // ⚠️ COMMENTED OUT - Safari layout fix
-          // top: "0",           // ⚠️ COMMENTED OUT - Safari layout fix
+          // position: "sticky",  
+          // top: "0",           
           zIndex: 100,
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
