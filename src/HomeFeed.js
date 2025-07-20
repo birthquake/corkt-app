@@ -521,8 +521,8 @@ const HomeFeed = ({ photos, currentUser }) => {
   return (
     <div
       style={{
-       // maxWidth: "500px", 
-       // margin: "0 auto", 
+        maxWidth: "500px", 
+        margin: "0 auto", 
         backgroundColor: "#f8f9fa",
         minHeight: "100vh",  
         paddingTop: "16px",
@@ -567,8 +567,8 @@ const HomeFeed = ({ photos, currentUser }) => {
           backgroundColor: "#ffffff",
           borderBottom: "1px solid #e9ecef",
           padding: "12px 0",
-          // position: "sticky",  
-          // top: "0",           
+          position: "sticky",  
+          top: "0",           
           zIndex: 100,
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
