@@ -524,7 +524,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         maxWidth: "500px",
         margin: "0 auto",
         backgroundColor: "#f8f9fa",
-        minHeight: "100%",
+        minHeight: "100%",  // ⚠️ CHANGED: Remove viewport units for Safari
         paddingTop: "16px",
       }}
     >
@@ -759,14 +759,17 @@ const HomeFeed = ({ photos, currentUser }) => {
             position: "fixed",
             top: 0,
             left: 0,
-            width: "100%",
-            height: "100%",
+            right: 0,        // ⚠️ CHANGED: Use right instead of width: "100%"
+            bottom: 0,       // ⚠️ CHANGED: Use bottom instead of height: "100%"
             backgroundColor: "rgba(0, 0, 0, 0.95)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             zIndex: 2000,
             padding: "20px 20px 110px 20px",
+            // ⚠️ SAFARI FIX: Force hardware acceleration
+            WebkitTransform: "translateZ(0)",
+            transform: "translateZ(0)",
           }}
           onClick={closePhotoModal}
         >
