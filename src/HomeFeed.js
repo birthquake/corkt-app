@@ -524,7 +524,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         maxWidth: "500px",
         margin: "0 auto",
         backgroundColor: "#f8f9fa",
-        minHeight: "100vh",
+        minHeight: "100%",
         paddingTop: "16px",
       }}
     >
