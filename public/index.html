@@ -17,38 +17,41 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="format-detection" content="telephone=no" />
 
-    <!--
-      manifest.json provides metadata used when your web app is added to the
-      homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
-    -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
-
-    <!-- Apple touch icons for when added to home screen -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.ico" />
 
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
     <title>Corkt - Photo Sharing</title>
 
     <!-- Mobile-specific CSS optimizations -->
     <style>
+      /* 🔧 SAFARI DEBUG: Layout monitoring styles */
+      .debug-info {
+        position: fixed;
+        top: 0;
+        right: 0;
+        background: rgba(255, 0, 0, 0.8);
+        color: white;
+        padding: 5px;
+        font-size: 10px;
+        z-index: 10000;
+        font-family: monospace;
+        max-width: 150px;
+        word-wrap: break-word;
+      }
+
       /* Prevent native pull-to-refresh behaviors */
       html,
       body {
         overscroll-behavior: contain !important;
         overscroll-behavior-y: contain !important;
         position: relative;
-        height: 100%;
+        /* 🔧 SAFARI FIX: Removed conflicting height: 100% */
         margin: 0;
         padding: 0;
+        /* 🔧 SAFARI FIX: Ensure no horizontal overflow */
+        max-width: 100vw;
+        overflow-x: hidden;
       }
 
       /* Prevent iOS Safari bounce and zoom */
@@ -58,6 +61,10 @@
         -webkit-text-size-adjust: none;
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
+        /* 🔧 SAFARI FIX: Ensure body doesn't exceed viewport */
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
       }
 
       /* Re-enable text selection for specific elements */
@@ -70,9 +77,14 @@
 
       /* Ensure full height on mobile */
       #root {
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height for modern browsers */
+        /* 🔧 SAFARI FIX: Simplified height approach */
+        min-height: 100vh;
+        min-height: 100dvh; /* Dynamic viewport height for modern browsers */
         overflow: hidden;
+        /* 🔧 SAFARI FIX: Prevent root from exceeding viewport */
+        max-width: 100vw;
+        width: 100%;
+        box-sizing: border-box;
       }
 
       /* iOS Safari safe area support */
@@ -80,6 +92,9 @@
         body {
           padding-left: max(0px, env(safe-area-inset-left));
           padding-right: max(0px, env(safe-area-inset-right));
+          /* 🔧 SAFARI FIX: Added top/bottom safe area */
+          padding-top: max(0px, env(safe-area-inset-top));
+          padding-bottom: max(0px, env(safe-area-inset-bottom));
         }
       }
 
@@ -108,13 +123,14 @@
         -moz-osx-font-smoothing: grayscale;
       }
 
-      /* Loading screen styles */
+      /* 🔧 SAFARI FIX: Updated loading screen positioning */
       .loading-screen {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+        /* 🔧 SAFARI FIX: Changed from width/height 100% to right/bottom 0 */
+        right: 0;
+        bottom: 0;
         background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
         display: flex;
         flex-direction: column;
@@ -122,6 +138,12 @@
         align-items: center;
         color: white;
         z-index: 9999;
+        /* 🔧 SAFARI FIX: Added hardware acceleration */
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        /* 🔧 SAFARI FIX: Ensure no overflow */
+        overflow: hidden;
+        box-sizing: border-box;
       }
 
       .loading-logo {
@@ -170,6 +192,11 @@
   <body>
     <noscript> You need to enable JavaScript to run this app. </noscript>
 
+    <!-- 🔧 DEBUG: Layout monitoring display -->
+    <div class="debug-info" id="debug-info">
+      Safari Debug Loading...
+    </div>
+
     <!-- Loading screen shown while React app loads -->
     <div class="loading-screen" id="loading-screen">
       <div class="loading-logo">Corkt</div>
@@ -178,16 +205,92 @@
 
     <div id="root"></div>
 
+    <!-- 🔧 SAFARI DEBUG: Layout monitoring script -->
+    <script>
+      console.log("🔍 SAFARI DEBUG: Index.html loaded - Version: CACHE_TEST_" + Date.now());
+      
+      // Layout monitoring function
+      function checkLayout() {
+        const bodyWidth = document.body.scrollWidth;
+        const bodyOffsetWidth = document.body.offsetWidth;
+        const windowWidth = window.innerWidth;
+        const htmlWidth = document.documentElement.scrollWidth;
+        
+        const debugInfo = {
+          windowWidth: windowWidth,
+          bodyScrollWidth: bodyWidth,
+          bodyOffsetWidth: bodyOffsetWidth,
+          htmlScrollWidth: htmlWidth,
+          overflowing: bodyWidth > windowWidth,
+          timestamp: new Date().toISOString().substr(11, 8)
+        };
+        
+        // Update debug display
+        const debugDiv = document.getElementById("debug-info");
+        if (debugDiv) {
+          debugDiv.innerHTML = `
+            Win: ${debugInfo.windowWidth}<br>
+            Body: ${debugInfo.bodyScrollWidth}<br>
+            HTML: ${debugInfo.htmlScrollWidth}<br>
+            ${debugInfo.overflowing ? '🚨 OVERFLOW!' : '✅ OK'}<br>
+            ${debugInfo.timestamp}
+          `;
+        }
+        
+        // Console logging
+        console.log("🔍 Layout Check:", debugInfo);
+        
+        // Alert if layout breaks
+        if (debugInfo.overflowing) {
+          console.error("🚨 SAFARI LAYOUT BROKE!", debugInfo);
+          console.log("🔍 Body styles:", getComputedStyle(document.body));
+          console.log("🔍 HTML styles:", getComputedStyle(document.documentElement));
+          console.log("🔍 Root styles:", getComputedStyle(document.getElementById('root')));
+        }
+        
+        return debugInfo;
+      }
+      
+      // Check layout every 500ms for the first 10 seconds
+      let layoutCheckCount = 0;
+      const layoutInterval = setInterval(() => {
+        checkLayout();
+        layoutCheckCount++;
+        if (layoutCheckCount > 20) { // Stop after 10 seconds
+          clearInterval(layoutInterval);
+          console.log("🔍 Layout monitoring stopped after 10 seconds");
+        }
+      }, 500);
+      
+      // Initial viewport logging
+      console.log("🔍 Initial Viewport:", {
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        devicePixelRatio: window.devicePixelRatio,
+        userAgent: navigator.userAgent.substring(0, 100)
+      });
+    </script>
+
     <!-- Hide loading screen when React mounts -->
     <script>
+      console.log("🔍 Loading screen script starting");
+      
       // Hide loading screen when React app loads
       window.addEventListener("DOMContentLoaded", function () {
+        console.log("🔍 DOMContentLoaded fired");
         setTimeout(function () {
+          console.log("🔍 Hiding loading screen");
           const loadingScreen = document.getElementById("loading-screen");
           if (loadingScreen) {
             loadingScreen.style.opacity = "0";
             setTimeout(function () {
               loadingScreen.style.display = "none";
+              console.log("🔍 Loading screen hidden");
+              // Final layout check after loading screen disappears
+              setTimeout(() => {
+                console.log("🔍 Final layout check after loading screen:");
+                checkLayout();
+              }, 100);
             }, 500);
           }
         }, 1000); // Show loading for at least 1 second
@@ -204,16 +307,5 @@
       });
       document.addEventListener("touchmove", function () {}, { passive: true });
     </script>
-
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
   </body>
 </html>
