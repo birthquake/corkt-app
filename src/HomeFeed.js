@@ -6,6 +6,7 @@ import { useFollowing, filterPhotosByFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
 import MobilePhotoCard from "./MobilePhotoCard";
 import LocationDisplay from "./LocationDisplay"; // ✅ NEW: Import LocationDisplay component
+// ✅ REMOVED: PullToRefresh import that was causing layout issues
 import analytics from "./analyticsService";
 
 // Minimal SVG icon components
@@ -80,6 +81,8 @@ const HomeFeed = ({ photos, currentUser }) => {
   const [modeSessionStart, setModeSessionStart] = useState(Date.now());
   const [photosViewedInSession, setPhotosViewedInSession] = useState(0);
   const [photosPostedInSession, setPhotosPostedInSession] = useState(0);
+
+  // ✅ REMOVED: Pull-to-refresh state and handler
 
   // Get following list for friends filter and privacy checking
   const { followingList, loading: followingLoading } = useFollowing(
@@ -564,8 +567,8 @@ const HomeFeed = ({ photos, currentUser }) => {
           backgroundColor: "#ffffff",
           borderBottom: "1px solid #e9ecef",
           padding: "12px 0",
-          position: "sticky",
-          top: "0",
+          // position: "sticky",  // ⚠️ COMMENTED OUT - Safari layout fix
+          // top: "0",           // ⚠️ COMMENTED OUT - Safari layout fix
           zIndex: 100,
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
@@ -693,7 +696,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         </div>
       </div>
 
-      {/* Feed Content */}
+      {/* ✅ REVERTED: Feed Content (No PullToRefresh wrapper) */}
       <div style={{ padding: "16px" }}>
         {filteredPhotos.length === 0 ? (
           <div
