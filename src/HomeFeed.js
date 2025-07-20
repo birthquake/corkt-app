@@ -521,8 +521,8 @@ const HomeFeed = ({ photos, currentUser }) => {
   return (
     <div
       style={{
-        maxWidth: "500px",
-        margin: "0 auto",
+       // maxWidth: "500px", //temporarily removed
+       // margin: "0 auto", //temporarily removed
         backgroundColor: "#f8f9fa",
         minHeight: "100%",  // ⚠️ CHANGED: Remove viewport units for Safari
         paddingTop: "16px",
