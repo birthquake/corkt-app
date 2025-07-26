@@ -496,6 +496,7 @@ const ProfilePage = ({ currentUser, photos }) => {
     }
   };
 
+  // 🔧 FIXED: Updated handleSave function to update both realName and username
   const handleSave = async () => {
     if (!isOwnProfile) return; // ✅ NEW: Prevent editing other users' profiles
 
@@ -503,10 +504,16 @@ const ProfilePage = ({ currentUser, photos }) => {
       const userDocRef = doc(db, "users", currentUser.uid);
       await updateDoc(userDocRef, {
         username: formData.username,
+        realName: formData.username,  // ✅ FIXED: Update realName too
         bio: formData.bio,
       });
 
-      setUserData({ ...userData, ...formData });
+      // ✅ FIXED: Update local state with both fields
+      setUserData({ 
+        ...userData, 
+        ...formData, 
+        realName: formData.username 
+      });
       setIsEditing(false);
     } catch (err) {
       console.error("Error updating profile:", err.message);
