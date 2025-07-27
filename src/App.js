@@ -15,6 +15,10 @@ import AnalyticsDashboard from "./AnalyticsDashboard";
 import MobileBottomNavigation from "./MobileBottomNavigation";
 import { LoadScript } from "@react-google-maps/api";
 
+// ✅ PWA Imports
+import { registerServiceWorker } from './pwaUtils';
+import PWAInstallPrompt from './PWAInstallPrompt';
+
 // Define libraries that need to be loaded
 const googleMapsLibraries = ["places"];
 
@@ -35,6 +39,12 @@ export default function App() {
 
   // 📊 Admin check for analytics access
   const isAdmin = user?.email === 'corktapp@gmail.com'; // Replace with your actual email
+
+  // ✅ PWA Service Worker Registration
+  useEffect(() => {
+    // Register service worker for PWA functionality
+    registerServiceWorker();
+  }, []);
 
   useEffect(() => {
     const auth = getAuth();
@@ -490,6 +500,9 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* ✅ PWA Install Prompt Component */}
+        <PWAInstallPrompt currentUser={user} />
 
         <style>
           {`
