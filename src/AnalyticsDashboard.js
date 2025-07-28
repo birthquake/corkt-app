@@ -36,7 +36,7 @@ const AnalyticsDashboard = () => {
   const [allPhotos, setAllPhotos] = useState([]);
 
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState('engagement'); // 'engagement' or 'behavior'
+  const [selectedTab, setSelectedTab] = useState('engagement'); // 'engagement', 'geographic', or 'behavior'
 
   // Helper function to get date ranges
   const getDateRanges = () => {
@@ -527,7 +527,7 @@ const AnalyticsDashboard = () => {
           onClick={() => setSelectedTab('engagement')}
           style={{
             flex: 1,
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: selectedTab === 'engagement' ? '#007bff' : 'transparent',
             color: selectedTab === 'engagement' ? 'white' : '#6b7280',
             border: 'none',
@@ -538,13 +538,30 @@ const AnalyticsDashboard = () => {
             transition: 'all 0.2s ease'
           }}
         >
-          📈 Engagement Metrics
+          📈 Engagement
+        </button>
+        <button
+          onClick={() => setSelectedTab('geographic')}
+          style={{
+            flex: 1,
+            padding: '12px 20px',
+            backgroundColor: selectedTab === 'geographic' ? '#007bff' : 'transparent',
+            color: selectedTab === 'geographic' ? 'white' : '#6b7280',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          🗺️ Geographic
         </button>
         <button
           onClick={() => setSelectedTab('behavior')}
           style={{
             flex: 1,
-            padding: '12px 24px',
+            padding: '12px 20px',
             backgroundColor: selectedTab === 'behavior' ? '#007bff' : 'transparent',
             color: selectedTab === 'behavior' ? 'white' : '#6b7280',
             border: 'none',
@@ -555,7 +572,7 @@ const AnalyticsDashboard = () => {
             transition: 'all 0.2s ease'
           }}
         >
-          🎯 Behavioral Analytics
+          🎯 Behavioral
         </button>
       </div>
 
@@ -995,6 +1012,264 @@ const AnalyticsDashboard = () => {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Geographic Analytics Tab */}
+      {selectedTab === 'geographic' && (
+        <div>
+          {/* Geographic Overview Stats */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '20px',
+            marginBottom: '32px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📍</div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
+                Photos with Location
+              </h3>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#007bff' }}>
+                {formatNumber(allPhotos.filter(photo => photo.latitude && photo.longitude).length)}
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+                of {formatNumber(allPhotos.length)} total photos
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎯</div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
+                Unique Locations
+              </h3>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#28a745' }}>
+                {formatNumber(engagementMetrics.topLocations.length)}
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+                distinct areas
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔥</div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
+                Hottest Location
+              </h3>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#dc3545' }}>
+                {engagementMetrics.topLocations[0]?.count || 0}
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+                photos in top spot
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
+                Location Coverage
+              </h3>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#6f42c1' }}>
+                {allPhotos.length > 0 ? Math.round((allPhotos.filter(photo => photo.latitude && photo.longitude).length / allPhotos.length) * 100) : 0}%
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
+                photos geotagged
+              </p>
+            </div>
+          </div>
+
+          {/* Large Interactive Heatmap */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+            marginBottom: '24px'
+          }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ 
+                color: '#1f2937', 
+                marginBottom: '8px', 
+                fontSize: '28px', 
+                fontWeight: '700',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                🗺️ Photo Heatmap
+                <span style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}>
+                  {formatNumber(allPhotos.filter(photo => photo.latitude && photo.longitude).length)} locations plotted
+                </span>
+              </h2>
+              <p style={{ 
+                color: '#6b7280', 
+                margin: 0, 
+                fontSize: '16px',
+                lineHeight: '1.6'
+              }}>
+                Interactive geographic distribution showing where users are most active. 
+                Red areas indicate high photo density, while blue areas show lighter activity.
+                <strong style={{ color: '#1f2937' }}> Zoom and pan to explore different regions.</strong>
+              </p>
+            </div>
+            
+            {window.google && window.google.maps ? (
+              <PhotoHeatmap photos={allPhotos} />
+            ) : (
+              <div style={{
+                width: '100%',
+                height: '500px',
+                borderRadius: '12px',
+                border: '2px dashed #e5e7eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f8f9fa',
+                color: '#6b7280'
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    border: '4px solid #e5e7eb',
+                    borderTop: '4px solid #007bff',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 16px'
+                  }} />
+                  <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '18px' }}>
+                    Loading Interactive Heatmap
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '14px' }}>
+                    Initializing Google Maps visualization...
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Top Locations List */}
+          {engagementMetrics.topLocations.length > 0 && (
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+            }}>
+              <h2 style={{ 
+                color: '#1f2937', 
+                marginBottom: '20px', 
+                fontSize: '20px', 
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                📍 Top Photo Locations
+                <span style={{
+                  backgroundColor: '#f3f4f6',
+                  color: '#6b7280',
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
+                  Ranked by activity
+                </span>
+              </h2>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '16px'
+              }}>
+                {engagementMetrics.topLocations.map((location, index) => (
+                  <div key={location.name} style={{
+                    padding: '20px',
+                    backgroundColor: index === 0 ? '#fef2f2' : '#f8f9fa',
+                    borderRadius: '12px',
+                    border: index === 0 ? '2px solid #fecaca' : '1px solid #e5e7eb',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    position: 'relative'
+                  }}>
+                    {index === 0 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '-8px',
+                        left: '16px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        padding: '4px 12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        🔥 HOTTEST
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <p style={{ 
+                        margin: '0 0 6px 0', 
+                        fontWeight: '600', 
+                        color: '#1f2937',
+                        fontSize: '16px',
+                        fontFamily: 'monospace'
+                      }}>
+                        {location.name}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                        #{index + 1} most active location
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{
+                        backgroundColor: index === 0 ? '#dc3545' : '#007bff',
+                        color: 'white',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        fontSize: '14px',
+                        fontWeight: '600'
+                      }}>
+                        {location.count} photos
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
