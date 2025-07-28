@@ -459,20 +459,6 @@ const formatTimeAgo = useCallback((timestamp) => {
   return date.toLocaleDateString('en-US', options);
 }, []);
 
-// Then, update your MobilePhotoCard usage to include timestamps.
-// In your filteredPhotos.map section (around line 599), update it like this:
-
-<MobilePhotoCard
-  key={photo.id}
-  photo={photo}
-  userInfo={userInfo}
-  currentUser={currentUser}
-  onPhotoClick={openPhotoModal}
-  onUserClick={handleUserClick}
-  showUserInfo={true}
-  showTimestamp={true} // ← ADD THIS PROP
-  formatTimeAgo={formatTimeAgo} // ← ADD THIS PROP
-/>
     
   const getUserInfo = useCallback(
     (photo) => {
