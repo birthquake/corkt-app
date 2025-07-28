@@ -1,8 +1,36 @@
 // AnalyticsDashboard.js - Enhanced with engagement metrics for investors
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, getDocs } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import analytics from './analyticsService';
+
+// Minimalist SVG icon components (matching HomeFeed.js style)
+const HeartIcon = ({ color = "#ef4444", size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="2">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+);
+
+const ClockIcon = ({ color = "#6b7280", size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12,6 12,12 16,14"/>
+  </svg>
+);
+
+const LocationIcon = ({ color = "#6b7280", size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+    <circle cx="12" cy="10" r="3"/>
+  </svg>
+);
+
+const UserIcon = ({ color = "#6b7280", size = 12 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
 
 const AnalyticsDashboard = () => {
   // Existing analytics state
@@ -60,10 +88,14 @@ const AnalyticsDashboard = () => {
 
   // Re-process metrics when users data changes
   useEffect(() => {
-    if (allPhotos.length > 0 && Object.keys(usersData).length > 0) {
-      console.log('Re-processing metrics with user data...');
-      processMetrics(allPhotos);
-    }
+    const reprocessMetrics = async () => {
+      if (allPhotos.length > 0 && Object.keys(usersData).length > 0) {
+        console.log('Re-processing metrics with user data...');
+        await processMetrics(allPhotos);
+      }
+    };
+    
+    reprocessMetrics();
   }, [usersData, allPhotos]);
 
   const loadBehavioralAnalytics = () => {
@@ -142,10 +174,27 @@ const AnalyticsDashboard = () => {
     }
   };
 
-  const processMetrics = (photos) => {
+  const processMetrics = async (photos) => {
     console.log('Processing metrics with:', photos.length, 'photos and', Object.keys(usersData).length, 'users');
     
     const { today, weekAgo, monthAgo } = getDateRanges();
+
+    // Query likes collection to get real like counts
+    const likesData = {};
+    try {
+      const likesRef = collection(db, "likes");
+      const likesSnapshot = await getDocs(likesRef);
+      
+      likesSnapshot.docs.forEach(doc => {
+        const like = doc.data();
+        const photoId = like.photoId; // Adjust field name if different in your likes collection
+        likesData[photoId] = (likesData[photoId] || 0) + 1;
+      });
+      
+      console.log('Likes data loaded:', Object.keys(likesData).length, 'photos have likes');
+    } catch (error) {
+      console.error('Error fetching likes data:', error);
+    }
     
     // Basic photo metrics
     const todayPhotos = photos.filter(photo => photo.timestamp >= today).length;
@@ -163,8 +212,8 @@ const AnalyticsDashboard = () => {
       photos.filter(photo => photo.timestamp >= weekAgo).map(photo => photo.uid)
     )].filter(Boolean).length;
 
-    // Engagement metrics
-    const totalLikes = photos.reduce((sum, photo) => sum + (photo.likeCount || 0), 0);
+    // Engagement metrics using real likes data
+    const totalLikes = Object.values(likesData).reduce((sum, count) => sum + count, 0);
     const totalComments = photos.reduce((sum, photo) => sum + (photo.commentCount || 0), 0);
     const engagementRate = photos.length > 0 ? ((totalLikes + totalComments) / photos.length).toFixed(2) : 0;
 
@@ -349,7 +398,7 @@ const AnalyticsDashboard = () => {
       .slice(0, 8)
       .map(([name, count]) => ({ name, count, photos: [] }));
 
-    // Recent activity with real names prioritized
+    // Recent activity with real names prioritized and real likes data
     const recentActivity = photos.slice(0, 15).map(photo => {
       const user = usersData[photo.uid];
       let displayName = 'Unknown User';
@@ -382,34 +431,7 @@ const AnalyticsDashboard = () => {
         const lat = parseFloat(photo.latitude);
         const lng = parseFloat(photo.longitude);
         
-        // Try reverse geocoding for this photo
-        if (window.google && window.google.maps && window.google.maps.Geocoder) {
-          const geocoder = new window.google.maps.Geocoder();
-          
-          // Note: This is async, so we'll show coordinates first and update later
-          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-            if (status === 'OK' && results[0]) {
-              const addressComponents = results[0].address_components;
-              let city = '', state = '', country = '';
-              
-              for (let component of addressComponents) {
-                const types = component.types;
-                if (types.includes('locality')) {
-                  city = component.long_name;
-                } else if (types.includes('administrative_area_level_1')) {
-                  state = component.short_name;
-                } else if (types.includes('country')) {
-                  country = component.short_name;
-                }
-              }
-              
-              // This would need a more complex state update to refresh individual activity items
-              // For now, we'll use the simpler coordinate display
-            }
-          });
-        }
-        
-        // Show coordinates as fallback (will be enhanced with reverse geocoding above)
+        // Show coordinates as fallback (geocoding happens asynchronously)
         locationName = `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
       }
 
@@ -418,8 +440,8 @@ const AnalyticsDashboard = () => {
         userEmail: displayName,
         location: locationName,
         timestamp: photo.timestamp,
-        likes: photo.likeCount || 0,
-        comments: photo.commentCount || 0
+        likes: likesData[photo.id] || 0, // Use real likes count from likes collection
+        uid: photo.uid
       };
     });
 
@@ -587,8 +609,19 @@ const AnalyticsDashboard = () => {
                       {formatDate(photo.timestamp)}
                     </p>
                     <div style={{ display: 'flex', gap: '8px', fontSize: '12px' }}>
-                      <span style={{ color: '#ef4444' }}>❤️ {photo.likeCount || 0}</span>
-                      <span style={{ color: '#3b82f6' }}>💬 {photo.commentCount || 0}</span>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '4px',
+                        backgroundColor: '#fef2f2',
+                        padding: '4px 8px',
+                        borderRadius: '8px'
+                      }}>
+                        <HeartIcon color="#ef4444" size={12} />
+                        <span style={{ color: '#ef4444', fontWeight: '500' }}>
+                          {photo.likeCount || 0}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -641,18 +674,12 @@ const AnalyticsDashboard = () => {
 
       if (heatmapData.length > 0 && window.google.maps.visualization) {
         const heatmap = new window.google.maps.visualization.HeatmapLayer({
-        data: heatmapData,
-        map: map,
-        radius: 30,
-        opacity: 0.7,
-        gradient: [
-        'rgba(0, 0, 255, 0)',      // Transparent blue  
-        'rgba(0, 0, 255, 1)',      // Blue (low density)
-        'rgba(127, 0, 255, 1)',    // Purple
-        'rgba(255, 0, 127, 1)',    // Pink  
-        'rgba(255, 0, 0, 1)'       // Red (high density)
-  ]
-});
+          data: heatmapData,
+          map: map,
+          radius: 20,
+          opacity: 0.6
+        });
+
         const bounds = new window.google.maps.LatLngBounds();
         heatmapData.forEach(point => bounds.extend(point));
         map.fitBounds(bounds);
@@ -1137,22 +1164,53 @@ const AnalyticsDashboard = () => {
                   alignItems: 'center'
                 }}>
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: '0 0 4px 0', fontWeight: '500', color: '#1f2937' }}>
-                      {activity.userEmail}
-                    </p>
-                    <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#6b7280' }}>
-                      📍 {activity.location}
-                    </p>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>
-                      {formatDate(activity.timestamp)}
-                    </p>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      marginBottom: '6px' 
+                    }}>
+                      <UserIcon color="#1f2937" size={14} />
+                      <p style={{ margin: 0, fontWeight: '500', color: '#1f2937', fontSize: '14px' }}>
+                        {activity.userEmail}
+                      </p>
+                    </div>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      marginBottom: '4px' 
+                    }}>
+                      <LocationIcon color="#6b7280" size={12} />
+                      <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>
+                        {activity.location}
+                      </p>
+                    </div>
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px' 
+                    }}>
+                      <ClockIcon color="#9ca3af" size={12} />
+                      <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>
+                        {formatDate(activity.timestamp)}
+                      </p>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', color: '#ef4444' }}>
-                      ❤️ {activity.likes}
-                    </span>
-                    <span style={{ fontSize: '12px', color: '#3b82f6' }}>
-                      💬 {activity.comments}
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px',
+                    backgroundColor: '#fef2f2',
+                    padding: '6px 10px',
+                    borderRadius: '12px'
+                  }}>
+                    <HeartIcon color="#ef4444" size={12} />
+                    <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: '500' }}>
+                      {activity.likes}
                     </span>
                   </div>
                 </div>
