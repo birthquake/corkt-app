@@ -431,7 +431,7 @@ class FollowSuggestionsService {
         return cached;
       }
 
-      const followingRef = collection(db, "following");
+      const followingRef = collection(db, "follows");
       const followingQuery = query(followingRef, where("followerId", "==", userId));
       const snapshot = await getDocs(followingQuery);
       
