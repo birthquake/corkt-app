@@ -641,12 +641,18 @@ const AnalyticsDashboard = () => {
 
       if (heatmapData.length > 0 && window.google.maps.visualization) {
         const heatmap = new window.google.maps.visualization.HeatmapLayer({
-          data: heatmapData,
-          map: map,
-          radius: 20,
-          opacity: 0.6
-        });
-
+        data: heatmapData,
+        map: map,
+        radius: 30,
+        opacity: 0.7,
+        gradient: [
+        'rgba(0, 0, 255, 0)',      // Transparent blue  
+        'rgba(0, 0, 255, 1)',      // Blue (low density)
+        'rgba(127, 0, 255, 1)',    // Purple
+        'rgba(255, 0, 127, 1)',    // Pink  
+        'rgba(255, 0, 0, 1)'       // Red (high density)
+  ]
+});
         const bounds = new window.google.maps.LatLngBounds();
         heatmapData.forEach(point => bounds.extend(point));
         map.fitBounds(bounds);
