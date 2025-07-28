@@ -23,6 +23,9 @@ const AnalyticsDashboard = () => {
     activeUsersWeek: 0,
     avgPhotosPerUser: 0,
     topLocations: [],
+    topCities: [],
+    topStates: [],
+    topCountries: [],
     recentActivity: [],
     growthRate: 0,
     engagementRate: 0,
@@ -35,6 +38,9 @@ const AnalyticsDashboard = () => {
   const [allPhotos, setAllPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('engagement');
+  const [locationFilter, setLocationFilter] = useState('city'); // 'city', 'state', 'country'
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   // Helper function to get date ranges
   const getDateRanges = () => {
@@ -171,7 +177,14 @@ const AnalyticsDashboard = () => {
       Math.round(((weeklyPhotos - previousWeekPhotos) / previousWeekPhotos) * 100) : 0;
 
     // Top locations with real place names using reverse geocoding
-    const locationCounts = {};
+    const locationData = {
+      city: {},
+      state: {},
+      country: {},
+      cityPhotos: {},
+      statePhotos: {},
+      countryPhotos: {}
+    };
     const locationPromises = [];
 
     photos.forEach(photo => {
@@ -186,7 +199,7 @@ const AnalyticsDashboard = () => {
             
             geocoder.geocode({ location: { lat, lng } }, (results, status) => {
               if (status === 'OK' && results[0]) {
-                // Extract meaningful place name from results
+                // Extract city, state, country separately
                 const addressComponents = results[0].address_components;
                 let city = '', state = '', country = '';
                 
@@ -201,31 +214,39 @@ const AnalyticsDashboard = () => {
                   }
                 }
                 
-                // Build location name
-                let locationName;
-                if (city && state) {
-                  locationName = `${city}, ${state}`;
-                } else if (city && country) {
-                  locationName = `${city}, ${country}`;
-                } else {
-                  // Use formatted address but clean it up
-                  const parts = results[0].formatted_address.split(',');
-                  if (parts.length >= 2) {
-                    locationName = parts.slice(0, 2).join(',').trim();
-                  } else {
-                    locationName = parts[0].trim();
-                  }
-                }
+                // Build location names for different levels
+                const cityName = city && state ? `${city}, ${state}` : 
+                                city && country ? `${city}, ${country}` :
+                                city || 'Unknown City';
+                const stateName = state || country || 'Unknown State';
+                const countryName = country || 'Unknown Country';
                 
-                resolve(locationName);
+                resolve({
+                  city: cityName,
+                  state: stateName,
+                  country: countryName,
+                  photo: photo
+                });
               } else {
                 // Fallback to coordinates if geocoding fails
-                resolve(`Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`);
+                const coordName = `Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`;
+                resolve({
+                  city: coordName,
+                  state: 'Unknown State',
+                  country: 'Unknown Country',
+                  photo: photo
+                });
               }
             });
           } else {
             // Google Maps not loaded, use coordinate fallback
-            resolve(`Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`);
+            const coordName = `Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`;
+            resolve({
+              city: coordName,
+              state: 'Unknown State',
+              country: 'Unknown Country',
+              photo: photo
+            });
           }
         });
         
@@ -234,22 +255,50 @@ const AnalyticsDashboard = () => {
     });
 
     // Wait for all geocoding to complete
-    Promise.all(locationPromises).then((locationNames) => {
-      // Count occurrences of each location name
-      const counts = {};
-      locationNames.forEach(name => {
-        counts[name] = (counts[name] || 0) + 1;
+    Promise.all(locationPromises).then((locationResults) => {
+      // Process results and organize by city/state/country
+      locationResults.forEach(result => {
+        const { city, state, country, photo } = result;
+        
+        // Count and store photos for cities
+        locationData.city[city] = (locationData.city[city] || 0) + 1;
+        if (!locationData.cityPhotos[city]) locationData.cityPhotos[city] = [];
+        locationData.cityPhotos[city].push(photo);
+        
+        // Count and store photos for states
+        locationData.state[state] = (locationData.state[state] || 0) + 1;
+        if (!locationData.statePhotos[state]) locationData.statePhotos[state] = [];
+        locationData.statePhotos[state].push(photo);
+        
+        // Count and store photos for countries
+        locationData.country[country] = (locationData.country[country] || 0) + 1;
+        if (!locationData.countryPhotos[country]) locationData.countryPhotos[country] = [];
+        locationData.countryPhotos[country].push(photo);
       });
       
-      const topLocationsWithRealNames = Object.entries(counts)
+      // Create sorted arrays for each level
+      const topCities = Object.entries(locationData.city)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 8)
-        .map(([name, count]) => ({ name, count }));
+        .map(([name, count]) => ({ name, count, photos: locationData.cityPhotos[name] }));
       
-      // Update the state with real location names
+      const topStates = Object.entries(locationData.state)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8)
+        .map(([name, count]) => ({ name, count, photos: locationData.statePhotos[name] }));
+      
+      const topCountries = Object.entries(locationData.country)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8)
+        .map(([name, count]) => ({ name, count, photos: locationData.countryPhotos[name] }));
+      
+      // Update the state with detailed location data
       setEngagementMetrics(prev => ({
         ...prev,
-        topLocations: topLocationsWithRealNames
+        topLocations: topCities, // Default to cities
+        topCities: topCities,
+        topStates: topStates,
+        topCountries: topCountries
       }));
     }).catch((error) => {
       console.error('Geocoding error:', error);
@@ -259,25 +308,26 @@ const AnalyticsDashboard = () => {
           const lat = parseFloat(photo.latitude).toFixed(1);
           const lng = parseFloat(photo.longitude).toFixed(1);
           const locationKey = `Near ${lat}, ${lng}`;
-          locationCounts[locationKey] = (locationCounts[locationKey] || 0) + 1;
+          locationData.city[locationKey] = (locationData.city[locationKey] || 0) + 1;
         }
       });
     });
 
     // Initial immediate update with coordinate-based names while geocoding happens
+    const initialLocationCounts = {};
     photos.forEach(photo => {
       if (photo.latitude && photo.longitude) {
         const lat = parseFloat(photo.latitude).toFixed(1);
         const lng = parseFloat(photo.longitude).toFixed(1);
         const locationKey = `Near ${lat}, ${lng}`;
-        locationCounts[locationKey] = (locationCounts[locationKey] || 0) + 1;
+        initialLocationCounts[locationKey] = (initialLocationCounts[locationKey] || 0) + 1;
       }
     });
 
-    const topLocations = Object.entries(locationCounts)
+    const topLocations = Object.entries(initialLocationCounts)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 8)
-      .map(([name, count]) => ({ name, count }));
+      .map(([name, count]) => ({ name, count, photos: [] }));
 
     // Recent activity with improved user name resolution and real location names
     const recentActivity = photos.slice(0, 15).map(photo => {
@@ -371,6 +421,9 @@ const AnalyticsDashboard = () => {
       activeUsersWeek,
       avgPhotosPerUser: totalUsers ? (photos.length / totalUsers).toFixed(1) : 0,
       topLocations,
+      topCities: [],
+      topStates: [],
+      topCountries: [],
       recentActivity,
       growthRate,
       engagementRate,
@@ -382,7 +435,170 @@ const AnalyticsDashboard = () => {
     setLoading(false);
   };
 
-  // Heatmap component
+  // Photo Modal Component
+  const PhotoModal = ({ isOpen, onClose, location, photos }) => {
+    if (!isOpen || !location || !photos) return null;
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          position: 'relative'
+        }}>
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              color: '#6b7280',
+              padding: '8px'
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Modal header */}
+          <div style={{ marginBottom: '24px', paddingRight: '40px' }}>
+            <h2 style={{ 
+              margin: '0 0 8px 0', 
+              color: '#1f2937', 
+              fontSize: '24px', 
+              fontWeight: '700' 
+            }}>
+              📍 {location.name}
+            </h2>
+            <p style={{ 
+              margin: 0, 
+              color: '#6b7280', 
+              fontSize: '16px' 
+            }}>
+              {photos.length} photo{photos.length !== 1 ? 's' : ''} from this location
+            </p>
+          </div>
+
+          {/* Photo grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '16px',
+            maxHeight: '60vh',
+            overflow: 'auto'
+          }}>
+            {photos.map((photo, index) => {
+              const user = usersData[photo.uid];
+              const userName = user ? (
+                user.displayScreenName || user.screenName || user.realName || user.email || `User ${photo.uid?.slice(-6)}`
+              ) : `User ${photo.uid?.slice(-6) || 'Unknown'}`;
+
+              return (
+                <div key={photo.id} style={{
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  border: '1px solid #e5e7eb'
+                }}>
+                  {/* Photo placeholder (you can replace with actual image) */}
+                  {photo.imageUrl ? (
+                    <img 
+                      src={photo.imageUrl} 
+                      alt="Photo"
+                      style={{
+                        width: '100%',
+                        height: '150px',
+                        objectFit: 'cover',
+                        borderRadius: '6px',
+                        marginBottom: '8px'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '100%',
+                      height: '150px',
+                      backgroundColor: '#e5e7eb',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '8px',
+                      color: '#6b7280'
+                    }}>
+                      📸 Photo
+                    </div>
+                  )}
+
+                  {/* Photo info */}
+                  <div>
+                    <p style={{ 
+                      margin: '0 0 4px 0', 
+                      fontWeight: '500', 
+                      color: '#1f2937',
+                      fontSize: '14px'
+                    }}>
+                      {userName}
+                    </p>
+                    <p style={{ 
+                      margin: '0 0 4px 0', 
+                      fontSize: '12px', 
+                      color: '#6b7280' 
+                    }}>
+                      {formatDate(photo.timestamp)}
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '12px' }}>
+                      <span style={{ color: '#ef4444' }}>❤️ {photo.likeCount || 0}</span>
+                      <span style={{ color: '#3b82f6' }}>💬 {photo.commentCount || 0}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleLocationClick = (location) => {
+    setSelectedLocation(location);
+    setShowPhotoModal(true);
+  };
+
+  const closePhotoModal = () => {
+    setShowPhotoModal(false);
+    setSelectedLocation(null);
+  };
+
+  const getCurrentLocationData = () => {
+    switch (locationFilter) {
+      case 'state':
+        return engagementMetrics.topStates || [];
+      case 'country':
+        return engagementMetrics.topCountries || [];
+      default:
+        return engagementMetrics.topCities || engagementMetrics.topLocations || [];
+    }
+  };
   const PhotoHeatmap = ({ photos }) => {
     const mapRef = React.useRef(null);
 
@@ -1084,7 +1300,7 @@ const AnalyticsDashboard = () => {
           </div>
 
           {/* Top Locations List */}
-          {engagementMetrics.topLocations.length > 0 && (
+          {engagementMetrics.topLocations && engagementMetrics.topLocations.length > 0 && (
             <div style={{
               backgroundColor: 'white',
               borderRadius: '12px',
@@ -1112,12 +1328,75 @@ const AnalyticsDashboard = () => {
                   By photo activity
                 </span>
               </h2>
+
+              {/* Filter Tabs */}
+              <div style={{
+                display: 'flex',
+                marginBottom: '20px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
+                padding: '4px'
+              }}>
+                <button
+                  onClick={() => setLocationFilter('city')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 16px',
+                    backgroundColor: locationFilter === 'city' ? '#007bff' : 'transparent',
+                    color: locationFilter === 'city' ? 'white' : '#6b7280',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  🏙️ Cities
+                </button>
+                <button
+                  onClick={() => setLocationFilter('state')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 16px',
+                    backgroundColor: locationFilter === 'state' ? '#007bff' : 'transparent',
+                    color: locationFilter === 'state' ? 'white' : '#6b7280',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  🗺️ States
+                </button>
+                <button
+                  onClick={() => setLocationFilter('country')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 16px',
+                    backgroundColor: locationFilter === 'country' ? '#007bff' : 'transparent',
+                    color: locationFilter === 'country' ? 'white' : '#6b7280',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  🌍 Countries
+                </button>
+              </div>
+
+              {/* Location List */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                 gap: '16px'
               }}>
-                {engagementMetrics.topLocations.map((location, index) => (
+                {getCurrentLocationData().map((location, index) => (
                   <div key={location.name} style={{
                     padding: '20px',
                     backgroundColor: index === 0 ? '#fef2f2' : '#f8f9fa',
@@ -1153,26 +1432,51 @@ const AnalyticsDashboard = () => {
                         {location.name}
                       </p>
                       <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
-                        #{index + 1} most active location
+                        #{index + 1} most active {locationFilter === 'city' ? 'city' : locationFilter === 'state' ? 'state' : 'country'}
                       </p>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{
-                        backgroundColor: index === 0 ? '#dc3545' : '#007bff',
-                        color: 'white',
-                        padding: '8px 16px',
-                        borderRadius: '20px',
-                        fontSize: '14px',
-                        fontWeight: '600'
-                      }}>
+                      <button
+                        onClick={() => handleLocationClick(location)}
+                        style={{
+                          backgroundColor: index === 0 ? '#dc3545' : '#007bff',
+                          color: 'white',
+                          padding: '8px 16px',
+                          borderRadius: '20px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            transform: 'scale(1.05)'
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = 'scale(1.05)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = 'scale(1)';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      >
                         {location.count} photos
-                      </span>
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
+          {/* Photo Modal */}
+          <PhotoModal 
+            isOpen={showPhotoModal}
+            onClose={closePhotoModal}
+            location={selectedLocation}
+            photos={selectedLocation?.photos || []}
+          />
         </div>
       )}
 
