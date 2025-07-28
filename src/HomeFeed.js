@@ -515,7 +515,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             justifyContent: "flex-start",
             alignItems: "center",
             gap: "2px",
-            padding: "0 16px",
+            padding: "0 12px",
           }}
         >
           {/* Global/Local Toggle - Hide for Discovery tab */}
