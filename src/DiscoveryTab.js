@@ -4,7 +4,7 @@ import { useOptimizedUsersData } from "./performanceHooks";
 import { getDisplayName, getScreenName } from "./useUserData";
 import { useFollowing } from "./useFollows";
 import MobilePhotoCard from "./MobilePhotoCard";
-import discoveryService from './DiscoveryService';
+import discoveryService from './discoveryService';
 
 // Discovery-specific icons
 const TrendingIcon = ({ color = "#ff6b35", size = 20 }) => (
