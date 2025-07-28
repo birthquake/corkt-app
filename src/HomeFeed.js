@@ -512,7 +512,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         <div
           style={{
             display: "flex",
-            justifyContent: "center",
+            justifyContent: "flex-start",
             alignItems: "center",
             gap: "16px",
             padding: "0 16px",
