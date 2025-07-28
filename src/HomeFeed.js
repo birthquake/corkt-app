@@ -514,7 +514,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             display: "flex",
             justifyContent: "flex-start",
             alignItems: "center",
-            gap: "16px",
+            gap: "12px",
             padding: "0 16px",
           }}
         >
