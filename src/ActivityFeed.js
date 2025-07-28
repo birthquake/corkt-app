@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 import ActivityItem from './ActivityItem';
+import SuggestedUsersComponent from './SuggestedUsersComponent';
 
 // Minimal SVG icon components - matching MobileBottomNavigation style
 const BellIcon = ({ color = "#6c757d", size = 48 }) => (
@@ -43,6 +44,42 @@ const ActivityFeed = ({ currentUser }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Determine if we should show follow suggestions
+  const shouldShowSuggestions = () => {
+    if (!currentUser) return false;
+    
+    // Always show for new users (following < 10 people OR account < 30 days old)
+    const accountAge = currentUser.createdAt ? 
+      (Date.now() - currentUser.createdAt.toDate().getTime()) / (1000 * 60 * 60 * 24) : 0;
+    const followingCount = currentUser.followingCount || 0;
+    
+    if (followingCount < 10 || accountAge < 30) {
+      return true;
+    }
+    
+    // Show when activity feed is empty
+    if (activities.length === 0 && !loading) {
+      return true;
+    }
+    
+    // 20% chance for established users (randomized per session)
+    const sessionRandom = Math.random();
+    return sessionRandom < 0.2;
+  };
+
+  // Update showSuggestions when dependencies change
+  useEffect(() => {
+    setShowSuggestions(shouldShowSuggestions());
+  }, [currentUser, activities.length, loading]);
+
+  // Handle user profile navigation
+  const handleUserClick = (userId) => {
+    // Navigate to user profile - adjust this based on your routing setup
+    window.location.href = `/profile/${userId}`;
+    // Or use your router: navigate(`/profile/${userId}`);
+  };
 
   useEffect(() => {
     if (!currentUser?.uid) {
@@ -157,6 +194,19 @@ const ActivityFeed = ({ currentUser }) => {
       </div>
       
       <div style={styles.feedContainer}>
+        {/* Follow Suggestions */}
+        {showSuggestions && (
+          <div style={{ padding: '0 20px' }}>
+            <SuggestedUsersComponent
+              currentUser={currentUser}
+              currentLocation={null} // Will be enhanced with location later
+              onUserClick={handleUserClick}
+              compact={true}
+              maxSuggestions={3}
+            />
+          </div>
+        )}
+
         {activities.length === 0 ? (
           <div style={styles.emptyContainer}>
             <div style={styles.emptyIconContainer}>
