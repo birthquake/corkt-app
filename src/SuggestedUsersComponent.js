@@ -49,21 +49,22 @@ const XIcon = ({ color = "#6b7280", size = 16 }) => (
   </svg>
 );
 
-  // Add this function before the SuggestedUsersComponent definition
+// Check if user is already following someone - FIXED COLLECTION NAME
 const checkIfFollowing = async (followerId, followingId) => {
   try {
-    const followingRef = collection(db, "following");
-    const followingQuery = query(
-      followingRef, 
+    const followsRef = collection(db, "follows"); // FIXED: was "following"
+    const followsQuery = query(
+      followsRef, 
       where("followerId", "==", followerId),
       where("followingId", "==", followingId)
     );
-    const snapshot = await getDocs(followingQuery);
+    const snapshot = await getDocs(followsQuery);
     return !snapshot.empty;
   } catch (error) {
     console.error('Error checking follow status:', error);
-  } // ← this closes the catch block
-}; // ← this closes the entire function
+    return false;
+  }
+};
 
 const SuggestedUsersComponent = ({ 
   currentUser, 
@@ -86,7 +87,7 @@ const SuggestedUsersComponent = ({
     }
   }, [currentUser?.uid, currentLocation]);
 
-  // Load follow suggestions
+  // Load follow suggestions - ADDED DOUBLE-CHECK LOGIC
   const loadSuggestions = useCallback(async () => {
     if (!currentUser?.uid) return;
 
@@ -99,7 +100,7 @@ const SuggestedUsersComponent = ({
       const suggestions = await followSuggestionsService.getFollowSuggestions(
         currentUser.uid,
         {
-          limit: maxSuggestions + 5, // Get extra in case some are dismissed
+          limit: maxSuggestions + 10, // Get extra in case some are dismissed/already followed
           userLocation: currentLocation,
           includeLocationBased: true,
           includeMutualFriends: true,
@@ -107,10 +108,22 @@ const SuggestedUsersComponent = ({
         }
       );
 
-      // Filter out dismissed users
-      const filteredSuggestions = suggestions.filter(
-        suggestion => !dismissedUsers.has(suggestion.userId)
-      ).slice(0, maxSuggestions);
+      // Filter out dismissed users AND already-followed users
+      const filteredSuggestions = [];
+      
+      for (const suggestion of suggestions) {
+        if (!dismissedUsers.has(suggestion.userId)) {
+          // Double-check if user is already following this person
+          const isAlreadyFollowing = await checkIfFollowing(currentUser.uid, suggestion.userId);
+          if (!isAlreadyFollowing) {
+            filteredSuggestions.push(suggestion);
+          } else {
+            console.log(`Filtered out already-followed user: ${suggestion.userId}`);
+          }
+        }
+        
+        if (filteredSuggestions.length >= maxSuggestions) break;
+      }
 
       setSuggestions(filteredSuggestions);
 
@@ -174,19 +187,34 @@ const SuggestedUsersComponent = ({
     }
   };
 
-  // Handle follow action
+  // Handle follow action - FIXED COLLECTION NAME AND FIELD NAME
   const handleFollow = async (suggestedUserId, suggestionType) => {
     if (!currentUser?.uid || followingStates[suggestedUserId]) return;
 
     setFollowingStates(prev => ({ ...prev, [suggestedUserId]: 'loading' }));
 
     try {
-      // Create follow relationship
-      const followDoc = doc(collection(db, "following"));
+      // First check if already following
+      const isAlreadyFollowing = await checkIfFollowing(currentUser.uid, suggestedUserId);
+      
+      if (isAlreadyFollowing) {
+        console.log('User is already following this person');
+        setFollowingStates(prev => ({ ...prev, [suggestedUserId]: 'following' }));
+        
+        // Remove from suggestions since they're already following
+        setTimeout(() => {
+          setSuggestions(prev => prev.filter(s => s.userId !== suggestedUserId));
+        }, 1000);
+        
+        return;
+      }
+
+      // Create follow relationship - FIXED COLLECTION NAME AND FIELD NAME
+      const followDoc = doc(collection(db, "follows")); // FIXED: was "following"
       await setDoc(followDoc, {
         followerId: currentUser.uid,
         followingId: suggestedUserId,
-        timestamp: new Date()
+        createdAt: new Date() // FIXED: was "timestamp"
       });
 
       setFollowingStates(prev => ({ ...prev, [suggestedUserId]: 'following' }));
@@ -198,6 +226,9 @@ const SuggestedUsersComponent = ({
         'followed',
         suggestionType
       );
+
+      // Clear suggestions cache to get fresh data
+      followSuggestionsService.clearCacheForUser(currentUser.uid);
 
       // Remove from suggestions after successful follow
       setTimeout(() => {
@@ -301,7 +332,7 @@ const SuggestedUsersComponent = ({
 
   // Refresh suggestions
   const refreshSuggestions = () => {
-    followSuggestionsService.clearCache();
+    followSuggestionsService.clearCacheForUser(currentUser.uid);
     setDismissedUsers(new Set()); // Clear dismissed users
     loadSuggestions();
   };
