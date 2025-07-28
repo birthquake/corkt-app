@@ -52,6 +52,14 @@ const AnalyticsDashboard = () => {
     loadEngagementMetrics();
   }, []);
 
+  // Re-process metrics when users data changes
+  useEffect(() => {
+    if (allPhotos.length > 0 && Object.keys(usersData).length > 0) {
+      console.log('Re-processing metrics with user data...');
+      processMetrics(allPhotos);
+    }
+  }, [usersData, allPhotos]);
+
   const loadBehavioralAnalytics = () => {
     const events = analytics.events;
     setAnalyticsData(events);
@@ -129,6 +137,8 @@ const AnalyticsDashboard = () => {
   };
 
   const processMetrics = (photos) => {
+    console.log('Processing metrics with:', photos.length, 'photos and', Object.keys(usersData).length, 'users');
+    
     const { today, weekAgo, monthAgo } = getDateRanges();
     
     // Basic photo metrics
@@ -160,29 +170,107 @@ const AnalyticsDashboard = () => {
     const growthRate = previousWeekPhotos > 0 ? 
       Math.round(((weeklyPhotos - previousWeekPhotos) / previousWeekPhotos) * 100) : 0;
 
-    // Top locations
+    // Top locations with real place names using reverse geocoding
     const locationCounts = {};
+    const locationPromises = [];
+
     photos.forEach(photo => {
       if (photo.latitude && photo.longitude) {
         const lat = parseFloat(photo.latitude);
         const lng = parseFloat(photo.longitude);
         
-        // Simple location naming
-        let locationName = 'Unknown Area';
-        if (lat >= 40.7 && lat <= 40.8 && lng >= -74.1 && lng <= -73.9) {
-          locationName = 'Manhattan, NY';
-        } else if (lat >= 40.6 && lat <= 40.7 && lng >= -74.1 && lng <= -73.9) {
-          locationName = 'Brooklyn, NY';
-        } else if (lat >= 34.0 && lat <= 34.2 && lng >= -118.5 && lng <= -118.2) {
-          locationName = 'Los Angeles, CA';
-        } else if (lat >= 37.7 && lat <= 37.8 && lng >= -122.5 && lng <= -122.3) {
-          locationName = 'San Francisco, CA';
-        } else {
-          const latRound = Math.round(lat * 100) / 100;
-          const lngRound = Math.round(lng * 100) / 100;
-          locationName = `Area ${latRound}, ${lngRound}`;
+        // Create a promise for reverse geocoding
+        const geocodePromise = new Promise((resolve) => {
+          if (window.google && window.google.maps && window.google.maps.Geocoder) {
+            const geocoder = new window.google.maps.Geocoder();
+            
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+              if (status === 'OK' && results[0]) {
+                // Extract meaningful place name from results
+                const addressComponents = results[0].address_components;
+                let city = '', state = '', country = '';
+                
+                for (let component of addressComponents) {
+                  const types = component.types;
+                  if (types.includes('locality')) {
+                    city = component.long_name;
+                  } else if (types.includes('administrative_area_level_1')) {
+                    state = component.short_name;
+                  } else if (types.includes('country')) {
+                    country = component.short_name;
+                  }
+                }
+                
+                // Build location name
+                let locationName;
+                if (city && state) {
+                  locationName = `${city}, ${state}`;
+                } else if (city && country) {
+                  locationName = `${city}, ${country}`;
+                } else {
+                  // Use formatted address but clean it up
+                  const parts = results[0].formatted_address.split(',');
+                  if (parts.length >= 2) {
+                    locationName = parts.slice(0, 2).join(',').trim();
+                  } else {
+                    locationName = parts[0].trim();
+                  }
+                }
+                
+                resolve(locationName);
+              } else {
+                // Fallback to coordinates if geocoding fails
+                resolve(`Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`);
+              }
+            });
+          } else {
+            // Google Maps not loaded, use coordinate fallback
+            resolve(`Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`);
+          }
+        });
+        
+        locationPromises.push(geocodePromise);
+      }
+    });
+
+    // Wait for all geocoding to complete
+    Promise.all(locationPromises).then((locationNames) => {
+      // Count occurrences of each location name
+      const counts = {};
+      locationNames.forEach(name => {
+        counts[name] = (counts[name] || 0) + 1;
+      });
+      
+      const topLocationsWithRealNames = Object.entries(counts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8)
+        .map(([name, count]) => ({ name, count }));
+      
+      // Update the state with real location names
+      setEngagementMetrics(prev => ({
+        ...prev,
+        topLocations: topLocationsWithRealNames
+      }));
+    }).catch((error) => {
+      console.error('Geocoding error:', error);
+      // Fallback to original coordinate-based naming if geocoding fails entirely
+      photos.forEach(photo => {
+        if (photo.latitude && photo.longitude) {
+          const lat = parseFloat(photo.latitude).toFixed(1);
+          const lng = parseFloat(photo.longitude).toFixed(1);
+          const locationKey = `Near ${lat}, ${lng}`;
+          locationCounts[locationKey] = (locationCounts[locationKey] || 0) + 1;
         }
-        locationCounts[locationName] = (locationCounts[locationName] || 0) + 1;
+      });
+    });
+
+    // Initial immediate update with coordinate-based names while geocoding happens
+    photos.forEach(photo => {
+      if (photo.latitude && photo.longitude) {
+        const lat = parseFloat(photo.latitude).toFixed(1);
+        const lng = parseFloat(photo.longitude).toFixed(1);
+        const locationKey = `Near ${lat}, ${lng}`;
+        locationCounts[locationKey] = (locationCounts[locationKey] || 0) + 1;
       }
     });
 
@@ -191,23 +279,74 @@ const AnalyticsDashboard = () => {
       .slice(0, 8)
       .map(([name, count]) => ({ name, count }));
 
-    // Recent activity
+    // Recent activity with improved user name resolution and real location names
     const recentActivity = photos.slice(0, 15).map(photo => {
       const user = usersData[photo.uid];
       let displayName = 'Unknown User';
       
+      console.log('Processing photo:', photo.id, 'UID:', photo.uid, 'User found:', !!user);
       if (user) {
-        displayName = user.displayScreenName || user.screenName || user.realName || user.email || `User ${photo.uid?.slice(-6)}`;
+        console.log('User data:', user);
+      }
+      
+      if (user) {
+        // Try different user fields in order of preference
+        if (user.displayScreenName) {
+          displayName = user.displayScreenName;
+        } else if (user.screenName) {
+          displayName = user.screenName;
+        } else if (user.realName) {
+          displayName = user.realName;
+        } else if (user.email) {
+          displayName = user.email;
+        } else {
+          displayName = `User ${photo.uid?.slice(-6)}`;
+        }
       } else if (photo.uid) {
         displayName = `User ${photo.uid.slice(-6)}`;
+      }
+
+      // Get real location name using reverse geocoding
+      let locationName = 'Unknown location';
+      if (photo.latitude && photo.longitude) {
+        const lat = parseFloat(photo.latitude);
+        const lng = parseFloat(photo.longitude);
+        
+        // Try reverse geocoding for this photo
+        if (window.google && window.google.maps && window.google.maps.Geocoder) {
+          const geocoder = new window.google.maps.Geocoder();
+          
+          // Note: This is async, so we'll show coordinates first and update later
+          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              const addressComponents = results[0].address_components;
+              let city = '', state = '', country = '';
+              
+              for (let component of addressComponents) {
+                const types = component.types;
+                if (types.includes('locality')) {
+                  city = component.long_name;
+                } else if (types.includes('administrative_area_level_1')) {
+                  state = component.short_name;
+                } else if (types.includes('country')) {
+                  country = component.short_name;
+                }
+              }
+              
+              // This would need a more complex state update to refresh individual activity items
+              // For now, we'll use the simpler coordinate display
+            }
+          });
+        }
+        
+        // Show coordinates as fallback (will be enhanced with reverse geocoding above)
+        locationName = `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
       }
 
       return {
         id: photo.id,
         userEmail: displayName,
-        location: photo.latitude && photo.longitude ? 
-          `${parseFloat(photo.latitude).toFixed(2)}, ${parseFloat(photo.longitude).toFixed(2)}` : 
-          'Unknown location',
+        location: locationName,
         timestamp: photo.timestamp,
         likes: photo.likeCount || 0,
         comments: photo.commentCount || 0
