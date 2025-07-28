@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import {
   collection,
@@ -10,6 +10,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
+import analytics from "./analyticsService"; // ✅ NEW: Import analytics service
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -22,6 +23,75 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [screenNameChecking, setScreenNameChecking] = useState(false);
   const [screenNameAvailable, setScreenNameAvailable] = useState(null);
+
+  // ✅ NEW: Location state for analytics
+  const [currentLocation, setCurrentLocation] = useState(null);
+
+  // ✅ NEW: Get current location for analytics
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: Date.now()
+          });
+        },
+        (error) => {
+          console.warn("Location not available for analytics:", error);
+          // Don't show error to user, just proceed without location
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 60000 // Accept cached location up to 1 minute old
+        }
+      );
+    }
+  }, []);
+
+  // ✅ NEW: Simple venue detection function (same as HomeFeed)
+  const detectVenue = (location) => {
+    if (!location) return null;
+    
+    const KNOWN_VENUES = [
+      { lat: 39.9685, lng: -82.9923, radius: 100, name: 'Fox in the Snow - Italian Village' },
+      { lat: 39.9612, lng: -82.9988, radius: 150, name: 'North Market' },
+      { lat: 39.9691, lng: -82.9977, radius: 200, name: 'Huntington Park' },
+      { lat: 39.9634, lng: -82.9959, radius: 100, name: 'Natalie\'s Music Hall' },
+      { lat: 39.9712, lng: -82.9943, radius: 150, name: 'Land-Grant Brewing' },
+    ];
+
+    for (const venue of KNOWN_VENUES) {
+      const distance = calculateDistance(
+        location.latitude,
+        location.longitude,
+        venue.lat,
+        venue.lng
+      );
+      if (distance <= venue.radius) {
+        return venue.name;
+      }
+    }
+    return null;
+  };
+
+  // ✅ NEW: Distance calculation helper
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in meters
+  };
 
   // Check if screen name is available
   const checkScreenNameAvailability = async (screenName) => {
@@ -145,6 +215,16 @@ const Signup = () => {
           screenName.toLowerCase().trim(),
           ...realName.toLowerCase().split(" "),
         ].filter((term) => term.length > 0),
+      });
+
+      // ✅ NEW: Track user signup with analytics
+      const venueDetected = detectVenue(currentLocation);
+      analytics.trackUserAcquisition(user.uid, currentLocation, venueDetected);
+      
+      console.log("📊 User signup tracked:", {
+        userId: user.uid,
+        location: currentLocation,
+        venue: venueDetected
       });
 
       setSuccess(true);
