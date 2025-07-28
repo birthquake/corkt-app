@@ -5,8 +5,11 @@ import { db } from "./firebaseConfig";
 class FollowSuggestionsService {
   constructor() {
     this.suggestionsCache = new Map();
+    this.followingCache = new Map(); // Cache for following lists
     this.cacheExpiry = 10 * 60 * 1000; // 10 minutes
+    this.followingCacheExpiry = 5 * 60 * 1000; // 5 minutes for following lists
     this.lastCacheUpdate = new Map();
+    this.lastFollowingCacheUpdate = new Map();
   }
 
   // Main function to get personalized follow suggestions
@@ -38,6 +41,8 @@ class FollowSuggestionsService {
         this.getUserProfile(userId),
         this.getUserRecentPhotos(userId, 50)
       ]);
+
+      console.log(`User ${userId} is currently following ${userFollowing.length} people`);
 
       // Get all potential suggestions with scores
       const suggestions = await this.generateSuggestionCandidates(
@@ -129,7 +134,17 @@ class FollowSuggestionsService {
       this.addOrMergeSuggestion(candidates, suggestion);
     });
 
-    return Array.from(candidates.values());
+    // Final filter to ensure no already-followed users slip through
+    const finalCandidates = [];
+    for (const candidate of Array.from(candidates.values())) {
+      if (!userFollowing.includes(candidate.userId) && candidate.userId !== userId) {
+        finalCandidates.push(candidate);
+      } else {
+        console.log(`Filtered out already-followed user or self: ${candidate.userId}`);
+      }
+    }
+
+    return finalCandidates;
   }
 
   // Location-based suggestions: users who post near the user
@@ -404,14 +419,30 @@ class FollowSuggestionsService {
     return Math.min(engagement * 2, 40); // Max 40 points for popularity
   }
 
-  // Data fetching helpers
+  // Data fetching helpers with improved caching
   async getUserFollowing(userId) {
     try {
+      // Check cache first
+      const cacheKey = `following_${userId}`;
+      const cached = this.followingCache.get(cacheKey);
+      const lastUpdate = this.lastFollowingCacheUpdate.get(cacheKey);
+      
+      if (cached && lastUpdate && (Date.now() - lastUpdate) < this.followingCacheExpiry) {
+        return cached;
+      }
+
       const followingRef = collection(db, "following");
       const followingQuery = query(followingRef, where("followerId", "==", userId));
       const snapshot = await getDocs(followingQuery);
       
-      return snapshot.docs.map(doc => doc.data().followingId);
+      const following = snapshot.docs.map(doc => doc.data().followingId);
+      
+      // Cache the result
+      this.followingCache.set(cacheKey, following);
+      this.lastFollowingCacheUpdate.set(cacheKey, Date.now());
+      
+      console.log(`User ${userId} is following ${following.length} people`);
+      return following;
     } catch (error) {
       console.error(`Error getting following for user ${userId}:`, error);
       return [];
@@ -519,11 +550,26 @@ class FollowSuggestionsService {
     return chunks;
   }
 
-  // Clear cache (useful for testing)
+  // Enhanced cache clearing for specific user
+  clearCacheForUser(userId) {
+    const suggestionsCacheKey = `suggestions_${userId}`;
+    const followingCacheKey = `following_${userId}`;
+    
+    this.suggestionsCache.delete(suggestionsCacheKey);
+    this.lastCacheUpdate.delete(suggestionsCacheKey);
+    this.followingCache.delete(followingCacheKey);
+    this.lastFollowingCacheUpdate.delete(followingCacheKey);
+    
+    console.log(`🤝 Follow suggestions and following cache cleared for user: ${userId}`);
+  }
+
+  // Clear all cache (useful for testing)
   clearCache() {
     this.suggestionsCache.clear();
     this.lastCacheUpdate.clear();
-    console.log('🤝 Follow suggestions cache cleared');
+    this.followingCache.clear();
+    this.lastFollowingCacheUpdate.clear();
+    console.log('🤝 All follow suggestions cache cleared');
   }
 
   // Track suggestion analytics
