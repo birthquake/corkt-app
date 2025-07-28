@@ -4,7 +4,7 @@ import { collection, query, orderBy, onSnapshot, getDocs } from "firebase/firest
 import { db } from "./firebaseConfig";
 import analytics from './analyticsService';
 
-// Minimalist SVG icon components (matching HomeFeed.js style)
+// Comprehensive minimalist SVG icon components (matching HomeFeed.js style)
 const HeartIcon = ({ color = "#ef4444", size = 12 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth="2">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -29,6 +29,142 @@ const UserIcon = ({ color = "#6b7280", size = 12 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
     <circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+
+const UsersIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
+const CameraIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
+
+const BarChartIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <line x1="12" y1="20" x2="12" y2="10"/>
+    <line x1="18" y1="20" x2="18" y2="4"/>
+    <line x1="6" y1="20" x2="6" y2="16"/>
+  </svg>
+);
+
+const TrendingUpIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+    <polyline points="17 6 23 6 23 12"/>
+  </svg>
+);
+
+const RocketIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+    <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+    <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+    <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+  </svg>
+);
+
+const SmartphoneIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+    <line x1="12" y1="18" x2="12.01" y2="18"/>
+  </svg>
+);
+
+const MapIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+    <line x1="8" y1="2" x2="8" y2="18"/>
+    <line x1="16" y1="6" x2="16" y2="22"/>
+  </svg>
+);
+
+const TargetIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="6"/>
+    <circle cx="12" cy="12" r="2"/>
+  </svg>
+);
+
+const FlameIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+  </svg>
+);
+
+const AnalyticsIcon = ({ color = "#6b7280", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M3 3v18h18"/>
+    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+  </svg>
+);
+
+const DownloadIcon = ({ color = "#6b7280", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7,10 12,15 17,10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+
+const TrashIcon = ({ color = "#6b7280", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="3,6 5,6 21,6"/>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+    <line x1="10" y1="11" x2="10" y2="17"/>
+    <line x1="14" y1="11" x2="14" y2="17"/>
+  </svg>
+);
+
+const ActivityIcon = ({ color = "#6b7280", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+  </svg>
+);
+
+const ToggleIcon = ({ color = "#6b7280", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="1" y="5" width="22" height="14" rx="7" ry="7"/>
+    <circle cx="8" cy="12" r="3"/>
+  </svg>
+);
+
+const CityIcon = ({ color = "#6b7280", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M3 21h18"/>
+    <path d="M5 21V7l8-4v18"/>
+    <path d="M19 21V10l-6-4"/>
+    <path d="M9 9v.01"/>
+    <path d="M9 12v.01"/>
+    <path d="M9 15v.01"/>
+    <path d="M9 18v.01"/>
+  </svg>
+);
+
+const GlobeIcon = ({ color = "#6b7280", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+
+const FileTextIcon = ({ color = "#6b7280", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14,2 14,8 20,8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10,9 9,9 8,9"/>
   </svg>
 );
 
@@ -768,13 +904,16 @@ const AnalyticsDashboard = () => {
         borderRadius: '12px',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
       }}>
-        <div>
-          <h1 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '32px', fontWeight: '700' }}>
-            📊 Corkt Analytics
-          </h1>
-          <p style={{ margin: 0, color: '#6b7280', fontSize: '16px' }}>
-            Real-time engagement metrics and behavioral insights
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <AnalyticsIcon color="#007bff" size={32} />
+          <div>
+            <h1 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '32px', fontWeight: '700' }}>
+              Corkt Analytics
+            </h1>
+            <p style={{ margin: 0, color: '#6b7280', fontSize: '16px' }}>
+              Real-time engagement metrics and behavioral insights
+            </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
@@ -787,10 +926,14 @@ const AnalyticsDashboard = () => {
               borderRadius: '8px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: '500'
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}
           >
-            📥 Export Data
+            <DownloadIcon color="white" size={16} />
+            Export Data
           </button>
           <button
             onClick={clearData}
@@ -802,10 +945,14 @@ const AnalyticsDashboard = () => {
               borderRadius: '8px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: '500'
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}
           >
-            🗑️ Clear Data
+            <TrashIcon color="white" size={16} />
+            Clear Data
           </button>
         </div>
       </div>
@@ -831,10 +978,15 @@ const AnalyticsDashboard = () => {
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: '500',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
           }}
         >
-          📈 Engagement
+          <TrendingUpIcon color={selectedTab === 'engagement' ? 'white' : '#6b7280'} size={16} />
+          Engagement
         </button>
         <button
           onClick={() => setSelectedTab('geographic')}
@@ -848,10 +1000,15 @@ const AnalyticsDashboard = () => {
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: '500',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
           }}
         >
-          🗺️ Geographic
+          <MapIcon color={selectedTab === 'geographic' ? 'white' : '#6b7280'} size={16} />
+          Geographic
         </button>
         <button
           onClick={() => setSelectedTab('behavior')}
@@ -865,10 +1022,15 @@ const AnalyticsDashboard = () => {
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: '500',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
           }}
         >
-          🎯 Behavioral
+          <TargetIcon color={selectedTab === 'behavior' ? 'white' : '#6b7280'} size={16} />
+          Behavioral
         </button>
       </div>
 
@@ -906,7 +1068,7 @@ const AnalyticsDashboard = () => {
                 }}>
                   Total Users
                 </h3>
-                <span style={{ fontSize: '24px' }}>👥</span>
+                <UsersIcon color="#007bff" size={24} />
               </div>
               <p style={{
                 fontSize: '36px',
@@ -949,7 +1111,7 @@ const AnalyticsDashboard = () => {
                 }}>
                   Total Photos
                 </h3>
-                <span style={{ fontSize: '24px' }}>📸</span>
+                <CameraIcon color="#28a745" size={24} />
               </div>
               <p style={{
                 fontSize: '36px',
@@ -992,7 +1154,7 @@ const AnalyticsDashboard = () => {
                 }}>
                   Weekly Photos
                 </h3>
-                <span style={{ fontSize: '24px' }}>📊</span>
+                <BarChartIcon color="#6f42c1" size={24} />
               </div>
               <p style={{
                 fontSize: '36px',
@@ -1035,7 +1197,7 @@ const AnalyticsDashboard = () => {
                 }}>
                   Engagement Rate
                 </h3>
-                <span style={{ fontSize: '24px' }}>💝</span>
+                <HeartIcon color="#ef4444" size={24} />
               </div>
               <p style={{
                 fontSize: '36px',
@@ -1078,7 +1240,7 @@ const AnalyticsDashboard = () => {
                 }}>
                   New Users
                 </h3>
-                <span style={{ fontSize: '24px' }}>🚀</span>
+                <RocketIcon color="#17a2b8" size={24} />
               </div>
               <p style={{
                 fontSize: '36px',
@@ -1121,7 +1283,7 @@ const AnalyticsDashboard = () => {
                 }}>
                   Avg Photos/User
                 </h3>
-                <span style={{ fontSize: '24px' }}>📱</span>
+                <SmartphoneIcon color="#fd7e14" size={24} />
               </div>
               <p style={{
                 fontSize: '36px',
@@ -1237,7 +1399,9 @@ const AnalyticsDashboard = () => {
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📍</div>
+              <div style={{ marginBottom: '8px' }}>
+                <LocationIcon color="#007bff" size={32} />
+              </div>
               <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
                 Photos with Location
               </h3>
@@ -1256,7 +1420,9 @@ const AnalyticsDashboard = () => {
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎯</div>
+              <div style={{ marginBottom: '8px' }}>
+                <TargetIcon color="#28a745" size={32} />
+              </div>
               <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
                 Unique Locations
               </h3>
@@ -1275,7 +1441,9 @@ const AnalyticsDashboard = () => {
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔥</div>
+              <div style={{ marginBottom: '8px' }}>
+                <FlameIcon color="#dc3545" size={32} />
+              </div>
               <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
                 Hottest Location
               </h3>
@@ -1294,7 +1462,9 @@ const AnalyticsDashboard = () => {
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📊</div>
+              <div style={{ marginBottom: '8px' }}>
+                <BarChartIcon color="#6f42c1" size={32} />
+              </div>
               <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
                 Location Coverage
               </h3>
@@ -1325,7 +1495,8 @@ const AnalyticsDashboard = () => {
                 alignItems: 'center',
                 gap: '12px'
               }}>
-                🗺️ Photo Heatmap
+                <MapIcon color="#007bff" size={32} />
+                Photo Heatmap
                 <span style={{
                   backgroundColor: '#007bff',
                   color: 'white',
@@ -1433,7 +1604,8 @@ const AnalyticsDashboard = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                📍 Top Photo Locations
+                <LocationIcon color="#007bff" size={24} />
+                Top Photo Locations
                 <span style={{
                   backgroundColor: '#f3f4f6',
                   color: '#6b7280',
@@ -1466,10 +1638,15 @@ const AnalyticsDashboard = () => {
                     cursor: 'pointer',
                     fontSize: '14px',
                     fontWeight: '500',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
                   }}
                 >
-                  🏙️ Cities
+                  <CityIcon color={locationFilter === 'city' ? 'white' : '#6b7280'} size={16} />
+                  Cities
                 </button>
                 <button
                   onClick={() => setLocationFilter('state')}
@@ -1483,10 +1660,15 @@ const AnalyticsDashboard = () => {
                     cursor: 'pointer',
                     fontSize: '14px',
                     fontWeight: '500',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
                   }}
                 >
-                  🗺️ States
+                  <MapIcon color={locationFilter === 'state' ? 'white' : '#6b7280'} size={16} />
+                  States
                 </button>
                 <button
                   onClick={() => setLocationFilter('country')}
@@ -1500,10 +1682,15 @@ const AnalyticsDashboard = () => {
                     cursor: 'pointer',
                     fontSize: '14px',
                     fontWeight: '500',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
                   }}
                 >
-                  🌍 Countries
+                  <GlobeIcon color={locationFilter === 'country' ? 'white' : '#6b7280'} size={16} />
+                  Countries
                 </button>
               </div>
 
@@ -1534,9 +1721,13 @@ const AnalyticsDashboard = () => {
                         padding: '4px 12px',
                         borderRadius: '12px',
                         fontSize: '12px',
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
                       }}>
-                        🔥 HOTTEST
+                        <FlameIcon color="white" size={12} />
+                        HOTTEST
                       </div>
                     )}
                     <div style={{ flex: 1 }}>
@@ -1611,58 +1802,93 @@ const AnalyticsDashboard = () => {
               backgroundColor: 'white',
               padding: '24px',
               borderRadius: '12px',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
             }}>
-              <h3 style={{ margin: '0 0 12px 0', color: '#1f2937', fontSize: '16px', fontWeight: '500' }}>Total Events</h3>
-              <p style={{ margin: 0, fontSize: '32px', fontWeight: '700', color: '#007bff' }}>
-                {formatNumber(summary.totalEvents)}
-              </p>
+              <ActivityIcon color="#007bff" size={24} />
+              <div>
+                <h3 style={{ margin: '0 0 4px 0', color: '#1f2937', fontSize: '16px', fontWeight: '500' }}>Total Events</h3>
+                <p style={{ margin: 0, fontSize: '32px', fontWeight: '700', color: '#007bff' }}>
+                  {formatNumber(summary.totalEvents)}
+                </p>
+              </div>
             </div>
             
             <div style={{
               backgroundColor: 'white',
               padding: '24px',
               borderRadius: '12px',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
             }}>
-              <h3 style={{ margin: '0 0 12px 0', color: '#1f2937', fontSize: '16px', fontWeight: '500' }}>Mode Toggles</h3>
-              <p style={{ margin: 0, fontSize: '32px', fontWeight: '700', color: '#28a745' }}>
-                {formatNumber(summary.modeToggles)}
-              </p>
-              <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
-                {summary.localTogglePercentage}% to Local mode
-              </p>
+              <ToggleIcon color="#28a745" size={24} />
+              <div>
+                <h3 style={{ margin: '0 0 4px 0', color: '#1f2937', fontSize: '16px', fontWeight: '500' }}>Mode Toggles</h3>
+                <p style={{ margin: 0, fontSize: '32px', fontWeight: '700', color: '#28a745' }}>
+                  {formatNumber(summary.modeToggles)}
+                </p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
+                  {summary.localTogglePercentage}% to Local mode
+                </p>
+              </div>
             </div>
             
             <div style={{
               backgroundColor: 'white',
               padding: '24px',
               borderRadius: '12px',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
             }}>
-              <h3 style={{ margin: '0 0 12px 0', color: '#1f2937', fontSize: '16px', fontWeight: '500' }}>Photo Interactions</h3>
-              <p style={{ margin: 0, fontSize: '32px', fontWeight: '700', color: '#ffc107' }}>
-                {formatNumber(summary.photoInteractions)}
-              </p>
+              <CameraIcon color="#ffc107" size={24} />
+              <div>
+                <h3 style={{ margin: '0 0 4px 0', color: '#1f2937', fontSize: '16px', fontWeight: '500' }}>Photo Interactions</h3>
+                <p style={{ margin: 0, fontSize: '32px', fontWeight: '700', color: '#ffc107' }}>
+                  {formatNumber(summary.photoInteractions)}
+                </p>
+              </div>
             </div>
             
             <div style={{
               backgroundColor: 'white',
               padding: '24px',
               borderRadius: '12px',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
             }}>
-              <h3 style={{ margin: '0 0 12px 0', color: '#1f2937', fontSize: '16px', fontWeight: '500' }}>User Signups</h3>
-              <p style={{ margin: 0, fontSize: '32px', fontWeight: '700', color: '#17a2b8' }}>
-                {formatNumber(summary.userSignups)}
-              </p>
+              <UserIcon color="#17a2b8" size={24} />
+              <div>
+                <h3 style={{ margin: '0 0 4px 0', color: '#1f2937', fontSize: '16px', fontWeight: '500' }}>User Signups</h3>
+                <p style={{ margin: 0, fontSize: '32px', fontWeight: '700', color: '#17a2b8' }}>
+                  {formatNumber(summary.userSignups)}
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Venue Analytics */}
           {summary.venues && summary.venues.length > 0 && (
             <div style={{ marginBottom: '30px' }}>
-              <h2 style={{ color: '#1f2937', marginBottom: '20px', fontSize: '24px', fontWeight: '600' }}>📍 Venue Analytics</h2>
+              <h2 style={{ 
+                color: '#1f2937', 
+                marginBottom: '20px', 
+                fontSize: '24px', 
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <LocationIcon color="#007bff" size={24} />
+                Venue Analytics
+              </h2>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
@@ -1698,6 +1924,94 @@ const AnalyticsDashboard = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
                           <span style={{ color: '#6b7280' }}>Avg Session (sec):</span>
                           <strong style={{ color: '#1f2937' }}>{venueData.average_session_duration}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Event Filter */}
+          <div style={{ 
+            marginBottom: '20px',
+            backgroundColor: 'white',
+            padding: '16px 24px',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <label style={{ fontWeight: '500', color: '#1f2937' }}>Filter by Venue:</label>
+            <select
+              value={selectedVenue}
+              onChange={(e) => setSelectedVenue(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid #d1d5db',
+                fontSize: '14px'
+              }}
+            >
+              <option value="all">All Venues</option>
+              {summary.venues && summary.venues.map(venue => (
+                <option key={venue} value={venue}>{venue}</option>
+              ))}
+            </select>
+            <span style={{ color: '#6b7280', fontSize: '14px' }}>
+              Showing {formatNumber(filteredEvents.length)} events
+            </span>
+          </div>
+
+          {/* Recent Events */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+          }}>
+            <div style={{ padding: '24px 24px 0 24px' }}>
+              <h2 style={{ 
+                color: '#1f2937', 
+                margin: '0 0 20px 0', 
+                fontSize: '20px', 
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <FileTextIcon color="#007bff" size={20} />
+                Recent Events
+              </h2>
+            </div>
+            <div style={{
+              maxHeight: '400px',
+              overflowY: 'auto'
+            }}>
+              {filteredEvents.slice(-50).reverse().map((event, index) => (
+                <div key={index} style={{
+                  padding: '16px 24px',
+                  borderBottom: index < filteredEvents.slice(-50).length - 1 ? '1px solid #f3f4f6' : 'none'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <strong style={{ color: '#1f2937', fontSize: '14px' }}>{event.event}</strong>
+                    <span style={{ color: '#9ca3af', fontSize: '12px' }}>
+                      {formatDate(event.timestamp)}
+                    </span>
+                  </div>
+                  <div style={{ color: '#6b7280', fontSize: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {event.venue_detected && <span>📍 {event.venue_detected}</span>}
+                    {event.from_mode && event.to_mode && (
+                      <span>🔄 {event.from_mode} → {event.to_mode}</span>
+                    )}
+                    {event.action && <span>📸 {event.action}</span>}
+                    {event.session_id && <span>Session: {event.session_id.slice(-6)}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>erage_session_duration}</strong>
                         </div>
                       </div>
                     </div>
