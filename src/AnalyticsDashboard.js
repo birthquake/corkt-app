@@ -25,8 +25,15 @@ const AnalyticsDashboard = () => {
     topLocations: [],
     recentActivity: [],
     growthRate: 0,
-    engagementRate: 0
+    engagementRate: 0,
+    userSignupsToday: 0,
+    userSignupsWeek: 0,
+    userSignupsMonth: 0
   });
+
+  const [usersData, setUsersData] = useState({});
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [allPhotos, setAllPhotos] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState('engagement'); // 'engagement' or 'behavior'
@@ -48,7 +55,30 @@ const AnalyticsDashboard = () => {
   // Load engagement metrics from Firestore
   useEffect(() => {
     loadEngagementMetrics();
+    loadUsersData();
   }, []);
+
+  // Load users data for joining with photos
+  const loadUsersData = () => {
+    try {
+      const usersRef = collection(db, "users");
+      const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+        const usersMap = {};
+        snapshot.docs.forEach(doc => {
+          usersMap[doc.id] = {
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate() || new Date(doc.data().createdAt || Date.now())
+          };
+        });
+        setUsersData(usersMap);
+      });
+
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error fetching users data:", error);
+    }
+  };
 
   const loadBehavioralAnalytics = () => {
     const events = analytics.events;
@@ -97,6 +127,23 @@ const AnalyticsDashboard = () => {
           timestamp: doc.data().timestamp?.toDate() || new Date(doc.data().timestamp || Date.now())
         }));
 
+        // Store all photos for heatmap
+        setAllPhotos(photos);
+
+        // Calculate user signup metrics from usersData
+        const allUsers = Object.values(usersData);
+        const userSignupsToday = allUsers.filter(user => 
+          user.createdAt >= today
+        ).length;
+
+        const userSignupsWeek = allUsers.filter(user => 
+          user.createdAt >= weekAgo
+        ).length;
+
+        const userSignupsMonth = allUsers.filter(user => 
+          user.createdAt >= monthAgo
+        ).length;
+
         // Calculate photo metrics
         const todayPhotos = photos.filter(photo => 
           photo.timestamp >= today
@@ -119,19 +166,19 @@ const AnalyticsDashboard = () => {
           sum + (photo.commentCount || photo.comments?.length || 0), 0
         );
 
-        // Get unique users from photos
-        const uniqueUsers = [...new Set(photos.map(photo => photo.userId || photo.userEmail))].filter(Boolean);
-        const totalUsers = uniqueUsers.length;
+        // Get unique users from photos (using uid field)
+        const uniqueUsers = [...new Set(photos.map(photo => photo.uid))].filter(Boolean);
+        const totalUsers = Object.keys(usersData).length; // Use actual users collection count
 
         // Active users (posted in time period)
         const activeUsersToday = [...new Set(
           photos.filter(photo => photo.timestamp >= today)
-                .map(photo => photo.userId || photo.userEmail)
+                .map(photo => photo.uid)
         )].filter(Boolean).length;
 
         const activeUsersWeek = [...new Set(
           photos.filter(photo => photo.timestamp >= weekAgo)
-                .map(photo => photo.userId || photo.userEmail)
+                .map(photo => photo.uid)
         )].filter(Boolean).length;
 
         // Growth rate (weekly photos vs previous week)
@@ -149,29 +196,45 @@ const AnalyticsDashboard = () => {
           ? Math.round(((totalLikes + totalComments) / photos.length) * 100) / 100
           : 0;
 
-        // Top locations
+        // Top locations (using coordinates to create location strings)
         const locationCounts = {};
         photos.forEach(photo => {
-          const locationName = photo.location?.name || photo.locationName;
-          if (locationName) {
-            locationCounts[locationName] = (locationCounts[locationName] || 0) + 1;
+          if (photo.latitude && photo.longitude) {
+            // Create a location string from coordinates (rounded to avoid too many unique locations)
+            const lat = parseFloat(photo.latitude).toFixed(3);
+            const lng = parseFloat(photo.longitude).toFixed(3);
+            const locationKey = `${lat}, ${lng}`;
+            locationCounts[locationKey] = (locationCounts[locationKey] || 0) + 1;
           }
         });
 
         const topLocations = Object.entries(locationCounts)
           .sort(([,a], [,b]) => b - a)
           .slice(0, 8)
-          .map(([name, count]) => ({ name, count }));
+          .map(([coords, count]) => ({ name: coords, count }));
 
-        // Recent activity (last 15 photos with user info)
-        const recentActivity = photos.slice(0, 15).map(photo => ({
-          id: photo.id,
-          userEmail: photo.userEmail || 'Unknown User',
-          location: photo.location?.name || photo.locationName || 'Unknown location',
-          timestamp: photo.timestamp,
-          likes: photo.likeCount || photo.likes?.length || 0,
-          comments: photo.commentCount || photo.comments?.length || 0
-        }));
+        // Recent activity (last 15 photos with real user info)
+        const recentActivity = photos.slice(0, 15).map(photo => {
+          const user = usersData[photo.uid];
+          const displayName = user ? (
+            user.displayScreenName || 
+            user.screenName || 
+            user.realName || 
+            user.email || 
+            `User ${photo.uid?.slice(-6)}`
+          ) : `User ${photo.uid?.slice(-6) || 'Unknown'}`;
+
+          return {
+            id: photo.id,
+            userEmail: displayName,
+            location: photo.latitude && photo.longitude 
+              ? `${parseFloat(photo.latitude).toFixed(3)}, ${parseFloat(photo.longitude).toFixed(3)}`
+              : 'Unknown location',
+            timestamp: photo.timestamp,
+            likes: photo.likeCount || photo.likes?.length || 0,
+            comments: photo.commentCount || photo.comments?.length || 0
+          };
+        });
 
         // Update engagement metrics state
         setEngagementMetrics({
@@ -188,7 +251,10 @@ const AnalyticsDashboard = () => {
           topLocations,
           recentActivity,
           growthRate,
-          engagementRate
+          engagementRate,
+          userSignupsToday,
+          userSignupsWeek,
+          userSignupsMonth
         });
 
         setLoading(false);
@@ -211,6 +277,142 @@ const AnalyticsDashboard = () => {
 
   const formatNumber = (num) => {
     return num.toLocaleString();
+  };
+
+  // Heatmap component
+  const PhotoHeatmap = ({ photos }) => {
+    const mapRef = React.useRef(null);
+    const heatmapRef = React.useRef(null);
+
+    React.useEffect(() => {
+      // Check if Google Maps and visualization library are available
+      if (!window.google || !window.google.maps) {
+        console.log('Google Maps not loaded yet');
+        return;
+      }
+
+      if (!window.google.maps.visualization) {
+        // Load visualization library if not already loaded
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?libraries=visualization&key=AIzaSyA868vL4wcDalIHwajFXLgTACs87w7apRE`;
+        script.onload = () => {
+          console.log('Visualization library loaded');
+          initializeHeatmap();
+        };
+        document.head.appendChild(script);
+        return;
+      }
+
+      initializeHeatmap();
+
+      function initializeHeatmap() {
+        if (!mapRef.current || photos.length === 0) return;
+
+        // Initialize map
+        const map = new window.google.maps.Map(mapRef.current, {
+          zoom: 10,
+          center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC, will adjust based on data
+          mapTypeId: 'roadmap',
+          styles: [
+            {
+              featureType: 'all',
+              elementType: 'geometry.fill',
+              stylers: [{ color: '#f8f9fa' }]
+            },
+            {
+              featureType: 'water',
+              elementType: 'geometry',
+              stylers: [{ color: '#e3f2fd' }]
+            },
+            {
+              featureType: 'road',
+              elementType: 'geometry',
+              stylers: [{ color: '#ffffff' }]
+            }
+          ]
+        });
+
+        // Prepare heatmap data
+        const heatmapData = photos
+          .filter(photo => photo.latitude && photo.longitude)
+          .map(photo => {
+            const lat = parseFloat(photo.latitude);
+            const lng = parseFloat(photo.longitude);
+            if (isNaN(lat) || isNaN(lng)) return null;
+            return new window.google.maps.LatLng(lat, lng);
+          })
+          .filter(Boolean);
+
+        console.log(`Heatmap: Processing ${heatmapData.length} valid photo locations`);
+
+        if (heatmapData.length === 0) {
+          // Show message when no location data
+          const infoWindow = new window.google.maps.InfoWindow({
+            content: '<div style="padding: 10px; text-align: center;">No location data available for photos</div>',
+            position: { lat: 40.7128, lng: -74.0060 }
+          });
+          infoWindow.open(map);
+          return;
+        }
+
+        // Create heatmap layer
+        const heatmap = new window.google.maps.visualization.HeatmapLayer({
+          data: heatmapData,
+          map: map,
+          radius: 20,
+          opacity: 0.6,
+          gradient: [
+            'rgba(0, 255, 255, 0)',
+            'rgba(0, 255, 255, 1)',
+            'rgba(0, 191, 255, 1)',
+            'rgba(0, 127, 255, 1)',
+            'rgba(0, 63, 255, 1)',
+            'rgba(0, 0, 255, 1)',
+            'rgba(0, 0, 223, 1)',
+            'rgba(0, 0, 191, 1)',
+            'rgba(0, 0, 159, 1)',
+            'rgba(0, 0, 127, 1)',
+            'rgba(63, 0, 91, 1)',
+            'rgba(127, 0, 63, 1)',
+            'rgba(191, 0, 31, 1)',
+            'rgba(255, 0, 0, 1)'
+          ]
+        });
+
+        heatmapRef.current = heatmap;
+
+        // Auto-fit bounds to show all points
+        if (heatmapData.length > 0) {
+          const bounds = new window.google.maps.LatLngBounds();
+          heatmapData.forEach(point => bounds.extend(point));
+          map.fitBounds(bounds);
+          
+          // Don't zoom in too much for single points
+          const listener = window.google.maps.event.addListener(map, 'idle', () => {
+            if (map.getZoom() > 15) map.setZoom(15);
+            window.google.maps.event.removeListener(listener);
+          });
+        }
+      }
+
+      return () => {
+        if (heatmapRef.current) {
+          heatmapRef.current.setMap(null);
+        }
+      };
+    }, [photos]);
+
+    return (
+      <div
+        ref={mapRef}
+        style={{
+          width: '100%',
+          height: '400px',
+          borderRadius: '8px',
+          border: '1px solid #e5e7eb'
+        }}
+      />
+    );
   };
 
   const exportData = () => {
@@ -393,6 +595,78 @@ const AnalyticsDashboard = () => {
                 </h3>
                 <span style={{ fontSize: '24px' }}>👥</span>
               </div>
+
+          {/* Geographic Heatmap */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+            marginBottom: '24px'
+          }}>
+            <div style={{ marginBottom: '20px' }}>
+              <h2 style={{ 
+                color: '#1f2937', 
+                marginBottom: '8px', 
+                fontSize: '20px', 
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                🗺️ Photo Heatmap
+                <span style={{
+                  backgroundColor: '#f3f4f6',
+                  color: '#6b7280',
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
+                  {engagementMetrics.totalPhotos} photos plotted
+                </span>
+              </h2>
+              <p style={{ 
+                color: '#6b7280', 
+                margin: 0, 
+                fontSize: '14px' 
+              }}>
+                Geographic distribution of photo uploads showing user activity hotspots
+              </p>
+            </div>
+            
+            {window.google && window.google.maps ? (
+              <PhotoHeatmap photos={allPhotos} />
+            ) : (
+              <div style={{
+                width: '100%',
+                height: '400px',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f8f9fa',
+                color: '#6b7280'
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    border: '3px solid #e5e7eb',
+                    borderTop: '3px solid #007bff',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 12px'
+                  }} />
+                  <p style={{ margin: 0 }}>Loading heatmap...</p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', opacity: 0.7 }}>
+                    Waiting for Google Maps to initialize
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
               <p style={{
                 fontSize: '36px',
                 fontWeight: '700',
@@ -538,6 +812,92 @@ const AnalyticsDashboard = () => {
                 likes + comments per photo
               </p>
             </div>
+
+            {/* User Signups */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '12px'
+              }}>
+                <h3 style={{
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  margin: '0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  New Users
+                </h3>
+                <span style={{ fontSize: '24px' }}>🚀</span>
+              </div>
+              <p style={{
+                fontSize: '36px',
+                fontWeight: '700',
+                color: '#1f2937',
+                margin: '0 0 8px 0'
+              }}>
+                {formatNumber(engagementMetrics.userSignupsWeek)}
+              </p>
+              <p style={{
+                fontSize: '14px',
+                color: '#10b981',
+                margin: '0'
+              }}>
+                {engagementMetrics.userSignupsToday} signed up today
+              </p>
+            </div>
+
+            {/* Average Photos Per User */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '12px'
+              }}>
+                <h3 style={{
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  margin: '0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  Avg Photos/User
+                </h3>
+                <span style={{ fontSize: '24px' }}>📱</span>
+              </div>
+              <p style={{
+                fontSize: '36px',
+                fontWeight: '700',
+                color: '#1f2937',
+                margin: '0 0 8px 0'
+              }}>
+                {engagementMetrics.avgPhotosPerUser}
+              </p>
+              <p style={{
+                fontSize: '14px',
+                color: '#6b7280',
+                margin: '0'
+              }}>
+                photos per registered user
+              </p>
+            </div>
           </div>
 
           {/* Top Locations */}
@@ -550,7 +910,7 @@ const AnalyticsDashboard = () => {
               marginBottom: '24px'
             }}>
               <h2 style={{ color: '#1f2937', marginBottom: '20px', fontSize: '20px', fontWeight: '600' }}>
-                📍 Top Locations
+                📍 Top Photo Locations (Coordinates)
               </h2>
               <div style={{
                 display: 'grid',
