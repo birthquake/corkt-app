@@ -199,14 +199,19 @@ const AnalyticsDashboard = () => {
             
             geocoder.geocode({ location: { lat, lng } }, (results, status) => {
               if (status === 'OK' && results[0]) {
-                // Extract city, state, country separately
+                // Extract city, state, country separately with better fallback logic
                 const addressComponents = results[0].address_components;
                 let city = '', state = '', country = '';
+                let neighborhood = '', sublocality = '';
                 
                 for (let component of addressComponents) {
                   const types = component.types;
                   if (types.includes('locality')) {
                     city = component.long_name;
+                  } else if (types.includes('sublocality') || types.includes('sublocality_level_1')) {
+                    sublocality = component.long_name;
+                  } else if (types.includes('neighborhood')) {
+                    neighborhood = component.long_name;
                   } else if (types.includes('administrative_area_level_1')) {
                     state = component.short_name;
                   } else if (types.includes('country')) {
@@ -214,12 +219,27 @@ const AnalyticsDashboard = () => {
                   }
                 }
                 
+                // Better fallback logic for city names
+                let finalCity = city;
+                if (!finalCity && sublocality) {
+                  finalCity = sublocality;
+                } else if (!finalCity && neighborhood) {
+                  finalCity = neighborhood;
+                } else if (!finalCity) {
+                  // Extract from formatted address as last resort
+                  const addressParts = results[0].formatted_address.split(',');
+                  if (addressParts.length > 0) {
+                    finalCity = addressParts[0].trim();
+                  }
+                }
+                
                 // Build location names for different levels
-                const cityName = city && state ? `${city}, ${state}` : 
-                                city && country ? `${city}, ${country}` :
-                                city || 'Unknown City';
-                const stateName = state || country || 'Unknown State';
-                const countryName = country || 'Unknown Country';
+                const cityName = finalCity && state ? `${finalCity}, ${state}` : 
+                                finalCity && country ? `${finalCity}, ${country}` :
+                                finalCity || `Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`;
+                
+                const stateName = state || country || `Near ${lat.toFixed(0)}, ${lng.toFixed(0)}`;
+                const countryName = country || `Area ${lat.toFixed(0)}, ${lng.toFixed(0)}`;
                 
                 resolve({
                   city: cityName,
@@ -228,23 +248,23 @@ const AnalyticsDashboard = () => {
                   photo: photo
                 });
               } else {
-                // Fallback to coordinates if geocoding fails
+                // Improved fallback to coordinates if geocoding fails
                 const coordName = `Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`;
                 resolve({
                   city: coordName,
-                  state: 'Unknown State',
-                  country: 'Unknown Country',
+                  state: `Area ${lat.toFixed(0)}, ${lng.toFixed(0)}`,
+                  country: `Region ${lat.toFixed(0)}, ${lng.toFixed(0)}`,
                   photo: photo
                 });
               }
             });
           } else {
-            // Google Maps not loaded, use coordinate fallback
+            // Google Maps not loaded, use coordinate fallback with better naming
             const coordName = `Near ${lat.toFixed(1)}, ${lng.toFixed(1)}`;
             resolve({
               city: coordName,
-              state: 'Unknown State',
-              country: 'Unknown Country',
+              state: `Area ${lat.toFixed(0)}, ${lng.toFixed(0)}`,
+              country: `Region ${lat.toFixed(0)}, ${lng.toFixed(0)}`,
               photo: photo
             });
           }
@@ -329,7 +349,7 @@ const AnalyticsDashboard = () => {
       .slice(0, 8)
       .map(([name, count]) => ({ name, count, photos: [] }));
 
-    // Recent activity with improved user name resolution and real location names
+    // Recent activity with real names prioritized
     const recentActivity = photos.slice(0, 15).map(photo => {
       const user = usersData[photo.uid];
       let displayName = 'Unknown User';
@@ -340,13 +360,13 @@ const AnalyticsDashboard = () => {
       }
       
       if (user) {
-        // Try different user fields in order of preference
-        if (user.displayScreenName) {
+        // Prioritize real name first, then other options
+        if (user.realName) {
+          displayName = user.realName;
+        } else if (user.displayScreenName) {
           displayName = user.displayScreenName;
         } else if (user.screenName) {
           displayName = user.screenName;
-        } else if (user.realName) {
-          displayName = user.realName;
         } else if (user.email) {
           displayName = user.email;
         } else {
@@ -508,8 +528,9 @@ const AnalyticsDashboard = () => {
           }}>
             {photos.map((photo, index) => {
               const user = usersData[photo.uid];
+              // Prioritize real name first in photo modal too
               const userName = user ? (
-                user.displayScreenName || user.screenName || user.realName || user.email || `User ${photo.uid?.slice(-6)}`
+                user.realName || user.displayScreenName || user.screenName || user.email || `User ${photo.uid?.slice(-6)}`
               ) : `User ${photo.uid?.slice(-6) || 'Unknown'}`;
 
               return (
@@ -1265,7 +1286,39 @@ const AnalyticsDashboard = () => {
             </div>
             
             {window.google && window.google.maps ? (
-              <PhotoHeatmap photos={allPhotos} />
+              window.google.maps.visualization ? (
+                <PhotoHeatmap photos={allPhotos} />
+              ) : (
+                <div style={{
+                  width: '100%',
+                  height: '500px',
+                  borderRadius: '12px',
+                  border: '2px dashed #e5e7eb',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#f8f9fa',
+                  color: '#6b7280'
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      border: '4px solid #e5e7eb',
+                      borderTop: '4px solid #007bff',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      margin: '0 auto 16px'
+                    }} />
+                    <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '18px' }}>
+                      Loading Heatmap Visualization
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '14px' }}>
+                      Loading Google Maps visualization library...
+                    </p>
+                  </div>
+                </div>
+              )
             ) : (
               <div style={{
                 width: '100%',
