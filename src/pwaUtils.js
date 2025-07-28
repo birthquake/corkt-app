@@ -1,12 +1,16 @@
 // PWA Utilities for Corkt App (Simplified - No Push Notifications)
 // Add this file to your src/ directory
 
-// Service Worker Registration
+// Service Worker Registration - FIXED VERSION
 export const registerServiceWorker = () => {
+  console.log('🔧 PWA: registerServiceWorker function called');
+  
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
+    console.log('🔧 PWA: Service Worker API available');
+    
+    // Register immediately instead of waiting for 'load' event
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
         console.log('✅ Service Worker registered:', registration);
         
         // Handle updates
@@ -21,10 +25,12 @@ export const registerServiceWorker = () => {
         });
         
         return registration;
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error('❌ Service Worker registration failed:', error);
-      }
-    });
+      });
+  } else {
+    console.log('❌ Service Worker not supported in this browser');
   }
 };
 
