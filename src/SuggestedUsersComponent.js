@@ -62,6 +62,8 @@ const checkIfFollowing = async (followerId, followingId) => {
     return !snapshot.empty;
   } catch (error) {
     console.error('Error checking follow status:', error);
+  } // ← this closes the catch block
+}; // ← this closes the entire function
 
 const SuggestedUsersComponent = ({ 
   currentUser, 
