@@ -64,13 +64,19 @@ const AnalyticsDashboard = () => {
       const usersRef = collection(db, "users");
       const unsubscribe = onSnapshot(usersRef, (snapshot) => {
         const usersMap = {};
+        console.log('Loading users, count:', snapshot.docs.length); // Debug log
+        
         snapshot.docs.forEach(doc => {
-          usersMap[doc.id] = {
+          const userData = {
             id: doc.id,
             ...doc.data(),
             createdAt: doc.data().createdAt?.toDate() || new Date(doc.data().createdAt || Date.now())
           };
+          usersMap[doc.id] = userData;
+          console.log('User loaded:', doc.id, userData.email || userData.screenName); // Debug log
         });
+        
+        console.log('Total users loaded:', Object.keys(usersMap).length); // Debug log
         setUsersData(usersMap);
       });
 
@@ -129,6 +135,13 @@ const AnalyticsDashboard = () => {
 
         // Store all photos for heatmap
         setAllPhotos(photos);
+        
+        // Debug: Check photo structure
+        if (photos.length > 0) {
+          console.log('Sample photo structure:', photos[0]);
+          console.log('Available user IDs in photos:', [...new Set(photos.map(p => p.uid))].slice(0, 5));
+          console.log('Available users in usersData:', Object.keys(usersData).slice(0, 5));
+        }
 
         // Calculate user signup metrics from usersData
         const allUsers = Object.values(usersData);
@@ -216,13 +229,18 @@ const AnalyticsDashboard = () => {
         // Recent activity (last 15 photos with real user info)
         const recentActivity = photos.slice(0, 15).map(photo => {
           const user = usersData[photo.uid];
-          const displayName = user ? (
-            user.displayScreenName || 
-            user.screenName || 
-            user.realName || 
-            user.email || 
-            `User ${photo.uid?.slice(-6)}`
-          ) : `User ${photo.uid?.slice(-6) || 'Unknown'}`;
+          console.log('Photo UID:', photo.uid, 'Found user:', user); // Debug log
+          
+          let displayName = 'Unknown User';
+          if (user) {
+            displayName = user.displayScreenName || 
+                         user.screenName || 
+                         user.realName || 
+                         user.email ||
+                         `User ${photo.uid?.slice(-6)}`;
+          } else if (photo.uid) {
+            displayName = `User ${photo.uid.slice(-6)}`;
+          }
 
           return {
             id: photo.id,
@@ -232,7 +250,8 @@ const AnalyticsDashboard = () => {
               : 'Unknown location',
             timestamp: photo.timestamp,
             likes: photo.likeCount || photo.likes?.length || 0,
-            comments: photo.commentCount || photo.comments?.length || 0
+            comments: photo.commentCount || photo.comments?.length || 0,
+            uid: photo.uid // Keep for debugging
           };
         });
 
@@ -407,9 +426,10 @@ const AnalyticsDashboard = () => {
         ref={mapRef}
         style={{
           width: '100%',
-          height: '400px',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb'
+          height: '500px',
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
         }}
       />
     );
@@ -917,56 +937,6 @@ const AnalyticsDashboard = () => {
             </div>
           </div>
 
-          {/* Top Locations */}
-          {engagementMetrics.topLocations.length > 0 && (
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-              marginBottom: '24px'
-            }}>
-              <h2 style={{ color: '#1f2937', marginBottom: '20px', fontSize: '20px', fontWeight: '600' }}>
-                📍 Top Photo Locations (Coordinates)
-              </h2>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '16px'
-              }}>
-                {engagementMetrics.topLocations.map((location, index) => (
-                  <div key={location.name} style={{
-                    padding: '16px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <div>
-                      <p style={{ margin: '0 0 4px 0', fontWeight: '500', color: '#1f2937' }}>
-                        {location.name}
-                      </p>
-                      <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>
-                        #{index + 1} most popular
-                      </p>
-                    </div>
-                    <span style={{
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '500'
-                    }}>
-                      {location.count} photos
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Recent Activity */}
           <div style={{
             backgroundColor: 'white',
@@ -977,6 +947,23 @@ const AnalyticsDashboard = () => {
             <h2 style={{ color: '#1f2937', marginBottom: '20px', fontSize: '20px', fontWeight: '600' }}>
               🕒 Recent Activity
             </h2>
+            
+            {/* Debug Info - Remove this after fixing */}
+            <div style={{
+              backgroundColor: '#f3f4f6',
+              padding: '12px',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              fontSize: '12px',
+              color: '#6b7280'
+            }}>
+              <strong>Debug Info:</strong> Users loaded: {Object.keys(usersData).length}, 
+              Photos: {engagementMetrics.recentActivity.length}
+              {engagementMetrics.recentActivity.length > 0 && (
+                <div>Sample UIDs: {engagementMetrics.recentActivity.slice(0, 3).map(a => a.uid).join(', ')}</div>
+              )}
+            </div>
+            
             <div style={{
               maxHeight: '400px',
               overflowY: 'auto'
@@ -997,7 +984,7 @@ const AnalyticsDashboard = () => {
                       📍 {activity.location}
                     </p>
                     <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>
-                      {formatDate(activity.timestamp)}
+                      {formatDate(activity.timestamp)} • UID: {activity.uid?.slice(-6)}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -1196,7 +1183,7 @@ const AnalyticsDashboard = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                📍 Top Photo Locations
+                📍 Top Photo Coordinates
                 <span style={{
                   backgroundColor: '#f3f4f6',
                   color: '#6b7280',
@@ -1208,6 +1195,13 @@ const AnalyticsDashboard = () => {
                   Ranked by activity
                 </span>
               </h2>
+              <p style={{ 
+                color: '#6b7280', 
+                margin: '0 0 16px 0', 
+                fontSize: '14px' 
+              }}>
+                Coordinates shown as latitude, longitude. Working on city/place name display.
+              </p>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
