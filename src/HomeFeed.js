@@ -734,7 +734,6 @@ const formatTimeAgo = useCallback((timestamp) => {
                     showUserInfo={true}
                     showTimestamp={true} // ← ADD THIS LINE
                     formatTimeAgo={formatTimeAgo} // ← ADD THIS LINE
-/>
                   />
                 );
               })}
