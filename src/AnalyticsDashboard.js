@@ -1,6 +1,6 @@
 // AnalyticsDashboard.js - Enhanced with engagement metrics for investors
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, getDocs, where } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import analytics from './analyticsService';
 
@@ -32,11 +32,9 @@ const AnalyticsDashboard = () => {
   });
 
   const [usersData, setUsersData] = useState({});
-  const [mapLoaded, setMapLoaded] = useState(false);
   const [allPhotos, setAllPhotos] = useState([]);
-
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState('engagement'); // 'engagement', 'geographic', or 'behavior'
+  const [selectedTab, setSelectedTab] = useState('engagement');
 
   // Helper function to get date ranges
   const getDateRanges = () => {
@@ -50,65 +48,14 @@ const AnalyticsDashboard = () => {
   // Load existing behavioral analytics
   useEffect(() => {
     loadBehavioralAnalytics();
+    loadUsersData();
+    loadEngagementMetrics();
   }, []);
-
-  // Load engagement metrics from Firestore  
-  useEffect(() => {
-    loadBehavioralAnalytics();
-    
-    // Load both users and engagement metrics
-    const unsubscribeUsers = loadUsersData();
-    const unsubscribePhotos = loadEngagementMetrics();
-    
-    return () => {
-      if (unsubscribeUsers) unsubscribeUsers();
-      if (unsubscribePhotos) unsubscribePhotos();
-    };
-  }, []);
-
-  // Process engagement metrics whenever usersData or allPhotos change
-  useEffect(() => {
-    if (allPhotos.length > 0) {
-      processEngagementMetrics(allPhotos, usersData);
-    }
-  }, [allPhotos, usersData]);
-
-  // Separate function to process engagement metrics
-  const processEngagementMetrics = (photos, users) => {
-
-  // Load users data for joining with photos
-  const loadUsersData = () => {
-    try {
-      const usersRef = collection(db, "users");
-      const unsubscribe = onSnapshot(usersRef, (snapshot) => {
-        const usersMap = {};
-        console.log('Loading users, count:', snapshot.docs.length); // Debug log
-        
-        snapshot.docs.forEach(doc => {
-          const userData = {
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate() || new Date(doc.data().createdAt || Date.now())
-          };
-          usersMap[doc.id] = userData;
-          console.log('User loaded:', doc.id, userData.email || userData.screenName); // Debug log
-        });
-        
-        console.log('Total users loaded:', Object.keys(usersMap).length); // Debug log
-        setUsersData(usersMap);
-      });
-
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Error fetching users data:", error);
-    }
-  };
 
   const loadBehavioralAnalytics = () => {
     const events = analytics.events;
     setAnalyticsData(events);
     
-    // Calculate summary statistics (your existing logic)
     const totalEvents = events.length;
     const modeToggles = events.filter(e => e.event === 'mode_toggle');
     const localToggles = modeToggles.filter(e => e.to_mode === 'local');
@@ -136,503 +83,198 @@ const AnalyticsDashboard = () => {
     });
   };
 
-  // Separate function to process engagement metrics
-  const processEngagementMetrics = (photos, users) => {
+  const loadUsersData = () => {
     try {
-      const { today, weekAgo, monthAgo } = getDateRanges();
-      
-      console.log('Processing metrics with:', photos.length, 'photos and', Object.keys(users).length, 'users');
-
-      // Calculate user signup metrics from users data
-      const allUsers = Object.values(users);
-      const userSignupsToday = allUsers.filter(user => 
-        user.createdAt >= today
-      ).length;
-
-      const userSignupsWeek = allUsers.filter(user => 
-        user.createdAt >= weekAgo
-      ).length;
-
-      const userSignupsMonth = allUsers.filter(user => 
-        user.createdAt >= monthAgo
-      ).length;
-
-      // Calculate photo metrics
-      const todayPhotos = photos.filter(photo => 
-        photo.timestamp >= today
-      ).length;
-
-      const weeklyPhotos = photos.filter(photo => 
-        photo.timestamp >= weekAgo
-      ).length;
-
-      const monthlyPhotos = photos.filter(photo => 
-        photo.timestamp >= monthAgo
-      ).length;
-
-      // Calculate engagement metrics
-      const totalLikes = photos.reduce((sum, photo) => 
-        sum + (photo.likeCount || photo.likes?.length || 0), 0
-      );
-
-      const totalComments = photos.reduce((sum, photo) => 
-        sum + (photo.commentCount || photo.comments?.length || 0), 0
-      );
-
-      // Get unique users from photos (using uid field)
-      const uniqueUsers = [...new Set(photos.map(photo => photo.uid))].filter(Boolean);
-      const totalUsers = Object.keys(users).length; // Use actual users collection count
-
-      // Active users (posted in time period)
-      const activeUsersToday = [...new Set(
-        photos.filter(photo => photo.timestamp >= today)
-              .map(photo => photo.uid)
-      )].filter(Boolean).length;
-
-      const activeUsersWeek = [...new Set(
-        photos.filter(photo => photo.timestamp >= weekAgo)
-              .map(photo => photo.uid)
-      )].filter(Boolean).length;
-
-      // Growth rate (weekly photos vs previous week)
-      const twoWeeksAgo = new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const previousWeekPhotos = photos.filter(photo => 
-        photo.timestamp >= twoWeeksAgo && photo.timestamp < weekAgo
-      ).length;
-      
-      const growthRate = previousWeekPhotos > 0 
-        ? Math.round(((weeklyPhotos - previousWeekPhotos) / previousWeekPhotos) * 100)
-        : 0;
-
-      // Engagement rate (likes + comments per photo)
-      const engagementRate = photos.length > 0 
-        ? Math.round(((totalLikes + totalComments) / photos.length) * 100) / 100
-        : 0;
-
-      // Top locations (use a simple area-based grouping for now)
-      const locationCounts = {};
-      photos.forEach(photo => {
-        if (photo.latitude && photo.longitude) {
-          const lat = parseFloat(photo.latitude);
-          const lng = parseFloat(photo.longitude);
-          
-          // Create area-based location names (very simple approach)
-          let locationName = 'Unknown Area';
-          
-          // Simple geographic naming (you can enhance this with actual reverse geocoding)
-          if (lat >= 40.7 && lat <= 40.8 && lng >= -74.1 && lng <= -73.9) {
-            locationName = 'Manhattan, NY';
-          } else if (lat >= 40.6 && lat <= 40.7 && lng >= -74.1 && lng <= -73.9) {
-            locationName = 'Brooklyn, NY';
-          } else if (lat >= 34.0 && lat <= 34.2 && lng >= -118.5 && lng <= -118.2) {
-            locationName = 'Los Angeles, CA';
-          } else if (lat >= 37.7 && lat <= 37.8 && lng >= -122.5 && lng <= -122.3) {
-            locationName = 'San Francisco, CA';
-          } else {
-            // Fallback to coordinate-based areas
-            const latRound = Math.round(lat * 100) / 100;
-            const lngRound = Math.round(lng * 100) / 100;
-            locationName = `Area near ${latRound}, ${lngRound}`;
-          }
-          
-          locationCounts[locationName] = (locationCounts[locationName] || 0) + 1;
-        }
+      const usersRef = collection(db, "users");
+      const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+        const usersMap = {};
+        snapshot.docs.forEach(doc => {
+          usersMap[doc.id] = {
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate() || new Date(doc.data().createdAt || Date.now())
+          };
+        });
+        setUsersData(usersMap);
+        console.log('Users loaded:', Object.keys(usersMap).length);
       });
 
-      const topLocations = Object.entries(locationCounts)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 8)
-        .map(([name, count]) => ({ name, count }));
-
-      // Recent activity (last 15 photos with real user info)
-      const recentActivity = photos.slice(0, 15).map(photo => {
-        const user = users[photo.uid];
-        console.log('Processing photo UID:', photo.uid, 'Found user:', user); // Debug log
-        
-        let displayName = 'Unknown User';
-        if (user) {
-          // Try different user fields in order of preference
-          displayName = user.displayScreenName || 
-                       user.screenName || 
-                       user.realName || 
-                       user.email;
-          
-          // If none of those exist, fall back to UID
-          if (!displayName) {
-            displayName = `User ${photo.uid?.slice(-6)}`;
-          }
-        } else if (photo.uid) {
-          displayName = `User ${photo.uid.slice(-6)}`;
-        }
-
-        // Get location name - try to make it more readable
-        let locationName = 'Unknown location';
-        if (photo.latitude && photo.longitude) {
-          const lat = parseFloat(photo.latitude);
-          const lng = parseFloat(photo.longitude);
-          
-          // Simple location naming based on coordinates
-          // You can enhance this later with reverse geocoding
-          locationName = `Location ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
-        }
-
-        return {
-          id: photo.id,
-          userEmail: displayName,
-          location: locationName,
-          timestamp: photo.timestamp,
-          likes: photo.likeCount || photo.likes?.length || 0,
-          comments: photo.commentCount || photo.comments?.length || 0,
-          uid: photo.uid, // Keep for debugging
-          rawUser: user // Keep for debugging
-        };
-      });
-
-      // Update engagement metrics state
-      setEngagementMetrics({
-        totalUsers,
-        totalPhotos: photos.length,
-        todayPhotos,
-        weeklyPhotos,
-        monthlyPhotos,
-        totalLikes,
-        totalComments,
-        activeUsersToday,
-        activeUsersWeek,
-        avgPhotosPerUser: totalUsers ? (photos.length / totalUsers).toFixed(1) : 0,
-        topLocations,
-        recentActivity,
-        growthRate,
-        engagementRate,
-        userSignupsToday,
-        userSignupsWeek,
-        userSignupsMonth
-      });
-
-      setLoading(false);
+      return () => unsubscribe();
     } catch (error) {
-      console.error("Error processing engagement metrics:", error);
-      setLoading(false);
+      console.error("Error fetching users data:", error);
     }
   };
 
   const loadEngagementMetrics = () => {
     try {
-      const { today, weekAgo, monthAgo } = getDateRanges();
-
-      // Get all photos with real-time updates
       const photosRef = collection(db, "photos");
       const photosQuery = query(photosRef, orderBy("timestamp", "desc"));
       
-      const unsubscribe = onSnapshot(photosQuery, async (snapshot) => {
+      const unsubscribe = onSnapshot(photosQuery, (snapshot) => {
         const photos = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
           timestamp: doc.data().timestamp?.toDate() || new Date(doc.data().timestamp || Date.now())
         }));
 
-        // Store all photos for heatmap
         setAllPhotos(photos);
-        
-        // Debug: Check photo structure
-        if (photos.length > 0) {
-          console.log('Sample photo structure:', photos[0]);
-          console.log('Available user IDs in photos:', [...new Set(photos.map(p => p.uid))].slice(0, 5));
-          console.log('Available users in usersData:', Object.keys(usersData).slice(0, 5));
-          console.log('UsersData loaded:', Object.keys(usersData).length > 0);
-        }
-
-        // Calculate user signup metrics from usersData
-        const allUsers = Object.values(usersData);
-        const userSignupsToday = allUsers.filter(user => 
-          user.createdAt >= today
-        ).length;
-
-        const userSignupsWeek = allUsers.filter(user => 
-          user.createdAt >= weekAgo
-        ).length;
-
-        const userSignupsMonth = allUsers.filter(user => 
-          user.createdAt >= monthAgo
-        ).length;
-
-        // Calculate photo metrics
-        const todayPhotos = photos.filter(photo => 
-          photo.timestamp >= today
-        ).length;
-
-        const weeklyPhotos = photos.filter(photo => 
-          photo.timestamp >= weekAgo
-        ).length;
-
-        const monthlyPhotos = photos.filter(photo => 
-          photo.timestamp >= monthAgo
-        ).length;
-
-        // Calculate engagement metrics
-        const totalLikes = photos.reduce((sum, photo) => 
-          sum + (photo.likeCount || photo.likes?.length || 0), 0
-        );
-
-        const totalComments = photos.reduce((sum, photo) => 
-          sum + (photo.commentCount || photo.comments?.length || 0), 0
-        );
-
-        // Get unique users from photos (using uid field)
-        const uniqueUsers = [...new Set(photos.map(photo => photo.uid))].filter(Boolean);
-        const totalUsers = Object.keys(usersData).length; // Use actual users collection count
-
-        // Active users (posted in time period)
-        const activeUsersToday = [...new Set(
-          photos.filter(photo => photo.timestamp >= today)
-                .map(photo => photo.uid)
-        )].filter(Boolean).length;
-
-        const activeUsersWeek = [...new Set(
-          photos.filter(photo => photo.timestamp >= weekAgo)
-                .map(photo => photo.uid)
-        )].filter(Boolean).length;
-
-        // Growth rate (weekly photos vs previous week)
-        const twoWeeksAgo = new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const previousWeekPhotos = photos.filter(photo => 
-          photo.timestamp >= twoWeeksAgo && photo.timestamp < weekAgo
-        ).length;
-        
-        const growthRate = previousWeekPhotos > 0 
-          ? Math.round(((weeklyPhotos - previousWeekPhotos) / previousWeekPhotos) * 100)
-          : 0;
-
-        // Engagement rate (likes + comments per photo)
-        const engagementRate = photos.length > 0 
-          ? Math.round(((totalLikes + totalComments) / photos.length) * 100) / 100
-          : 0;
-
-        // Top locations (using coordinates to create location strings)
-        const locationCounts = {};
-        photos.forEach(photo => {
-          if (photo.latitude && photo.longitude) {
-            // Create a location string from coordinates (rounded to avoid too many unique locations)
-            const lat = parseFloat(photo.latitude).toFixed(3);
-            const lng = parseFloat(photo.longitude).toFixed(3);
-            const locationKey = `${lat}, ${lng}`;
-            locationCounts[locationKey] = (locationCounts[locationKey] || 0) + 1;
-          }
-        });
-
-        const topLocations = Object.entries(locationCounts)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 8)
-          .map(([coords, count]) => ({ name: coords, count }));
-
-        // Recent activity (last 15 photos with real user info)
-        const recentActivity = photos.slice(0, 15).map(photo => {
-          const user = usersData[photo.uid];
-          console.log('Photo UID:', photo.uid, 'Found user:', user); // Debug log
-          
-          let displayName = 'Unknown User';
-          if (user) {
-            // Try different user fields in order of preference
-            displayName = user.displayScreenName || 
-                         user.screenName || 
-                         user.realName || 
-                         user.email;
-            
-            // If none of those exist, fall back to UID
-            if (!displayName) {
-              displayName = `User ${photo.uid?.slice(-6)}`;
-            }
-          } else if (photo.uid) {
-            displayName = `User ${photo.uid.slice(-6)}`;
-          }
-
-          // Get location name - try to make it more readable
-          let locationName = 'Unknown location';
-          if (photo.latitude && photo.longitude) {
-            const lat = parseFloat(photo.latitude);
-            const lng = parseFloat(photo.longitude);
-            
-            // Simple location naming based on coordinates
-            // You can enhance this later with reverse geocoding
-            locationName = `Location ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
-          }
-
-          return {
-            id: photo.id,
-            userEmail: displayName,
-            location: locationName,
-            timestamp: photo.timestamp,
-            likes: photo.likeCount || photo.likes?.length || 0,
-            comments: photo.commentCount || photo.comments?.length || 0,
-            uid: photo.uid, // Keep for debugging
-            rawUser: user // Keep for debugging
-          };
-        });
-
-        // Update engagement metrics state
-        setEngagementMetrics({
-          totalUsers,
-          totalPhotos: photos.length,
-          todayPhotos,
-          weeklyPhotos,
-          monthlyPhotos,
-          totalLikes,
-          totalComments,
-          activeUsersToday,
-          activeUsersWeek,
-          avgPhotosPerUser: totalUsers ? (photos.length / totalUsers).toFixed(1) : 0,
-          topLocations,
-          recentActivity,
-          growthRate,
-          engagementRate,
-          userSignupsToday,
-          userSignupsWeek,
-          userSignupsMonth
-        });
-
-        setLoading(false);
+        processMetrics(photos);
       });
 
       return () => unsubscribe();
     } catch (error) {
-      console.error("Error fetching engagement metrics:", error);
+      console.error("Error fetching photos:", error);
       setLoading(false);
     }
   };
 
-  const getVenueAnalytics = (venueName) => {
-    return analytics.getVenueAnalytics(venueName);
-  };
+  const processMetrics = (photos) => {
+    const { today, weekAgo, monthAgo } = getDateRanges();
+    
+    // Basic photo metrics
+    const todayPhotos = photos.filter(photo => photo.timestamp >= today).length;
+    const weeklyPhotos = photos.filter(photo => photo.timestamp >= weekAgo).length;
+    const monthlyPhotos = photos.filter(photo => photo.timestamp >= monthAgo).length;
 
-  const formatDate = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
-  };
+    // User metrics
+    const totalUsers = Object.keys(usersData).length;
+    const uniquePhotoUsers = [...new Set(photos.map(photo => photo.uid))].filter(Boolean);
+    const activeUsersToday = [...new Set(
+      photos.filter(photo => photo.timestamp >= today).map(photo => photo.uid)
+    )].filter(Boolean).length;
+    
+    const activeUsersWeek = [...new Set(
+      photos.filter(photo => photo.timestamp >= weekAgo).map(photo => photo.uid)
+    )].filter(Boolean).length;
 
-  const formatNumber = (num) => {
-    return num.toLocaleString();
+    // Engagement metrics
+    const totalLikes = photos.reduce((sum, photo) => sum + (photo.likeCount || 0), 0);
+    const totalComments = photos.reduce((sum, photo) => sum + (photo.commentCount || 0), 0);
+    const engagementRate = photos.length > 0 ? ((totalLikes + totalComments) / photos.length).toFixed(2) : 0;
+
+    // Growth rate
+    const twoWeeksAgo = new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const previousWeekPhotos = photos.filter(photo => 
+      photo.timestamp >= twoWeeksAgo && photo.timestamp < weekAgo
+    ).length;
+    const growthRate = previousWeekPhotos > 0 ? 
+      Math.round(((weeklyPhotos - previousWeekPhotos) / previousWeekPhotos) * 100) : 0;
+
+    // Top locations
+    const locationCounts = {};
+    photos.forEach(photo => {
+      if (photo.latitude && photo.longitude) {
+        const lat = parseFloat(photo.latitude);
+        const lng = parseFloat(photo.longitude);
+        
+        // Simple location naming
+        let locationName = 'Unknown Area';
+        if (lat >= 40.7 && lat <= 40.8 && lng >= -74.1 && lng <= -73.9) {
+          locationName = 'Manhattan, NY';
+        } else if (lat >= 40.6 && lat <= 40.7 && lng >= -74.1 && lng <= -73.9) {
+          locationName = 'Brooklyn, NY';
+        } else if (lat >= 34.0 && lat <= 34.2 && lng >= -118.5 && lng <= -118.2) {
+          locationName = 'Los Angeles, CA';
+        } else if (lat >= 37.7 && lat <= 37.8 && lng >= -122.5 && lng <= -122.3) {
+          locationName = 'San Francisco, CA';
+        } else {
+          const latRound = Math.round(lat * 100) / 100;
+          const lngRound = Math.round(lng * 100) / 100;
+          locationName = `Area ${latRound}, ${lngRound}`;
+        }
+        locationCounts[locationName] = (locationCounts[locationName] || 0) + 1;
+      }
+    });
+
+    const topLocations = Object.entries(locationCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 8)
+      .map(([name, count]) => ({ name, count }));
+
+    // Recent activity
+    const recentActivity = photos.slice(0, 15).map(photo => {
+      const user = usersData[photo.uid];
+      let displayName = 'Unknown User';
+      
+      if (user) {
+        displayName = user.displayScreenName || user.screenName || user.realName || user.email || `User ${photo.uid?.slice(-6)}`;
+      } else if (photo.uid) {
+        displayName = `User ${photo.uid.slice(-6)}`;
+      }
+
+      return {
+        id: photo.id,
+        userEmail: displayName,
+        location: photo.latitude && photo.longitude ? 
+          `${parseFloat(photo.latitude).toFixed(2)}, ${parseFloat(photo.longitude).toFixed(2)}` : 
+          'Unknown location',
+        timestamp: photo.timestamp,
+        likes: photo.likeCount || 0,
+        comments: photo.commentCount || 0
+      };
+    });
+
+    // User signups
+    const allUsers = Object.values(usersData);
+    const userSignupsToday = allUsers.filter(user => user.createdAt >= today).length;
+    const userSignupsWeek = allUsers.filter(user => user.createdAt >= weekAgo).length;
+    const userSignupsMonth = allUsers.filter(user => user.createdAt >= monthAgo).length;
+
+    setEngagementMetrics({
+      totalUsers,
+      totalPhotos: photos.length,
+      todayPhotos,
+      weeklyPhotos,
+      monthlyPhotos,
+      totalLikes,
+      totalComments,
+      activeUsersToday,
+      activeUsersWeek,
+      avgPhotosPerUser: totalUsers ? (photos.length / totalUsers).toFixed(1) : 0,
+      topLocations,
+      recentActivity,
+      growthRate,
+      engagementRate,
+      userSignupsToday,
+      userSignupsWeek,
+      userSignupsMonth
+    });
+
+    setLoading(false);
   };
 
   // Heatmap component
   const PhotoHeatmap = ({ photos }) => {
     const mapRef = React.useRef(null);
-    const heatmapRef = React.useRef(null);
 
     React.useEffect(() => {
-      // Check if Google Maps and visualization library are available
-      if (!window.google || !window.google.maps) {
-        console.log('Google Maps not loaded yet');
-        return;
-      }
+      if (!window.google || !window.google.maps || !mapRef.current) return;
 
-      if (!window.google.maps.visualization) {
-        // Load visualization library if not already loaded
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?libraries=visualization&key=AIzaSyA868vL4wcDalIHwajFXLgTACs87w7apRE`;
-        script.onload = () => {
-          console.log('Visualization library loaded');
-          initializeHeatmap();
-        };
-        document.head.appendChild(script);
-        return;
-      }
+      const map = new window.google.maps.Map(mapRef.current, {
+        zoom: 10,
+        center: { lat: 40.7128, lng: -74.0060 },
+        mapTypeId: 'roadmap'
+      });
 
-      initializeHeatmap();
+      const heatmapData = photos
+        .filter(photo => photo.latitude && photo.longitude)
+        .map(photo => new window.google.maps.LatLng(
+          parseFloat(photo.latitude),
+          parseFloat(photo.longitude)
+        ));
 
-      function initializeHeatmap() {
-        if (!mapRef.current || photos.length === 0) return;
-
-        // Initialize map
-        const map = new window.google.maps.Map(mapRef.current, {
-          zoom: 10,
-          center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC, will adjust based on data
-          mapTypeId: 'roadmap',
-          styles: [
-            {
-              featureType: 'all',
-              elementType: 'geometry.fill',
-              stylers: [{ color: '#f8f9fa' }]
-            },
-            {
-              featureType: 'water',
-              elementType: 'geometry',
-              stylers: [{ color: '#e3f2fd' }]
-            },
-            {
-              featureType: 'road',
-              elementType: 'geometry',
-              stylers: [{ color: '#ffffff' }]
-            }
-          ]
-        });
-
-        // Prepare heatmap data
-        const heatmapData = photos
-          .filter(photo => photo.latitude && photo.longitude)
-          .map(photo => {
-            const lat = parseFloat(photo.latitude);
-            const lng = parseFloat(photo.longitude);
-            if (isNaN(lat) || isNaN(lng)) return null;
-            return new window.google.maps.LatLng(lat, lng);
-          })
-          .filter(Boolean);
-
-        console.log(`Heatmap: Processing ${heatmapData.length} valid photo locations`);
-
-        if (heatmapData.length === 0) {
-          // Show message when no location data
-          const infoWindow = new window.google.maps.InfoWindow({
-            content: '<div style="padding: 10px; text-align: center;">No location data available for photos</div>',
-            position: { lat: 40.7128, lng: -74.0060 }
-          });
-          infoWindow.open(map);
-          return;
-        }
-
-        // Create heatmap layer
+      if (heatmapData.length > 0 && window.google.maps.visualization) {
         const heatmap = new window.google.maps.visualization.HeatmapLayer({
           data: heatmapData,
           map: map,
           radius: 20,
-          opacity: 0.6,
-          gradient: [
-            'rgba(0, 255, 255, 0)',
-            'rgba(0, 255, 255, 1)',
-            'rgba(0, 191, 255, 1)',
-            'rgba(0, 127, 255, 1)',
-            'rgba(0, 63, 255, 1)',
-            'rgba(0, 0, 255, 1)',
-            'rgba(0, 0, 223, 1)',
-            'rgba(0, 0, 191, 1)',
-            'rgba(0, 0, 159, 1)',
-            'rgba(0, 0, 127, 1)',
-            'rgba(63, 0, 91, 1)',
-            'rgba(127, 0, 63, 1)',
-            'rgba(191, 0, 31, 1)',
-            'rgba(255, 0, 0, 1)'
-          ]
+          opacity: 0.6
         });
 
-        heatmapRef.current = heatmap;
-
-        // Auto-fit bounds to show all points
-        if (heatmapData.length > 0) {
-          const bounds = new window.google.maps.LatLngBounds();
-          heatmapData.forEach(point => bounds.extend(point));
-          map.fitBounds(bounds);
-          
-          // Don't zoom in too much for single points
-          const listener = window.google.maps.event.addListener(map, 'idle', () => {
-            if (map.getZoom() > 15) map.setZoom(15);
-            window.google.maps.event.removeListener(listener);
-          });
-        }
+        const bounds = new window.google.maps.LatLngBounds();
+        heatmapData.forEach(point => bounds.extend(point));
+        map.fitBounds(bounds);
       }
-
-      return () => {
-        if (heatmapRef.current) {
-          heatmapRef.current.setMap(null);
-        }
-      };
     }, [photos]);
 
     return (
@@ -642,11 +284,22 @@ const AnalyticsDashboard = () => {
           width: '100%',
           height: '500px',
           borderRadius: '12px',
-          border: '1px solid #e5e7eb',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+          border: '1px solid #e5e7eb'
         }}
       />
     );
+  };
+
+  const formatNumber = (num) => {
+    return num.toLocaleString();
+  };
+
+  const formatDate = (timestamp) => {
+    return new Date(timestamp).toLocaleString();
+  };
+
+  const getVenueAnalytics = (venueName) => {
+    return analytics.getVenueAnalytics(venueName);
   };
 
   const exportData = () => {
@@ -846,78 +499,6 @@ const AnalyticsDashboard = () => {
                 </h3>
                 <span style={{ fontSize: '24px' }}>👥</span>
               </div>
-
-          {/* Geographic Heatmap */}
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-            marginBottom: '24px'
-          }}>
-            <div style={{ marginBottom: '20px' }}>
-              <h2 style={{ 
-                color: '#1f2937', 
-                marginBottom: '8px', 
-                fontSize: '20px', 
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                🗺️ Photo Heatmap
-                <span style={{
-                  backgroundColor: '#f3f4f6',
-                  color: '#6b7280',
-                  padding: '4px 8px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: '500'
-                }}>
-                  {engagementMetrics.totalPhotos} photos plotted
-                </span>
-              </h2>
-              <p style={{ 
-                color: '#6b7280', 
-                margin: 0, 
-                fontSize: '14px' 
-              }}>
-                Geographic distribution of photo uploads showing user activity hotspots
-              </p>
-            </div>
-            
-            {window.google && window.google.maps ? (
-              <PhotoHeatmap photos={allPhotos} />
-            ) : (
-              <div style={{
-                width: '100%',
-                height: '400px',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#f8f9fa',
-                color: '#6b7280'
-              }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    border: '3px solid #e5e7eb',
-                    borderTop: '3px solid #007bff',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    margin: '0 auto 12px'
-                  }} />
-                  <p style={{ margin: 0 }}>Loading heatmap...</p>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', opacity: 0.7 }}>
-                    Waiting for Google Maps to initialize
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
               <p style={{
                 fontSize: '36px',
                 fontWeight: '700',
@@ -1064,7 +645,7 @@ const AnalyticsDashboard = () => {
               </p>
             </div>
 
-            {/* User Signups */}
+            {/* New Users */}
             <div style={{
               backgroundColor: 'white',
               borderRadius: '12px',
@@ -1161,35 +742,6 @@ const AnalyticsDashboard = () => {
             <h2 style={{ color: '#1f2937', marginBottom: '20px', fontSize: '20px', fontWeight: '600' }}>
               🕒 Recent Activity
             </h2>
-            
-            {/* Debug Info - Remove this after fixing */}
-            <div style={{
-              backgroundColor: '#f3f4f6',
-              padding: '16px',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              fontSize: '12px',
-              color: '#6b7280'
-            }}>
-              <strong>Debug Info:</strong><br/>
-              • Users loaded: {Object.keys(usersData).length}<br/>
-              • Photos: {engagementMetrics.recentActivity.length}<br/>
-              {engagementMetrics.recentActivity.length > 0 && (
-                <>
-                  • Sample photo UID: {engagementMetrics.recentActivity[0]?.uid}<br/>
-                  • User data for that UID: {JSON.stringify(engagementMetrics.recentActivity[0]?.rawUser)}<br/>
-                  • Available user fields: {engagementMetrics.recentActivity[0]?.rawUser ? 
-                    Object.keys(engagementMetrics.recentActivity[0].rawUser).join(', ') : 'No user found'}
-                </>
-              )}
-              {Object.keys(usersData).length > 0 && (
-                <>
-                  <br/>• Sample user ID: {Object.keys(usersData)[0]}<br/>
-                  • Sample user data: {JSON.stringify(Object.values(usersData)[0])}
-                </>
-              )}
-            </div>
-            
             <div style={{
               maxHeight: '400px',
               overflowY: 'auto'
@@ -1210,7 +762,7 @@ const AnalyticsDashboard = () => {
                       📍 {activity.location}
                     </p>
                     <p style={{ margin: 0, fontSize: '12px', color: '#9ca3af' }}>
-                      {formatDate(activity.timestamp)} • UID: {activity.uid?.slice(-6)}
+                      {formatDate(activity.timestamp)}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -1457,8 +1009,7 @@ const AnalyticsDashboard = () => {
                         margin: '0 0 6px 0', 
                         fontWeight: '600', 
                         color: '#1f2937',
-                        fontSize: '16px',
-                        fontFamily: 'monospace'
+                        fontSize: '16px'
                       }}>
                         {location.name}
                       </p>
@@ -1486,7 +1037,7 @@ const AnalyticsDashboard = () => {
         </div>
       )}
 
-      {/* Behavioral Analytics Tab (Your existing content) */}
+      {/* Behavioral Analytics Tab */}
       {selectedTab === 'behavior' && (
         <div>
           {/* Summary Statistics */}
