@@ -21,6 +21,7 @@ console.log('🔧 APP: App.js file loading...');
 console.log('🔧 APP: About to import PWA utilities...');
 import { registerServiceWorker } from './pwaUtils';
 import PWAInstallPrompt from './PWAInstallPrompt';
+import IOSInstallPrompt from './IOSInstallPrompt';
 console.log('🔧 APP: PWA imports completed');
 console.log('🔧 APP: registerServiceWorker function:', typeof registerServiceWorker);
 
@@ -527,8 +528,9 @@ export default function App() {
           </div>
         )}
 
-        {/* ✅ PWA Install Prompt Component */}
+        {/* ✅ PWA Install Prompt Components */}
         <PWAInstallPrompt currentUser={user} />
+        <IOSInstallPrompt />
 
         <style>
           {`
