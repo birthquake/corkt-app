@@ -732,6 +732,9 @@ const formatTimeAgo = useCallback((timestamp) => {
                     onPhotoClick={openPhotoModal}
                     onUserClick={handleUserClick}
                     showUserInfo={true}
+                    showTimestamp={true} // ← ADD THIS LINE
+                    formatTimeAgo={formatTimeAgo} // ← ADD THIS LINE
+/>
                   />
                 );
               })}
