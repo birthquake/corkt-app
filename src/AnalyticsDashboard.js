@@ -789,6 +789,7 @@ const AnalyticsDashboard = () => {
         return engagementMetrics.topCities || engagementMetrics.topLocations || [];
     }
   };
+  
   const PhotoHeatmap = ({ photos }) => {
     const mapRef = React.useRef(null);
 
@@ -1984,83 +1985,6 @@ const AnalyticsDashboard = () => {
                 <FileTextIcon color="#007bff" size={20} />
                 Recent Events
               </h2>
-            </div>
-            <div style={{
-              maxHeight: '400px',
-              overflowY: 'auto'
-            }}>
-              {filteredEvents.slice(-50).reverse().map((event, index) => (
-                <div key={index} style={{
-                  padding: '16px 24px',
-                  borderBottom: index < filteredEvents.slice(-50).length - 1 ? '1px solid #f3f4f6' : 'none'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <strong style={{ color: '#1f2937', fontSize: '14px' }}>{event.event}</strong>
-                    <span style={{ color: '#9ca3af', fontSize: '12px' }}>
-                      {formatDate(event.timestamp)}
-                    </span>
-                  </div>
-                  <div style={{ color: '#6b7280', fontSize: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {event.venue_detected && <span>📍 {event.venue_detected}</span>}
-                    {event.from_mode && event.to_mode && (
-                      <span>🔄 {event.from_mode} → {event.to_mode}</span>
-                    )}
-                    {event.action && <span>📸 {event.action}</span>}
-                    {event.session_id && <span>Session: {event.session_id.slice(-6)}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>erage_session_duration}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Event Filter */}
-          <div style={{ 
-            marginBottom: '20px',
-            backgroundColor: 'white',
-            padding: '16px 24px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-          }}>
-            <label style={{ fontWeight: '500', color: '#1f2937' }}>Filter by Venue:</label>
-            <select
-              value={selectedVenue}
-              onChange={(e) => setSelectedVenue(e.target.value)}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '8px',
-                border: '1px solid #d1d5db',
-                fontSize: '14px'
-              }}
-            >
-              <option value="all">All Venues</option>
-              {summary.venues && summary.venues.map(venue => (
-                <option key={venue} value={venue}>{venue}</option>
-              ))}
-            </select>
-            <span style={{ color: '#6b7280', fontSize: '14px' }}>
-              Showing {formatNumber(filteredEvents.length)} events
-            </span>
-          </div>
-
-          {/* Recent Events */}
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
-          }}>
-            <div style={{ padding: '24px 24px 0 24px' }}>
-              <h2 style={{ color: '#1f2937', margin: '0 0 20px 0', fontSize: '20px', fontWeight: '600' }}>📋 Recent Events</h2>
             </div>
             <div style={{
               maxHeight: '400px',
