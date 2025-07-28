@@ -94,6 +94,97 @@ const BackIcon = ({ color = "#6c757d", size = 20 }) => (
   </svg>
 );
 
+// 🎨 NEW: Achievement Badge Icons
+const CameraIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
+
+const TargetIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="6"/>
+    <circle cx="12" cy="12" r="2"/>
+  </svg>
+);
+
+const CompassIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88 16.24,7.76"/>
+  </svg>
+);
+
+const PlaneIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 4c-1.5 0-3.5 1-3.5 1L10 7 4 6 2 8l5 2 2 5 2-2 1-6 4.5-1.5S19 4 19.5 4"/>
+  </svg>
+);
+
+const GlobeIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+
+const FireIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+  </svg>
+);
+
+const StarIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"/>
+  </svg>
+);
+
+const UsersIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
+const AwardIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="8" r="7"/>
+    <polyline points="8.21,13.89 7,22 12,20 17,22 15.79,13.88"/>
+  </svg>
+);
+
+const CrownIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M2 20h20l-2-6-4 2-4-4-4 4-4-2-2 6z"/>
+    <path d="M6 12l2-4 4 2 4-2 2 4"/>
+  </svg>
+);
+
+const SparkleIcon = ({ color = "#ffffff", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"/>
+    <circle cx="12" cy="12" r="1" fill={color}/>
+    <path d="M4 4l2 2"/>
+    <path d="M20 4l-2 2"/>
+    <path d="M4 20l2-2"/>
+    <path d="M20 20l-2-2"/>
+  </svg>
+);
+
+const LockIcon = ({ color = "#6c757d", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+    <circle cx="12" cy="16" r="1"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </svg>
+);
+
 const ProfilePage = ({ currentUser, photos }) => {
   const { userId } = useParams(); // ✅ NEW: Get userId from URL params
   const [userData, setUserData] = useState(null);
@@ -287,6 +378,34 @@ const ProfilePage = ({ currentUser, photos }) => {
     setUserPhotos(userSpecificPhotos);
   };
 
+  // 🎨 UPDATED: Achievement icon mapping
+  const getAchievementIcon = (achievementId, unlocked) => {
+    const iconProps = { 
+      color: "#ffffff", 
+      size: 20 
+    };
+
+    const iconMap = {
+      first_photo: <CameraIcon {...iconProps} />,
+      photographer: <CameraIcon {...iconProps} />,
+      pro_shooter: <TargetIcon {...iconProps} />,
+      explorer: <CompassIcon {...iconProps} />,
+      traveler: <PlaneIcon {...iconProps} />,
+      wanderer: <CompassIcon {...iconProps} />,
+      globetrotter: <GlobeIcon {...iconProps} />,
+      consistent: <FireIcon {...iconProps} />,
+      dedicated: <StarIcon {...iconProps} />,
+      popular: <UsersIcon {...iconProps} />,
+      influencer: <StarIcon {...iconProps} />,
+      century: <AwardIcon {...iconProps} />,
+      world_explorer: <TrophyIcon {...iconProps} />,
+      celebrity: <SparkleIcon {...iconProps} />,
+      legend: <CrownIcon {...iconProps} />,
+    };
+
+    return unlocked ? iconMap[achievementId] : <LockIcon color="#6c757d" size={20} />;
+  };
+
   // ✅ UPDATED: Calculate achievements for the user being viewed
   const calculateAchievements = () => {
     const userSpecificPhotos = photos.filter((photo) => photo.uid === profileUserId);
@@ -302,7 +421,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "first_photo",
         title: "First Photo",
         description: "Shared your first memory",
-        icon: "📸",
         unlocked: true,
       });
     if (userSpecificPhotos.length >= 10)
@@ -310,7 +428,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "photographer",
         title: "Photographer",
         description: "Shared 10 photos",
-        icon: "📷",
         unlocked: true,
       });
     if (userSpecificPhotos.length >= 50)
@@ -318,7 +435,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "pro_shooter",
         title: "Pro Shooter",
         description: "Shared 50 photos",
-        icon: "🎯",
         unlocked: true,
       });
 
@@ -328,7 +444,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "explorer",
         title: "Explorer",
         description: "Tagged your first location",
-        icon: "🗺️",
         unlocked: true,
       });
     if (photosWithLocation.length >= 5)
@@ -336,7 +451,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "traveler",
         title: "Traveler",
         description: "Photos from 5+ locations",
-        icon: "✈️",
         unlocked: true,
       });
 
@@ -354,7 +468,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "wanderer",
         title: "Wanderer",
         description: "Visited 3+ unique places",
-        icon: "🧭",
         unlocked: true,
       });
     if (uniqueLocations.size >= 10)
@@ -362,7 +475,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "globetrotter",
         title: "Globetrotter",
         description: "Visited 10+ unique places",
-        icon: "🌍",
         unlocked: true,
       });
 
@@ -396,7 +508,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "consistent",
         title: "Consistent",
         description: "3-day photo streak",
-        icon: "🔥",
         unlocked: true,
       });
     if (maxStreak >= 7)
@@ -404,7 +515,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "dedicated",
         title: "Dedicated",
         description: "7-day photo streak",
-        icon: "⭐",
         unlocked: true,
       });
 
@@ -414,7 +524,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "popular",
         title: "Popular",
         description: "10+ followers",
-        icon: "👥",
         unlocked: true,
       });
     if (followersCount >= 50)
@@ -422,7 +531,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "influencer",
         title: "Influencer",
         description: "50+ followers",
-        icon: "⭐",
         unlocked: true,
       });
 
@@ -432,28 +540,24 @@ const ProfilePage = ({ currentUser, photos }) => {
         id: "century",
         title: "Century Club",
         description: "Share 100 photos",
-        icon: "💯",
         unlocked: userSpecificPhotos.length >= 100,
       },
       {
         id: "world_explorer",
         title: "World Explorer",
         description: "Visit 25+ unique places",
-        icon: "🏆",
         unlocked: uniqueLocations.size >= 25,
       },
       {
         id: "celebrity",
         title: "Celebrity",
         description: "100+ followers",
-        icon: "🌟",
         unlocked: followersCount >= 100,
       },
       {
         id: "legend",
         title: "Legend",
         description: "Share 500 photos",
-        icon: "👑",
         unlocked: userSpecificPhotos.length >= 500,
       }
     );
@@ -1501,7 +1605,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                       fontSize: "20px",
                     }}
                   >
-                    {achievement.unlocked ? achievement.icon : "🔒"}
+                    {getAchievementIcon(achievement.id, achievement.unlocked)}
                   </div>
                   <div style={{ flex: 1 }}>
                     <h4
