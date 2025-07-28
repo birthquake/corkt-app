@@ -13,6 +13,8 @@ const MobilePhotoCard = ({
   onUserClick, // ✅ NEW: Callback for user clicks
   onHashtagClick, // ✅ NEW: Callback for hashtag clicks (optional)
   showUserInfo = true,
+  showTimestamp = false, // ✅ NEW: Control timestamp display
+  formatTimeAgo, // ✅ NEW: Accept formatTimeAgo function as prop
 }) => {
   const navigate = useNavigate(); // ✅ NEW: Navigation hook
 
@@ -160,21 +162,52 @@ const MobilePhotoCard = ({
     [longPressTimer, handleTouchEnd]
   );
 
-  const formatTimeAgo = useCallback((timestamp) => {
+  // ✅ UPDATED: Enhanced formatTimeAgo function (fallback if not provided as prop)
+  const defaultFormatTimeAgo = useCallback((timestamp) => {
     if (!timestamp) return "Unknown time";
+    
+    // Convert Firestore timestamp to Date if needed
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "now";
-    if (diffMins < 60) return `${diffMins}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays < 7) return `${diffDays}d`;
-    return date.toLocaleDateString();
+    const diffInMilliseconds = now.getTime() - date.getTime();
+    
+    // Convert to different time units
+    const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+    const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
+    
+    // Less than 1 minute
+    if (diffInMinutes < 1) {
+      return 'just now';
+    }
+    
+    // Less than 1 hour - show minutes
+    if (diffInHours < 1) {
+      return diffInMinutes === 1 ? '1m' : `${diffInMinutes}m`;
+    }
+    
+    // Less than 24 hours - show hours
+    if (diffInDays < 1) {
+      return diffInHours === 1 ? '1h' : `${diffInHours}h`;
+    }
+    
+    // Less than 7 days - show days
+    if (diffInDays < 7) {
+      return diffInDays === 1 ? '1d' : `${diffInDays}d`;
+    }
+    
+    // 7 days or more - show actual date
+    const options = {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    };
+    
+    return date.toLocaleDateString('en-US', options);
   }, []);
+
+  // Use provided formatTimeAgo or fall back to default
+  const timeFormatter = formatTimeAgo || defaultFormatTimeAgo;
 
   return (
     <div
@@ -187,7 +220,7 @@ const MobilePhotoCard = ({
         border: "1px solid #f0f0f0",
       }}
     >
-      {/* ✅ UPDATED: Clickable User Header */}
+      {/* ✅ UPDATED: Clickable User Header with Conditional Timestamp */}
       {showUserInfo && (
         <div
           style={{
@@ -254,14 +287,17 @@ const MobilePhotoCard = ({
               >
                 {userInfo.displayName}
               </span>
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: "#8e8e8e",
-                }}
-              >
-                • {formatTimeAgo(photo.timestamp)}
-              </span>
+              {/* ✅ UPDATED: Conditional timestamp display */}
+              {showTimestamp && (
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "#8e8e8e",
+                  }}
+                >
+                  • {timeFormatter(photo.timestamp)}
+                </span>
+              )}
             </div>
 
             {/* ENHANCED LOCATION DISPLAY */}
