@@ -1,4 +1,4 @@
-// HomeFeed.js - Enhanced with Discovery Features and Gesture Support
+// HomeFeed.js - Enhanced with Discovery Features and Immersive Photo Modal
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOptimizedUsersData } from "./performanceHooks";
@@ -389,7 +389,7 @@ const HomeFeed = ({ photos, currentUser }) => {
 
     if (touches.length === 0) {
       if (isDragging) {
-        const dismissThreshold = 100;
+        const dismissThreshold = 80;
         if (modalTranslateY > dismissThreshold) {
           closePhotoModal();
         } else {
@@ -922,7 +922,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         </div>
       )}
 
-      {/* ✅ ENHANCED: Photo Modal with Gesture Support */}
+      {/* ✅ IMMERSIVE: Full-Screen Photo Modal */}
       {selectedPhoto && (
         <div
           ref={modalRef}
@@ -932,12 +932,11 @@ const HomeFeed = ({ photos, currentUser }) => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: `rgba(0, 0, 0, ${Math.max(0.95 - modalTranslateY * 0.002, 0.3)})`,
+            backgroundColor: `rgba(0, 0, 0, ${Math.max(0.98 - modalTranslateY * 0.002, 0.3)})`,
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             zIndex: 2000,
-            padding: "20px 20px 110px 20px",
             WebkitTransform: "translateZ(0)",
             transform: "translateZ(0)",
             transition: isDragging ? 'none' : 'all 0.3s ease-out',
@@ -953,29 +952,30 @@ const HomeFeed = ({ photos, currentUser }) => {
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "16px",
-              overflow: "hidden",
-              maxWidth: "90vw",
-              maxHeight: "calc(100vh - 130px)",
-              width: "100%",
+              width: "100vw",
+              height: "100vh",
               display: "flex",
               flexDirection: "column",
               transform: `translateY(${modalTranslateY}px)`,
               transition: isDragging ? 'none' : 'transform 0.3s ease-out',
               opacity: Math.max(1 - modalTranslateY * 0.01, 0.3),
+              position: "relative",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+            {/* ✅ FLOATING: Header Overlay */}
             <div
               style={{
-                padding: "16px 20px",
-                borderBottom: "1px solid #f0f0f0",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 10,
+                background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)",
+                padding: "50px 20px 30px 20px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                flexShrink: 0,
               }}
             >
               <div
@@ -983,7 +983,8 @@ const HomeFeed = ({ photos, currentUser }) => {
                   display: "flex", 
                   alignItems: "center", 
                   gap: "12px",
-                  cursor: "pointer"
+                  cursor: "pointer",
+                  flex: 1,
                 }}
                 onClick={() => handleUserClick(selectedPhoto.uid)}
               >
@@ -996,6 +997,7 @@ const HomeFeed = ({ photos, currentUser }) => {
                       height: "32px",
                       borderRadius: "50%",
                       objectFit: "cover",
+                      border: "2px solid rgba(255,255,255,0.3)",
                     }}
                   />
                 ) : (
@@ -1011,6 +1013,7 @@ const HomeFeed = ({ photos, currentUser }) => {
                       color: "white",
                       fontSize: "14px",
                       fontWeight: "600",
+                      border: "2px solid rgba(255,255,255,0.3)",
                     }}
                   >
                     {getUserInfo(selectedPhoto).initials}
@@ -1020,47 +1023,63 @@ const HomeFeed = ({ photos, currentUser }) => {
                   <div
                     style={{
                       fontWeight: "600",
-                      fontSize: "14px",
-                      color: "#343a40",
+                      fontSize: "15px",
+                      color: "white",
+                      textShadow: "0 1px 3px rgba(0,0,0,0.5)",
                     }}
                   >
                     {getUserInfo(selectedPhoto).displayName}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                  <div 
+                    style={{ 
+                      fontSize: "12px", 
+                      color: "rgba(255,255,255,0.8)",
+                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                    }}
+                  >
                     @{getUserInfo(selectedPhoto).screenName}
                   </div>
                 </div>
               </div>
+              
               <button
                 onClick={closePhotoModal}
                 style={{
-                  background: "none",
+                  background: "rgba(0,0,0,0.5)",
                   border: "none",
-                  fontSize: "20px",
+                  fontSize: "18px",
                   cursor: "pointer",
-                  color: "#6c757d",
-                  padding: "4px",
+                  color: "white",
+                  padding: "8px",
                   borderRadius: "50%",
-                  width: "32px",
-                  height: "32px",
+                  width: "36px",
+                  height: "36px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(10px)",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "rgba(0,0,0,0.7)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "rgba(0,0,0,0.5)";
                 }}
               >
                 ✕
               </button>
             </div>
 
-            {/* ✅ ENHANCED: Photo Container with Zoom Support */}
+            {/* ✅ FULL-SCREEN: Photo Container */}
             <div
               style={{
-                flex: "0 0 auto",
-                maxHeight: "60vh",
+                flex: 1,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: "#f8f9fa",
+                backgroundColor: "black",
                 overflow: "hidden",
                 position: "relative",
                 touchAction: "none",
@@ -1073,7 +1092,6 @@ const HomeFeed = ({ photos, currentUser }) => {
                 style={{
                   width: "100%",
                   height: "100%",
-                  maxHeight: "60vh",
                   objectFit: "contain",
                   transform: `scale(${imageScale}) translate(${imageTranslateX}px, ${imageTranslateY}px)`,
                   transition: (isDragging || isZooming) ? 'none' : 'transform 0.3s ease-out',
@@ -1088,15 +1106,17 @@ const HomeFeed = ({ photos, currentUser }) => {
                 <div
                   style={{
                     position: "absolute",
-                    top: "10px",
-                    right: "10px",
+                    top: "20px",
+                    right: "20px",
                     backgroundColor: "rgba(0,0,0,0.7)",
                     color: "white",
-                    padding: "4px 8px",
-                    borderRadius: "12px",
+                    padding: "6px 12px",
+                    borderRadius: "20px",
                     fontSize: "12px",
                     fontWeight: "500",
                     pointerEvents: "none",
+                    backdropFilter: "blur(10px)",
+                    WebkitBackdropFilter: "blur(10px)",
                   }}
                 >
                   {Math.round(imageScale * 100)}%
@@ -1104,110 +1124,56 @@ const HomeFeed = ({ photos, currentUser }) => {
               )}
             </div>
 
-            {/* Modal Content */}
-            <div
-              style={{
-                padding: "20px",
-                flex: "1 1 auto",
-                overflow: "auto",
-                maxHeight: "30vh",
-              }}
-            >
-              {/* Privacy indicator */}
-              {selectedPhoto.privacy && selectedPhoto.privacy !== "public" && (
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    backgroundColor: "#f8f9fa",
-                    padding: "4px 8px",
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                    color: "#6c757d",
-                    marginBottom: "12px",
-                  }}
-                >
-                  {getPrivacyIcon(selectedPhoto.privacy)}
-                  <span style={{ textTransform: "capitalize" }}>
-                    {selectedPhoto.privacy} photo
-                  </span>
-                </div>
-              )}
-
-              {/* Caption */}
-              {selectedPhoto.caption && (
-                <p
-                  style={{
-                    margin: "0 0 12px 0",
-                    fontSize: "16px",
-                    lineHeight: "1.4",
-                    color: "#343a40",
-                  }}
-                >
-                  <span 
-                    style={{ 
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      color: "#007bff"
-                    }}
-                    onClick={() => handleUserClick(selectedPhoto.uid)}
-                  >
-                    {getUserInfo(selectedPhoto).displayName}
-                  </span>{" "}
-                  {selectedPhoto.caption}
-                </p>
-              )}
-
-              {/* Tagged users */}
-              {selectedPhoto.taggedUsers &&
-                selectedPhoto.taggedUsers.length > 0 && (
+            {/* ✅ BOTTOM: Details Overlay */}
+            {(selectedPhoto.caption || selectedPhoto.placeName) && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)",
+                  padding: "30px 20px 50px 20px",
+                  color: "white",
+                }}
+              >
+                {selectedPhoto.caption && (
                   <p
                     style={{
-                      margin: "0 0 12px 0",
-                      fontSize: "12px",
-                      color: "#007bff",
+                      margin: "0 0 8px 0",
+                      fontSize: "15px",
+                      lineHeight: "1.4",
+                      textShadow: "0 1px 3px rgba(0,0,0,0.5)",
                     }}
                   >
-                    with{" "}
-                    {selectedPhoto.taggedUsers.map((taggedUser, index) => (
-                      <span 
-                        key={taggedUser.uid}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handleUserClick(taggedUser.uid)}
-                      >
-                        @{taggedUser.displayScreenName}
-                        {index < selectedPhoto.taggedUsers.length - 1
-                          ? ", "
-                          : ""}
-                      </span>
-                    ))}
+                    <span 
+                      style={{ 
+                        fontWeight: "600",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => handleUserClick(selectedPhoto.uid)}
+                    >
+                      {getUserInfo(selectedPhoto).displayName}
+                    </span>{" "}
+                    {selectedPhoto.caption}
                   </p>
                 )}
 
-              {/* Time and location */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                  fontSize: "12px",
-                  color: "#6c757d",
-                  marginBottom: "16px",
-                  flexDirection: "column",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <ClockIcon color="#6c757d" size={14} />
-                  <span>{formatTimeAgo(selectedPhoto.timestamp)}</span>
-                </div>
-
-                {selectedPhoto.placeName ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                {selectedPhoto.placeName && (
+                  <div 
+                    style={{ 
+                      fontSize: "12px", 
+                      color: "rgba(255,255,255,0.8)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                    }}
+                  >
                     <span>📍</span>
                     <span>{selectedPhoto.placeName}</span>
                     {currentLocation && selectedPhoto.latitude && selectedPhoto.longitude && (
-                      <span style={{ marginLeft: "8px", fontWeight: "500" }}>
+                      <span style={{ marginLeft: "8px" }}>
                         ({formatDistance(calculateDistance(
                           currentLocation.latitude,
                           currentLocation.longitude,
@@ -1217,60 +1183,9 @@ const HomeFeed = ({ photos, currentUser }) => {
                       </span>
                     )}
                   </div>
-                ) : selectedPhoto.latitude && selectedPhoto.longitude ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span>📍</span>
-                    <LocationDisplay
-                      latitude={selectedPhoto.latitude}
-                      longitude={selectedPhoto.longitude}
-                    />
-                    {currentLocation && (
-                      <span style={{ marginLeft: "8px", fontWeight: "500" }}>
-                        ({formatDistance(calculateDistance(
-                          currentLocation.latitude,
-                          currentLocation.longitude,
-                          selectedPhoto.latitude,
-                          selectedPhoto.longitude
-                        ))} away)
-                      </span>
-                    )}
-                  </div>
-                ) : null}
+                )}
               </div>
-
-              {/* Photo interaction summary */}
-              <PhotoInteractionSummary
-                photo={selectedPhoto}
-                currentUserId={currentUser?.uid}
-              />
-            </div>
-
-            {/* Close button */}
-            <div
-              style={{
-                padding: "16px 20px",
-                borderTop: "1px solid #f0f0f0",
-                backgroundColor: "#ffffff",
-                flexShrink: 0,
-              }}
-            >
-              <button
-                onClick={closePhotoModal}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  backgroundColor: "#007bff",
-                  border: "none",
-                  borderRadius: "8px",
-                  color: "white",
-                  fontSize: "16px",
-                  cursor: "pointer",
-                  fontWeight: "500",
-                }}
-              >
-                Close
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
