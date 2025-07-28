@@ -414,18 +414,66 @@ const HomeFeed = ({ photos, currentUser }) => {
     setSelectedPhotoIndex(0);
   }, []);
 
-  const formatTimeAgo = useCallback((timestamp) => {
-    if (!timestamp) return "Unknown time";
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffDays = Math.floor(diffMs / 86400000);
+  // Replace your existing formatTimeAgo function (around line 326) with this enhanced version:
 
-    if (diffDays < 1) return "Today";
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
-  }, []);
+const formatTimeAgo = useCallback((timestamp) => {
+  if (!timestamp) return "Unknown time";
+  
+  // Convert Firestore timestamp to Date if needed
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const now = new Date();
+  const diffInMilliseconds = now.getTime() - date.getTime();
+  
+  // Convert to different time units
+  const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+  const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
+  
+  // Less than 1 minute
+  if (diffInMinutes < 1) {
+    return 'just now';
+  }
+  
+  // Less than 1 hour - show minutes
+  if (diffInHours < 1) {
+    return diffInMinutes === 1 ? '1m' : `${diffInMinutes}m`;
+  }
+  
+  // Less than 24 hours - show hours
+  if (diffInDays < 1) {
+    return diffInHours === 1 ? '1h' : `${diffInHours}h`;
+  }
+  
+  // Less than 7 days - show days
+  if (diffInDays < 7) {
+    return diffInDays === 1 ? '1d' : `${diffInDays}d`;
+  }
+  
+  // 7 days or more - show actual date
+  const options = {
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+  };
+  
+  return date.toLocaleDateString('en-US', options);
+}, []);
 
+// Then, update your MobilePhotoCard usage to include timestamps.
+// In your filteredPhotos.map section (around line 599), update it like this:
+
+<MobilePhotoCard
+  key={photo.id}
+  photo={photo}
+  userInfo={userInfo}
+  currentUser={currentUser}
+  onPhotoClick={openPhotoModal}
+  onUserClick={handleUserClick}
+  showUserInfo={true}
+  showTimestamp={true} // ← ADD THIS PROP
+  formatTimeAgo={formatTimeAgo} // ← ADD THIS PROP
+/>
+    
   const getUserInfo = useCallback(
     (photo) => {
       const userData = usersData[photo.uid];
