@@ -15,14 +15,21 @@ import AnalyticsDashboard from "./AnalyticsDashboard";
 import MobileBottomNavigation from "./MobileBottomNavigation";
 import { LoadScript } from "@react-google-maps/api";
 
-// ✅ PWA Imports
+console.log('🔧 APP: App.js file loading...');
+
+// ✅ PWA Imports with debugging
+console.log('🔧 APP: About to import PWA utilities...');
 import { registerServiceWorker } from './pwaUtils';
 import PWAInstallPrompt from './PWAInstallPrompt';
+console.log('🔧 APP: PWA imports completed');
+console.log('🔧 APP: registerServiceWorker function:', typeof registerServiceWorker);
 
 // Define libraries that need to be loaded
 const googleMapsLibraries = ["places"];
 
 export default function App() {
+  console.log('🔧 APP: App component function called');
+  
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [photos, setPhotos] = useState([]);
@@ -40,18 +47,30 @@ export default function App() {
   // 📊 Admin check for analytics access
   const isAdmin = user?.email === 'corktapp@gmail.com'; // Replace with your actual email
 
-  // ✅ PWA Service Worker Registration
+  // ✅ PWA Service Worker Registration with Enhanced Debugging
   useEffect(() => {
-    // Register service worker for PWA functionality
-    registerServiceWorker();
+    console.log('🔧 APP: PWA useEffect starting...');
+    console.log('🔧 APP: registerServiceWorker type:', typeof registerServiceWorker);
+    
+    try {
+      console.log('🔧 APP: About to call registerServiceWorker...');
+      // Register service worker for PWA functionality
+      registerServiceWorker();
+      console.log('🔧 APP: registerServiceWorker called successfully');
+    } catch (error) {
+      console.error('❌ APP: Error calling registerServiceWorker:', error);
+    }
   }, []);
 
   useEffect(() => {
+    console.log('🔧 APP: Firebase auth useEffect starting...');
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
+        console.log('🔧 APP: User logged in:', currentUser.email);
         setUser(currentUser);
       } else {
+        console.log('🔧 APP: No user logged in');
         setUser(null);
       }
       setAuthLoading(false);
@@ -63,6 +82,7 @@ export default function App() {
   // Real-time photo updates for the feed
   useEffect(() => {
     if (user) {
+      console.log('🔧 APP: Setting up photos listener...');
       const photosRef = collection(db, "photos");
       const unsubscribe = onSnapshot(photosRef, (snapshot) => {
         const allPhotos = snapshot.docs.map((doc) => ({
@@ -77,6 +97,7 @@ export default function App() {
           return bTime - aTime;
         });
 
+        console.log('🔧 APP: Photos updated, count:', sortedPhotos.length);
         setPhotos(sortedPhotos);
       });
 
@@ -87,6 +108,7 @@ export default function App() {
   // Hide loading screen when app is ready
   useEffect(() => {
     if (!authLoading) {
+      console.log('🔧 APP: Auth loading complete, hiding loading screen...');
       const loadingScreen = document.getElementById("loading-screen");
       if (loadingScreen) {
         loadingScreen.style.opacity = "0";
@@ -98,7 +120,10 @@ export default function App() {
     }
   }, [authLoading]);
 
+  console.log('🔧 APP: App component rendering, authLoading:', authLoading);
+
   if (authLoading) {
+    console.log('🔧 APP: Showing loading screen...');
     return (
       <div
         style={{
@@ -141,6 +166,7 @@ export default function App() {
     );
   }
 
+  console.log('🔧 APP: Rendering main app...');
   const googleMapsApiKey = "AIzaSyA868vL4wcDalIHwajFXLgTACs87w7apRE";
 
   return (
@@ -545,4 +571,6 @@ export default function App() {
       </Router>
     </LoadScript>
   );
+
+  console.log('🔧 APP: App component render completed');
 }
