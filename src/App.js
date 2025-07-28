@@ -26,7 +26,7 @@ console.log('🔧 APP: PWA imports completed');
 console.log('🔧 APP: registerServiceWorker function:', typeof registerServiceWorker);
 
 // Define libraries that need to be loaded
-const googleMapsLibraries = ["places"], ["visualization"];
+const googleMapsLibraries = ["places", "visualization"];
 
 export default function App() {
   console.log('🔧 APP: App component function called');
