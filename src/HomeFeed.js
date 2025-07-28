@@ -468,38 +468,38 @@ const HomeFeed = ({ photos, currentUser }) => {
 
   // ✅ UPDATED: Filter options with Discovery
   const filters = [
-    { 
-      id: "discovery", 
-      icon: DiscoveryIcon, 
-      tooltip: "Trending & Discovery",
-      label: "Discovery"
-    },
-    { 
-      id: "public", 
-      icon: PublicIcon, 
-      tooltip: "Public",
-      label: "Public"
-    },
-    { 
-      id: "friends", 
-      icon: FriendsIcon, 
-      tooltip: "Friends",
-      label: "Friends"
-    },
-    { 
-      id: "tagged", 
-      icon: TaggedIcon, 
-      tooltip: "Tagged",
-      label: "Tagged"
-    },
-    { 
-      id: "mine", 
-      icon: MyPostsIcon, 
-      tooltip: "My Posts",
-      label: "Mine"
-    },
-  ];
-
+  { 
+    id: "public", 
+    icon: PublicIcon, 
+    tooltip: "Public",
+    label: "Public"
+  },
+  { 
+    id: "friends", 
+    icon: FriendsIcon, 
+    tooltip: "Friends",
+    label: "Friends"
+  },
+  { 
+    id: "tagged", 
+    icon: TaggedIcon, 
+    tooltip: "Tagged",
+    label: "Tagged"
+  },
+  { 
+    id: "mine", 
+    icon: MyPostsIcon, 
+    tooltip: "My Posts",
+    label: "Mine"
+  },
+  { 
+    id: "discovery", 
+    icon: DiscoveryIcon, 
+    tooltip: "Trending & Discovery",
+    label: "Discovery"
+  },
+];
+  
   // Photo filtering (only for non-discovery filters)
   const filteredPhotos = useMemo(() => {
     if (activeFilter === "discovery") {
