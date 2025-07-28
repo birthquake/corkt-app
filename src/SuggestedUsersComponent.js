@@ -49,6 +49,20 @@ const XIcon = ({ color = "#6b7280", size = 16 }) => (
   </svg>
 );
 
+  // Add this function before the SuggestedUsersComponent definition
+const checkIfFollowing = async (followerId, followingId) => {
+  try {
+    const followingRef = collection(db, "following");
+    const followingQuery = query(
+      followingRef, 
+      where("followerId", "==", followerId),
+      where("followingId", "==", followingId)
+    );
+    const snapshot = await getDocs(followingQuery);
+    return !snapshot.empty;
+  } catch (error) {
+    console.error('Error checking follow status:', error);
+
 const SuggestedUsersComponent = ({ 
   currentUser, 
   currentLocation, 
