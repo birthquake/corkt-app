@@ -5,6 +5,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import Signup from "./Signup";
 import Login from "./Login";
+import ForgotPassword from "./ForgotPassword"; // ✅ New import
 import HomeFeed from "./HomeFeed";
 import SearchPage from "./SearchPage";
 import CaptureComponent from "./CaptureComponent";
@@ -34,7 +35,8 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [photos, setPhotos] = useState([]);
-  const [showLogin, setShowLogin] = useState(true);
+  // ✅ Updated: Replace showLogin boolean with authView string for 3 states
+  const [authView, setAuthView] = useState('login'); // 'login', 'signup', 'forgot'
 
   // Detect CodeSandbox environment for navigation adjustments
   const isCodeSandbox =
@@ -379,7 +381,7 @@ export default function App() {
             <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
           </div>
         ) : (
-          // iOS-friendly auth section
+          // ✅ Updated: Enhanced authentication section with password recovery
           <div style={{
             background: "#e3f2fd",
             padding: "20px 20px 300px 20px", // HUGE bottom padding for iOS
@@ -389,7 +391,8 @@ export default function App() {
               maxWidth: "400px",
               margin: "0 auto"
             }}>
-              {showLogin ? (
+              {/* ✅ Login View */}
+              {authView === 'login' && (
                 <div style={{
                   background: "white",
                   borderRadius: "20px",
@@ -416,10 +419,29 @@ export default function App() {
 
                   <Login />
 
+                  {/* ✅ Updated: Navigation section with forgot password */}
                   <div style={{
                     textAlign: "center",
                     color: "#6b7280",
-                    margin: "24px 0",
+                    margin: "24px 0 16px 0"
+                  }}>
+                    <span 
+                      onClick={() => setAuthView('forgot')}
+                      style={{
+                        color: "#007bff",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        textDecoration: "underline"
+                      }}
+                    >
+                      Forgot your password?
+                    </span>
+                  </div>
+
+                  <div style={{
+                    textAlign: "center",
+                    color: "#6b7280",
+                    margin: "16px 0",
                     position: "relative"
                   }}>
                     <div style={{
@@ -445,7 +467,7 @@ export default function App() {
                   }}>
                     Don't have an account?{" "}
                     <span 
-                      onClick={() => setShowLogin(false)}
+                      onClick={() => setAuthView('signup')}
                       style={{
                         color: "#007bff",
                         cursor: "pointer",
@@ -456,7 +478,10 @@ export default function App() {
                     </span>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {/* ✅ Signup View */}
+              {authView === 'signup' && (
                 <div style={{
                   background: "white",
                   borderRadius: "20px",
@@ -512,7 +537,7 @@ export default function App() {
                   }}>
                     Already have an account?{" "}
                     <span 
-                      onClick={() => setShowLogin(true)}
+                      onClick={() => setAuthView('login')}
                       style={{
                         color: "#007bff",
                         cursor: "pointer",
@@ -522,6 +547,20 @@ export default function App() {
                       Log in
                     </span>
                   </div>
+                </div>
+              )}
+
+              {/* ✅ New: Forgot Password View */}
+              {authView === 'forgot' && (
+                <div style={{
+                  background: "white",
+                  borderRadius: "20px",
+                  padding: "40px 30px",
+                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)"
+                }}>
+                  <ForgotPassword 
+                    onBackToLogin={() => setAuthView('login')} 
+                  />
                 </div>
               )}
             </div>
