@@ -219,11 +219,12 @@ const CaptureComponent = ({ user }) => {
           },
         };
       } else {
+        // ✅ IMPROVED: Higher resolution for non-iOS devices
         constraints = {
           video: {
             facingMode: facingMode,
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
           },
         };
       }
@@ -319,7 +320,8 @@ const CaptureComponent = ({ user }) => {
 
     try {
       const size = Math.min(video.videoWidth, video.videoHeight);
-      const maxSize = isMobile ? 800 : 1200;
+      // ✅ IMPROVED: Higher resolution canvas output
+      const maxSize = isMobile ? 1200 : 1600;
       const actualSize = Math.min(size, maxSize);
 
       canvas.width = actualSize;
@@ -340,7 +342,8 @@ const CaptureComponent = ({ user }) => {
         actualSize,
         actualSize
       );
-      const imageData = canvas.toDataURL("image/jpeg", isMobile ? 0.5 : 0.7);
+      // ✅ IMPROVED: Higher JPEG quality
+      const imageData = canvas.toDataURL("image/jpeg", isMobile ? 0.8 : 0.9);
 
       await stopCamera();
       setCapturedImage(imageData);
