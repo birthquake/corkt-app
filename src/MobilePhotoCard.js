@@ -1,22 +1,38 @@
+// MobilePhotoCard.js - Enhanced with Flag Button in Actions Bar
 import React, { useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ NEW: For navigation to search
+import { useNavigate } from "react-router-dom";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "./firebaseConfig";
 import { useLikes } from "./useLikes";
 import { LikeButton } from "./ActionBar";
 import LocationDisplay from "./LocationDisplay";
-import { formatTextWithHashtags } from "./hashtagService"; // ✅ NEW: Import hashtag formatting
+import { formatTextWithHashtags } from "./hashtagService";
+import analytics from "./analyticsService";
+
+// ✅ NEW: Flag icon component
+const FlagIcon = ({ color = "#6c757d", size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+    <line x1="4" y1="22" x2="4" y2="15"/>
+  </svg>
+);
 
 const MobilePhotoCard = ({
   photo,
   userInfo,
   currentUser,
   onPhotoClick,
-  onUserClick, // ✅ NEW: Callback for user clicks
-  onHashtagClick, // ✅ NEW: Callback for hashtag clicks (optional)
+  onUserClick,
+  onHashtagClick,
   showUserInfo = true,
-  showTimestamp = false, // ✅ NEW: Control timestamp display
-  formatTimeAgo, // ✅ NEW: Accept formatTimeAgo function as prop
+  showTimestamp = false,
+  formatTimeAgo,
+  // ✅ NEW: Add these props for location/mode context (if available)
+  currentLocation = null,
+  isGlobalMode = true,
+  activeFilter = 'public'
 }) => {
-  const navigate = useNavigate(); // ✅ NEW: Navigation hook
+  const navigate = useNavigate();
 
   // ✅ UPDATED: Enhanced useLikes integration with activity creation parameters
   const { likesCount, isLiked, toggleLike, liking } = useLikes(
@@ -31,6 +47,11 @@ const MobilePhotoCard = ({
   const [lastTap, setLastTap] = useState(0);
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const heartAnimationRef = useRef(null);
+
+  // ✅ NEW: Flag-related state
+  const [showFlagMenu, setShowFlagMenu] = useState(false);
+  const [flaggingPhoto, setFlaggingPhoto] = useState(false);
+  const [flagSuccess, setFlagSuccess] = useState(false);
 
   // ✅ NEW: Handle user click navigation
   const handleUserClick = useCallback((e) => {
@@ -54,6 +75,71 @@ const MobilePhotoCard = ({
       console.log(`🔍 Navigating to search for hashtag: #${hashtag}`);
     }
   }, [onHashtagClick, navigate]);
+
+  // ✅ NEW: Photo flagging functions
+  const handleFlagPhoto = useCallback(async (reason) => {
+    if (!photo || !currentUser || flaggingPhoto) return;
+    
+    setFlaggingPhoto(true);
+    setShowFlagMenu(false);
+    
+    try {
+      const flagData = {
+        photoId: photo.id,
+        photoOwnerId: photo.uid,
+        photoUrl: photo.imageUrl,
+        photoCaption: photo.caption || '',
+        flaggedBy: currentUser.uid,
+        flaggedByEmail: currentUser.email,
+        reason: reason,
+        timestamp: serverTimestamp(),
+        location: photo.placeName || 'Unknown location',
+        flagStatus: 'pending',
+        
+        // Additional metadata for analytics
+        userLocation: currentLocation ? {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude
+        } : null,
+        flaggedFromMode: isGlobalMode ? 'global' : 'local',
+        flaggedFromFilter: activeFilter,
+        flaggedFromSource: 'feed_card', // ✅ NEW: Track source of flag
+        
+        // Photo metadata
+        photoLocation: photo.latitude && photo.longitude ? {
+          latitude: photo.latitude,
+          longitude: photo.longitude
+        } : null
+      };
+
+      await addDoc(collection(db, "flags"), flagData);
+      
+      // Track in analytics
+      analytics.trackPhotoInteraction(
+        'flag',
+        photo.latitude && photo.longitude ? 
+          { latitude: photo.latitude, longitude: photo.longitude } : null,
+        currentLocation,
+        isGlobalMode ? 'global' : 'local',
+        { reason, flaggedPhotoId: photo.id, source: 'feed_card' }
+      );
+
+      // Show success feedback
+      setFlagSuccess(true);
+      setTimeout(() => setFlagSuccess(false), 2000);
+      
+      console.log('✅ Photo flagged successfully from feed card:', reason);
+      
+    } catch (error) {
+      console.error('❌ Error flagging photo:', error);
+    } finally {
+      setFlaggingPhoto(false);
+    }
+  }, [photo, currentUser, currentLocation, isGlobalMode, activeFilter, flaggingPhoto]);
+
+  const toggleFlagMenu = useCallback(() => {
+    setShowFlagMenu(prev => !prev);
+  }, []);
 
   // Handle double-tap to like
   const handleDoubleTap = useCallback(async () => {
@@ -218,6 +304,7 @@ const MobilePhotoCard = ({
         marginBottom: "16px",
         boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
         border: "1px solid #f0f0f0",
+        position: "relative", // ✅ NEW: For absolute positioning of success message
       }}
     >
       {/* ✅ UPDATED: Clickable User Header with Conditional Timestamp */}
@@ -229,18 +316,16 @@ const MobilePhotoCard = ({
             alignItems: "center",
             gap: "12px",
             borderBottom: "1px solid #f8f9fa",
-            cursor: onUserClick ? "pointer" : "default", // ✅ NEW: Show pointer cursor when clickable
-            transition: "background-color 0.2s ease", // ✅ NEW: Smooth hover transition
+            cursor: onUserClick ? "pointer" : "default",
+            transition: "background-color 0.2s ease",
           }}
-          onClick={handleUserClick} // ✅ NEW: Make entire header clickable
+          onClick={handleUserClick}
           onMouseEnter={(e) => {
-            // ✅ NEW: Hover effect
             if (onUserClick) {
               e.target.style.backgroundColor = "#f8f9fa";
             }
           }}
           onMouseLeave={(e) => {
-            // ✅ NEW: Remove hover effect
             if (onUserClick) {
               e.target.style.backgroundColor = "transparent";
             }
@@ -282,7 +367,7 @@ const MobilePhotoCard = ({
                 style={{
                   fontWeight: "600",
                   fontSize: "14px",
-                  color: onUserClick ? "#007bff" : "#1a1a1a", // ✅ NEW: Blue color when clickable
+                  color: onUserClick ? "#007bff" : "#1a1a1a",
                 }}
               >
                 {userInfo.displayName}
@@ -387,16 +472,16 @@ const MobilePhotoCard = ({
         />
       </div>
 
-      {/* Actions Bar - SIMPLIFIED to only show the like button */}
+      {/* ✅ UPDATED: Actions Bar with Flag Button */}
       <div
         style={{
           padding: "8px 16px 12px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "flex-start", // Changed from space-between since we only have one button
+          justifyContent: "space-between", // ✅ CHANGED: Back to space-between for flag button
         }}
       >
-        {/* Like Button - Only button remaining */}
+        {/* Like Button - Left side */}
         <button
           onClick={toggleLike}
           disabled={liking}
@@ -434,8 +519,181 @@ const MobilePhotoCard = ({
           )}
         </button>
 
-        {/* REMOVED: Comment Button and Share Button */}
+        {/* ✅ NEW: Flag Button - Right side (only for other users' photos) */}
+        {photo.uid !== currentUser?.uid && (
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={toggleFlagMenu}
+              disabled={flaggingPhoto}
+              style={{
+                background: "none",
+                border: "none",
+                padding: "8px",
+                cursor: "pointer",
+                color: "#6c757d",
+                fontSize: "18px",
+                transition: "all 0.2s ease",
+                borderRadius: "50%",
+                opacity: flaggingPhoto ? 0.6 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = "#dc3545";
+                e.target.style.backgroundColor = "#f8f9fa";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = "#6c757d";
+                e.target.style.backgroundColor = "transparent";
+              }}
+            >
+              {flaggingPhoto ? (
+                <div style={{
+                  width: "14px",
+                  height: "14px",
+                  border: "2px solid #6c757d",
+                  borderTop: "2px solid transparent",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite"
+                }} />
+              ) : (
+                <FlagIcon color="currentColor" size={18} />
+              )}
+            </button>
+
+            {/* Flag Menu Dropdown */}
+            {showFlagMenu && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "45px",
+                  right: "0",
+                  backgroundColor: "white",
+                  borderRadius: "12px",
+                  boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
+                  padding: "8px",
+                  minWidth: "200px",
+                  zIndex: 1000,
+                  animation: "slideUpFromBottom 0.2s ease-out"
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{
+                  padding: "12px 16px",
+                  borderBottom: "1px solid #f0f0f0",
+                  marginBottom: "8px"
+                }}>
+                  <h4 style={{ 
+                    margin: "0 0 4px 0", 
+                    color: "#1a1a1a", 
+                    fontSize: "14px", 
+                    fontWeight: "600" 
+                  }}>
+                    Report this photo
+                  </h4>
+                  <p style={{ 
+                    margin: 0, 
+                    color: "#666", 
+                    fontSize: "12px" 
+                  }}>
+                    Help us keep the community safe
+                  </p>
+                </div>
+                
+                {[
+                  { id: 'inappropriate', label: 'Inappropriate content', emoji: '🚫' },
+                  { id: 'spam', label: 'Spam or misleading', emoji: '📢' },
+                  { id: 'harassment', label: 'Harassment or bullying', emoji: '😡' },
+                  { id: 'violence', label: 'Violence or dangerous', emoji: '⚠️' },
+                  { id: 'copyright', label: 'Copyright violation', emoji: '©️' },
+                  { id: 'other', label: 'Something else', emoji: '❓' }
+                ].map((reason) => (
+                  <button
+                    key={reason.id}
+                    onClick={() => handleFlagPhoto(reason.id)}
+                    style={{
+                      width: "100%",
+                      padding: "12px 16px",
+                      background: "none",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      fontSize: "14px",
+                      color: "#1a1a1a",
+                      transition: "background-color 0.2s ease",
+                      marginBottom: "4px"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = "#f8f9fa";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    <span style={{ fontSize: "16px" }}>{reason.emoji}</span>
+                    <span style={{ fontWeight: "500" }}>{reason.label}</span>
+                  </button>
+                ))}
+                
+                <div style={{
+                  padding: "8px 16px",
+                  borderTop: "1px solid #f0f0f0",
+                  marginTop: "8px"
+                }}>
+                  <button
+                    onClick={() => setShowFlagMenu(false)}
+                    style={{
+                      width: "100%",
+                      padding: "8px",
+                      background: "none",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      color: "#666",
+                      fontWeight: "500"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* ✅ NEW: Success Toast for Flag Submission */}
+      {flagSuccess && (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "rgba(34, 197, 94, 0.95)",
+            color: "white",
+            padding: "8px 16px",
+            borderRadius: "20px",
+            fontSize: "12px",
+            fontWeight: "500",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            animation: "fadeInOut 2s ease-out"
+          }}
+        >
+          <span>✅</span>
+          <span>Reported</span>
+        </div>
+      )}
 
       {/* ✅ ENHANCED: Caption with Clickable Hashtags and Clickable Username */}
       {photo.caption && (
@@ -451,11 +709,11 @@ const MobilePhotoCard = ({
             <span 
               style={{ 
                 fontWeight: "600",
-                cursor: onUserClick ? "pointer" : "default", // ✅ NEW: Clickable username in caption
-                color: onUserClick ? "#007bff" : "#262626", // ✅ NEW: Blue color when clickable
+                cursor: onUserClick ? "pointer" : "default",
+                color: onUserClick ? "#007bff" : "#262626",
                 transition: "color 0.2s ease"
               }}
-              onClick={handleUserClick} // ✅ NEW: Make username in caption clickable
+              onClick={handleUserClick}
             >
               {userInfo.displayName}
             </span>{" "}
@@ -464,7 +722,7 @@ const MobilePhotoCard = ({
         </div>
       )}
 
-      {/* CSS Animation */}
+      {/* CSS Animations */}
       <style>
         {`
           @keyframes heartPulse {
@@ -483,6 +741,41 @@ const MobilePhotoCard = ({
               transform: translate(-50%, -50%) scale(1);
               opacity: 0;
             }
+          }
+          
+          @keyframes slideUpFromBottom {
+            0% {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          
+          @keyframes fadeInOut {
+            0% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.8);
+            }
+            20% {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            80% {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+              opacity: 0;
+              transform: translate(-50%, -50%) scale(0.8);
+            }
+          }
+          
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
           }
         `}
       </style>
