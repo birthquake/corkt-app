@@ -1,6 +1,8 @@
-// HomeFeed.js - Enhanced with Discovery Features and Immersive Photo Modal
+// HomeFeed.js - Enhanced with Discovery Features, Immersive Photo Modal, and Photo Flagging
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "./firebaseConfig";
 import { useOptimizedUsersData } from "./performanceHooks";
 import { PhotoInteractionSummary } from "./ActionBar";
 import { useFollowing, filterPhotosByFollowing } from "./useFollows";
@@ -10,7 +12,7 @@ import LocationDisplay from "./LocationDisplay";
 import DiscoveryTab from "./DiscoveryTab"; // ✅ NEW: Import Discovery component
 import analytics from "./analyticsService";
 
-// Existing icon components + new Discovery icon
+// Existing icon components + new Discovery icon + Flag icon
 const PublicIcon = ({ color = "#6c757d", size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="12" cy="12" r="10"/>
@@ -47,6 +49,14 @@ const DiscoveryIcon = ({ color = "#ff6b35", size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="12" cy="12" r="10"/>
     <polygon points="16.24,7.76 14.12,14.12 7.76,16.24 9.88,9.88"/>
+  </svg>
+);
+
+// ✅ NEW: Flag icon for reporting
+const FlagIcon = ({ color = "#ff6b35", size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+    <line x1="4" y1="22" x2="4" y2="15"/>
   </svg>
 );
 
@@ -90,6 +100,11 @@ const HomeFeed = ({ photos, currentUser }) => {
   const [modeSessionStart, setModeSessionStart] = useState(Date.now());
   const [photosViewedInSession, setPhotosViewedInSession] = useState(0);
   const [photosPostedInSession, setPhotosPostedInSession] = useState(0);
+
+  // ✅ NEW: Photo flagging state
+  const [flaggingPhoto, setFlaggingPhoto] = useState(false);
+  const [showFlagMenu, setShowFlagMenu] = useState(false);
+  const [flagSuccess, setFlagSuccess] = useState(false);
 
   // ✅ NEW: Gesture state for modal
   const [modalTranslateY, setModalTranslateY] = useState(0);
@@ -148,6 +163,71 @@ const HomeFeed = ({ photos, currentUser }) => {
       }
     }
     return null;
+  }, []);
+
+  // ✅ NEW: Photo flagging functions
+  const handleFlagPhoto = useCallback(async (reason) => {
+    if (!selectedPhoto || !currentUser || flaggingPhoto) return;
+    
+    setFlaggingPhoto(true);
+    setShowFlagMenu(false);
+    
+    try {
+      const flagData = {
+        photoId: selectedPhoto.id,
+        photoOwnerId: selectedPhoto.uid,
+        photoUrl: selectedPhoto.imageUrl,
+        photoCaption: selectedPhoto.caption || '',
+        flaggedBy: currentUser.uid,
+        flaggedByEmail: currentUser.email,
+        reason: reason,
+        timestamp: serverTimestamp(),
+        location: selectedPhoto.placeName || 'Unknown location',
+        flagStatus: 'pending', // pending, reviewed, dismissed, removed
+        
+        // Additional metadata for analytics
+        userLocation: currentLocation ? {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude
+        } : null,
+        flaggedFromMode: isGlobalMode ? 'global' : 'local',
+        flaggedFromFilter: activeFilter,
+        
+        // Photo metadata
+        photoLocation: selectedPhoto.latitude && selectedPhoto.longitude ? {
+          latitude: selectedPhoto.latitude,
+          longitude: selectedPhoto.longitude
+        } : null
+      };
+
+      await addDoc(collection(db, "flags"), flagData);
+      
+      // Track in analytics
+      analytics.trackPhotoInteraction(
+        'flag',
+        selectedPhoto.latitude && selectedPhoto.longitude ? 
+          { latitude: selectedPhoto.latitude, longitude: selectedPhoto.longitude } : null,
+        currentLocation,
+        isGlobalMode ? 'global' : 'local',
+        { reason, flaggedPhotoId: selectedPhoto.id }
+      );
+
+      // Show success feedback
+      setFlagSuccess(true);
+      setTimeout(() => setFlagSuccess(false), 2000);
+      
+      console.log('✅ Photo flagged successfully:', reason);
+      
+    } catch (error) {
+      console.error('❌ Error flagging photo:', error);
+      // You could add error toast notification here
+    } finally {
+      setFlaggingPhoto(false);
+    }
+  }, [selectedPhoto, currentUser, currentLocation, isGlobalMode, activeFilter, flaggingPhoto]);
+
+  const toggleFlagMenu = useCallback(() => {
+    setShowFlagMenu(prev => !prev);
   }, []);
 
   // ✅ NEW: Reset zoom and position when photo changes
@@ -595,6 +675,7 @@ const HomeFeed = ({ photos, currentUser }) => {
     setImageTranslateY(0);
     setIsDragging(false);
     setIsZooming(false);
+    setShowFlagMenu(false); // ✅ NEW: Close flag menu when modal closes
   }, []);
 
   const formatTimeAgo = useCallback((timestamp) => {
@@ -922,7 +1003,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         </div>
       )}
 
-      {/* ✅ IMMERSIVE: Full-Screen Photo Modal */}
+      {/* ✅ IMMERSIVE: Full-Screen Photo Modal with Flagging */}
       {selectedPhoto && (
         <div
           ref={modalRef}
@@ -963,7 +1044,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* ✅ FLOATING: Header Overlay */}
+            {/* ✅ FLOATING: Header Overlay - UPDATED with Flag Button */}
             <div
               style={{
                 position: "absolute",
@@ -1042,35 +1123,215 @@ const HomeFeed = ({ photos, currentUser }) => {
                 </div>
               </div>
               
-              <button
-                onClick={closePhotoModal}
+              {/* Header buttons container */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {/* Flag Button - Only show if not own photo */}
+                {selectedPhoto.uid !== currentUser?.uid && (
+                  <div style={{ position: "relative" }}>
+                    <button
+                      onClick={toggleFlagMenu}
+                      disabled={flaggingPhoto}
+                      style={{
+                        background: "rgba(0,0,0,0.5)",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "white",
+                        padding: "8px",
+                        borderRadius: "50%",
+                        width: "36px",
+                        height: "36px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backdropFilter: "blur(10px)",
+                        WebkitBackdropFilter: "blur(10px)",
+                        transition: "all 0.2s ease",
+                        opacity: flaggingPhoto ? 0.6 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = "rgba(255,107,53,0.8)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = "rgba(0,0,0,0.5)";
+                      }}
+                    >
+                      {flaggingPhoto ? (
+                        <div style={{
+                          width: "16px",
+                          height: "16px",
+                          border: "2px solid white",
+                          borderTop: "2px solid transparent",
+                          borderRadius: "50%",
+                          animation: "spin 1s linear infinite"
+                        }} />
+                      ) : (
+                        <FlagIcon color="white" size={20} />
+                      )}
+                    </button>
+
+                    {/* Flag Menu Dropdown */}
+                    {showFlagMenu && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "45px",
+                          right: "0",
+                          backgroundColor: "white",
+                          borderRadius: "12px",
+                          boxShadow: "0 8px 25px rgba(0,0,0,0.3)",
+                          padding: "8px",
+                          minWidth: "200px",
+                          zIndex: 1000,
+                          animation: "slideInFromTop 0.2s ease-out"
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div style={{
+                          padding: "12px 16px",
+                          borderBottom: "1px solid #f0f0f0",
+                          marginBottom: "8px"
+                        }}>
+                          <h4 style={{ 
+                            margin: "0 0 4px 0", 
+                            color: "#1a1a1a", 
+                            fontSize: "14px", 
+                            fontWeight: "600" 
+                          }}>
+                            Report this photo
+                          </h4>
+                          <p style={{ 
+                            margin: 0, 
+                            color: "#666", 
+                            fontSize: "12px" 
+                          }}>
+                            Help us keep the community safe
+                          </p>
+                        </div>
+                        
+                        {[
+                          { id: 'inappropriate', label: 'Inappropriate content', emoji: '🚫' },
+                          { id: 'spam', label: 'Spam or misleading', emoji: '📢' },
+                          { id: 'harassment', label: 'Harassment or bullying', emoji: '😡' },
+                          { id: 'violence', label: 'Violence or dangerous', emoji: '⚠️' },
+                          { id: 'copyright', label: 'Copyright violation', emoji: '©️' },
+                          { id: 'other', label: 'Something else', emoji: '❓' }
+                        ].map((reason) => (
+                          <button
+                            key={reason.id}
+                            onClick={() => handleFlagPhoto(reason.id)}
+                            style={{
+                              width: "100%",
+                              padding: "12px 16px",
+                              background: "none",
+                              border: "none",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "12px",
+                              fontSize: "14px",
+                              color: "#1a1a1a",
+                              transition: "background-color 0.2s ease",
+                              marginBottom: "4px"
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = "#f8f9fa";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = "transparent";
+                            }}
+                          >
+                            <span style={{ fontSize: "16px" }}>{reason.emoji}</span>
+                            <span style={{ fontWeight: "500" }}>{reason.label}</span>
+                          </button>
+                        ))}
+                        
+                        <div style={{
+                          padding: "8px 16px",
+                          borderTop: "1px solid #f0f0f0",
+                          marginTop: "8px"
+                        }}>
+                          <button
+                            onClick={() => setShowFlagMenu(false)}
+                            style={{
+                              width: "100%",
+                              padding: "8px",
+                              background: "none",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontSize: "13px",
+                              color: "#666",
+                              fontWeight: "500"
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Close Button */}
+                <button
+                  onClick={closePhotoModal}
+                  style={{
+                    background: "rgba(0,0,0,0.5)",
+                    border: "none",
+                    fontSize: "18px",
+                    cursor: "pointer",
+                    color: "white",
+                    padding: "8px",
+                    borderRadius: "50%",
+                    width: "36px",
+                    height: "36px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backdropFilter: "blur(10px)",
+                    WebkitBackdropFilter: "blur(10px)",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = "rgba(0,0,0,0.7)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "rgba(0,0,0,0.5)";
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Success Toast */}
+            {flagSuccess && (
+              <div
                 style={{
-                  background: "rgba(0,0,0,0.5)",
-                  border: "none",
-                  fontSize: "18px",
-                  cursor: "pointer",
+                  position: "absolute",
+                  top: "100px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  backgroundColor: "rgba(34, 197, 94, 0.9)",
                   color: "white",
-                  padding: "8px",
-                  borderRadius: "50%",
-                  width: "36px",
-                  height: "36px",
+                  padding: "12px 20px",
+                  borderRadius: "25px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  zIndex: 1100,
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  gap: "8px",
                   backdropFilter: "blur(10px)",
                   WebkitBackdropFilter: "blur(10px)",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = "rgba(0,0,0,0.7)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = "rgba(0,0,0,0.5)";
+                  animation: "slideInFromTop 0.3s ease-out"
                 }}
               >
-                ✕
-              </button>
-            </div>
+                <span>✅</span>
+                <span>Thank you for reporting this content</span>
+              </div>
+            )}
 
             {/* ✅ FULL-SCREEN: Photo Container */}
             <div
@@ -1195,6 +1456,17 @@ const HomeFeed = ({ photos, currentUser }) => {
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+          }
+          
+          @keyframes slideInFromTop {
+            0% {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
         `}
       </style>
