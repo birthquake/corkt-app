@@ -1,6 +1,6 @@
-// AnalyticsDashboard.js - Enhanced with engagement metrics for investors
+// AnalyticsDashboard.js - Enhanced with engagement metrics for investors and Flagged Content Management
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, getDocs } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, getDocs, updateDoc, doc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import analytics from './analyticsService';
 
@@ -168,6 +168,37 @@ const FileTextIcon = ({ color = "#6b7280", size = 16 }) => (
   </svg>
 );
 
+// ✅ NEW: Flag-related icons
+const FlagIcon = ({ color = "#dc3545", size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+    <line x1="4" y1="22" x2="4" y2="15"/>
+  </svg>
+);
+
+const AlertTriangleIcon = ({ color = "#f59e0b", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
+const CheckCircleIcon = ({ color = "#10b981", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+    <polyline points="22,4 12,14.01 9,11.01"/>
+  </svg>
+);
+
+const XCircleIcon = ({ color = "#ef4444", size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="15" y1="9" x2="9" y2="15"/>
+    <line x1="9" y1="9" x2="15" y2="15"/>
+  </svg>
+);
+
 const AnalyticsDashboard = () => {
   // Existing analytics state
   const [analyticsData, setAnalyticsData] = useState([]);
@@ -198,6 +229,17 @@ const AnalyticsDashboard = () => {
     userSignupsMonth: 0
   });
 
+  // ✅ NEW: Flagged content state
+  const [flaggedContent, setFlaggedContent] = useState([]);
+  const [loadingFlags, setLoadingFlags] = useState(true);
+  const [flagStats, setFlagStats] = useState({
+    totalFlags: 0,
+    pendingFlags: 0,
+    reviewedFlags: 0,
+    dismissedFlags: 0,
+    removedPhotos: 0
+  });
+
   const [usersData, setUsersData] = useState({});
   const [allPhotos, setAllPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -220,6 +262,7 @@ const AnalyticsDashboard = () => {
     loadBehavioralAnalytics();
     loadUsersData();
     loadEngagementMetrics();
+    loadFlaggedContent(); // ✅ NEW: Load flagged content
   }, []);
 
   // Re-process metrics when users data changes
@@ -233,6 +276,73 @@ const AnalyticsDashboard = () => {
     
     reprocessMetrics();
   }, [usersData, allPhotos]);
+
+  // ✅ NEW: Load flagged content
+  const loadFlaggedContent = () => {
+    try {
+      const flagsRef = collection(db, "flags");
+      const flagsQuery = query(flagsRef, orderBy("timestamp", "desc"));
+      
+      const unsubscribe = onSnapshot(flagsQuery, (snapshot) => {
+        const flags = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp?.toDate() || new Date(doc.data().timestamp || Date.now())
+        }));
+
+        setFlaggedContent(flags);
+        
+        // Calculate stats
+        const stats = {
+          totalFlags: flags.length,
+          pendingFlags: flags.filter(f => f.flagStatus === 'pending').length,
+          reviewedFlags: flags.filter(f => f.flagStatus === 'reviewed').length,
+          dismissedFlags: flags.filter(f => f.flagStatus === 'dismissed').length,
+          removedPhotos: flags.filter(f => f.flagStatus === 'removed').length
+        };
+        
+        setFlagStats(stats);
+        setLoadingFlags(false);
+      });
+
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error fetching flagged content:", error);
+      setLoadingFlags(false);
+    }
+  };
+
+  // ✅ NEW: Flag management functions
+  const updateFlagStatus = async (flagId, newStatus) => {
+    try {
+      await updateDoc(doc(db, "flags", flagId), {
+        flagStatus: newStatus,
+        reviewedAt: serverTimestamp(),
+        reviewedBy: 'admin' // You could use actual admin user ID
+      });
+      console.log(`✅ Flag ${flagId} updated to ${newStatus}`);
+    } catch (error) {
+      console.error("❌ Error updating flag status:", error);
+    }
+  };
+
+  const removePhoto = async (flagId, photoId) => {
+    try {
+      // Update flag status
+      await updateDoc(doc(db, "flags", flagId), {
+        flagStatus: 'removed',
+        reviewedAt: serverTimestamp(),
+        reviewedBy: 'admin'
+      });
+      
+      // You might want to also delete or hide the actual photo
+      // await deleteDoc(doc(db, "photos", photoId));
+      
+      console.log(`✅ Photo ${photoId} marked as removed`);
+    } catch (error) {
+      console.error("❌ Error removing photo:", error);
+    }
+  };
 
   const loadBehavioralAnalytics = () => {
     const events = analytics.events;
@@ -958,7 +1068,7 @@ const AnalyticsDashboard = () => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation - UPDATED with Flagged Content tab */}
       <div style={{
         display: 'flex',
         marginBottom: '24px',
@@ -1032,6 +1142,47 @@ const AnalyticsDashboard = () => {
         >
           <TargetIcon color={selectedTab === 'behavior' ? 'white' : '#6b7280'} size={16} />
           Behavioral
+        </button>
+        {/* ✅ NEW: Flagged Content Tab */}
+        <button
+          onClick={() => setSelectedTab('flags')}
+          style={{
+            flex: 1,
+            padding: '12px 20px',
+            backgroundColor: selectedTab === 'flags' ? '#dc3545' : 'transparent',
+            color: selectedTab === 'flags' ? 'white' : '#6b7280',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            position: 'relative'
+          }}
+        >
+          <FlagIcon color={selectedTab === 'flags' ? 'white' : '#6b7280'} size={16} />
+          Flagged Content
+          {flagStats.pendingFlags > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '4px',
+              right: '8px',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              borderRadius: '10px',
+              padding: '2px 6px',
+              fontSize: '11px',
+              fontWeight: '600',
+              minWidth: '18px',
+              textAlign: 'center'
+            }}>
+              {flagStats.pendingFlags}
+            </span>
+          )}
         </button>
       </div>
 
@@ -2012,6 +2163,321 @@ const AnalyticsDashboard = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ NEW: Flagged Content Tab */}
+      {selectedTab === 'flags' && (
+        <div>
+          {/* Flag Statistics */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '20px',
+            marginBottom: '32px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center'
+            }}>
+              <div style={{ marginBottom: '8px' }}>
+                <FlagIcon color="#dc3545" size={32} />
+              </div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
+                Total Reports
+              </h3>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#dc3545' }}>
+                {formatNumber(flagStats.totalFlags)}
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center'
+            }}>
+              <div style={{ marginBottom: '8px' }}>
+                <AlertTriangleIcon color="#f59e0b" size={32} />
+              </div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
+                Pending Review
+              </h3>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#f59e0b' }}>
+                {formatNumber(flagStats.pendingFlags)}
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center'
+            }}>
+              <div style={{ marginBottom: '8px' }}>
+                <CheckCircleIcon color="#10b981" size={32} />
+              </div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
+                Reviewed
+              </h3>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#10b981' }}>
+                {formatNumber(flagStats.reviewedFlags)}
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+              textAlign: 'center'
+            }}>
+              <div style={{ marginBottom: '8px' }}>
+                <XCircleIcon color="#ef4444" size={32} />
+              </div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '16px', fontWeight: '600' }}>
+                Removed
+              </h3>
+              <p style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#ef4444' }}>
+                {formatNumber(flagStats.removedPhotos)}
+              </p>
+            </div>
+          </div>
+
+          {/* Flagged Content List */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+          }}>
+            <h2 style={{ 
+              color: '#1f2937', 
+              marginBottom: '20px', 
+              fontSize: '20px', 
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <FlagIcon color="#dc3545" size={24} />
+              Reported Content
+              <span style={{
+                backgroundColor: flagStats.pendingFlags > 0 ? '#fef2f2' : '#f3f4f6',
+                color: flagStats.pendingFlags > 0 ? '#dc3545' : '#6b7280',
+                padding: '4px 8px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: '500'
+              }}>
+                {flagStats.pendingFlags} pending
+              </span>
+            </h2>
+
+            {loadingFlags ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+                <div style={{
+                  width: "32px",
+                  height: "32px",
+                  border: "3px solid #e5e7eb",
+                  borderTop: "3px solid #007bff",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  margin: "0 auto 16px"
+                }} />
+                Loading flagged content...
+              </div>
+            ) : flaggedContent.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px',
+                color: '#6b7280'
+              }}>
+                <FlagIcon color="#9ca3af" size={48} />
+                <h3 style={{ margin: '16px 0 8px 0', color: '#374151' }}>No reports yet</h3>
+                <p style={{ margin: 0 }}>Flagged content will appear here for review</p>
+              </div>
+            ) : (
+              <div style={{
+                maxHeight: '600px',
+                overflowY: 'auto'
+              }}>
+                {flaggedContent.map((flag, index) => (
+                  <div key={flag.id} style={{
+                    padding: '20px',
+                    borderBottom: index < flaggedContent.length - 1 ? '1px solid #f3f4f6' : 'none',
+                    display: 'grid',
+                    gridTemplateColumns: '80px 1fr auto',
+                    gap: '16px',
+                    alignItems: 'start'
+                  }}>
+                    {/* Photo Thumbnail */}
+                    <div style={{
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      backgroundColor: '#f3f4f6'
+                    }}>
+                      {flag.photoUrl ? (
+                        <img 
+                          src={flag.photoUrl} 
+                          alt="Flagged content"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#9ca3af'
+                        }}>
+                          📸
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Flag Details */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <span style={{
+                          backgroundColor: flag.flagStatus === 'pending' ? '#fef2f2' : 
+                                         flag.flagStatus === 'reviewed' ? '#f0f9ff' :
+                                         flag.flagStatus === 'dismissed' ? '#f9fafb' : '#fef2f2',
+                          color: flag.flagStatus === 'pending' ? '#dc3545' : 
+                                 flag.flagStatus === 'reviewed' ? '#0ea5e9' :
+                                 flag.flagStatus === 'dismissed' ? '#6b7280' : '#dc3545',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          textTransform: 'uppercase'
+                        }}>
+                          {flag.flagStatus}
+                        </span>
+                        <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                          {formatDate(flag.timestamp)}
+                        </span>
+                      </div>
+
+                      <h4 style={{ margin: '0 0 4px 0', color: '#1f2937', fontSize: '14px', fontWeight: '600' }}>
+                        Reported for: {flag.reason?.replace('_', ' ') || 'Unknown reason'}
+                      </h4>
+                      
+                      <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#6b7280' }}>
+                        Reported by: {flag.flaggedByEmail}
+                      </p>
+
+                      {flag.photoCaption && (
+                        <p style={{ 
+                          margin: '0 0 8px 0', 
+                          fontSize: '13px', 
+                          color: '#4b5563',
+                          fontStyle: 'italic',
+                          maxWidth: '400px'
+                        }}>
+                          "{flag.photoCaption.length > 100 ? flag.photoCaption.substring(0, 100) + '...' : flag.photoCaption}"
+                        </p>
+                      )}
+
+                      <p style={{ margin: '0', fontSize: '12px', color: '#9ca3af' }}>
+                        📍 {flag.location} • Photo ID: {flag.photoId}
+                      </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '120px' }}>
+                      {flag.flagStatus === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => updateFlagStatus(flag.id, 'reviewed')}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#0ea5e9',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <CheckCircleIcon color="white" size={12} />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => updateFlagStatus(flag.id, 'dismissed')}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#6b7280',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '500'
+                            }}
+                          >
+                            Dismiss
+                          </button>
+                          <button
+                            onClick={() => removePhoto(flag.id, flag.photoId)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#dc3545',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <XCircleIcon color="white" size={12} />
+                            Remove
+                          </button>
+                        </>
+                      )}
+                      
+                      {flag.flagStatus !== 'pending' && (
+                        <div style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#f9fafb',
+                          borderRadius: '6px',
+                          textAlign: 'center',
+                          fontSize: '12px',
+                          color: '#6b7280'
+                        }}>
+                          {flag.flagStatus === 'reviewed' && '✅ Reviewed'}
+                          {flag.flagStatus === 'dismissed' && '👁️ Dismissed'}
+                          {flag.flagStatus === 'removed' && '🗑️ Removed'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
