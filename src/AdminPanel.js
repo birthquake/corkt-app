@@ -4,6 +4,7 @@ import { db } from './firebaseConfig';
 
 const AdminPanel = ({ currentUser }) => {
   const [photos, setPhotos] = useState([]);
+  const [flags, setFlags] = useState([]); // ✅ NEW: Track flags from flags collection
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,6 +16,16 @@ const AdminPanel = ({ currentUser }) => {
   const userEmail = currentUser?.email || '';
   const isAdmin = userEmail === adminEmail;
 
+  // ✅ NEW: Helper function to check if photo is flagged
+  const isPhotoFlagged = (photoId) => {
+    return flags.some(flag => flag.photoId === photoId && flag.flagStatus === 'pending');
+  };
+
+  // ✅ NEW: Get flag details for a photo
+  const getPhotoFlags = (photoId) => {
+    return flags.filter(flag => flag.photoId === photoId);
+  };
+
   useEffect(() => {
     if (!isAdmin) {
       setLoading(false);
@@ -22,22 +33,21 @@ const AdminPanel = ({ currentUser }) => {
     }
 
     try {
+      // ✅ EXISTING: Load photos
       const photosRef = collection(db, 'photos');
       const photosQuery = query(photosRef, orderBy('timestamp', 'desc'));
       
-      const unsubscribe = onSnapshot(photosQuery, (snapshot) => {
+      const photosUnsubscribe = onSnapshot(photosQuery, (snapshot) => {
         try {
           const allPhotos = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }));
           setPhotos(allPhotos);
-          setLoading(false);
           setError('');
         } catch (err) {
           console.error('Error processing photos:', err);
           setError('Error loading photos: ' + err.message);
-          setLoading(false);
         }
       }, (err) => {
         console.error('Error fetching photos:', err);
@@ -45,15 +55,43 @@ const AdminPanel = ({ currentUser }) => {
         setLoading(false);
       });
 
-      return () => unsubscribe();
+      // ✅ NEW: Load flags from flags collection
+      const flagsRef = collection(db, 'flags');
+      const flagsQuery = query(flagsRef, orderBy('timestamp', 'desc'));
+      
+      const flagsUnsubscribe = onSnapshot(flagsQuery, (snapshot) => {
+        try {
+          const allFlags = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            timestamp: doc.data().timestamp?.toDate() || new Date(doc.data().timestamp || Date.now())
+          }));
+          setFlags(allFlags);
+          setLoading(false);
+          console.log('📊 AdminPanel: Loaded flags:', allFlags.length);
+        } catch (err) {
+          console.error('Error processing flags:', err);
+          setError('Error loading flags: ' + err.message);
+          setLoading(false);
+        }
+      }, (err) => {
+        console.error('Error fetching flags:', err);
+        setError('Error fetching flags: ' + err.message);
+        setLoading(false);
+      });
+
+      return () => {
+        photosUnsubscribe();
+        flagsUnsubscribe();
+      };
     } catch (err) {
-      console.error('Error setting up photo listener:', err);
-      setError('Error setting up photo listener: ' + err.message);
+      console.error('Error setting up listeners:', err);
+      setError('Error setting up listeners: ' + err.message);
       setLoading(false);
     }
   }, [isAdmin]);
 
-  // Filter photos based on current filter and search
+  // ✅ UPDATED: Filter photos based on current filter and search (now uses new flagging system)
   const filteredPhotos = photos.filter(photo => {
     // Text search filter
     if (searchTerm) {
@@ -68,7 +106,7 @@ const AdminPanel = ({ currentUser }) => {
 
     // Status filter
     if (filter === 'flagged') {
-      return photo.flagged === true;
+      return isPhotoFlagged(photo.id); // ✅ NEW: Use new flagging system
     } else if (filter === 'recent') {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const photoDate = photo.timestamp?.toDate?.() || new Date(photo.timestamp);
@@ -94,8 +132,11 @@ const AdminPanel = ({ currentUser }) => {
     }
   };
 
+  // ✅ UPDATED: Handle flagging using new system (this is now for manual admin flagging)
   const handleFlagPhoto = async (photoId, flagged) => {
     try {
+      // This updates the old flagged field for backwards compatibility
+      // The new user-reported flags are handled in the AnalyticsDashboard
       await updateDoc(doc(db, 'photos', photoId), {
         flagged: flagged,
         flaggedAt: flagged ? new Date() : null,
@@ -177,6 +218,9 @@ const AdminPanel = ({ currentUser }) => {
     return '#28a745'; // public
   };
 
+  // ✅ NEW: Calculate flagged count using new system
+  const flaggedCount = photos.filter(photo => isPhotoFlagged(photo.id)).length;
+
   if (!isAdmin) {
     return (
       <div style={{ 
@@ -210,7 +254,7 @@ const AdminPanel = ({ currentUser }) => {
           animation: 'spin 1s linear infinite',
           margin: '20px auto'
         }} />
-        <p style={{ color: '#6c757d' }}>Loading photos...</p>
+        <p style={{ color: '#6c757d' }}>Loading photos and flags...</p>
       </div>
     );
   }
@@ -294,13 +338,13 @@ const AdminPanel = ({ currentUser }) => {
           >
             <option value="all">All Photos ({photos.length})</option>
             <option value="recent">Recent (24h)</option>
-            <option value="flagged">Flagged ({photos.filter(p => p.flagged).length})</option>
+            <option value="flagged">Flagged ({flaggedCount})</option>
             <option value="private">Private Photos ({photos.filter(p => p.privacy === 'private').length})</option>
           </select>
         </div>
       </div>
 
-      {/* Stats Bar */}
+      {/* ✅ UPDATED: Stats Bar with new flagging count */}
       <div style={{
         backgroundColor: '#fff',
         padding: '16px 20px',
@@ -316,10 +360,14 @@ const AdminPanel = ({ currentUser }) => {
           <strong style={{ color: '#343a40' }}>Showing:</strong> {filteredPhotos.length}
         </div>
         <div style={{ color: '#6c757d', fontSize: '14px' }}>
-          <strong style={{ color: '#dc3545' }}>Flagged:</strong> {photos.filter(p => p.flagged).length}
+          <strong style={{ color: '#dc3545' }}>Flagged:</strong> {flaggedCount}
         </div>
         <div style={{ color: '#6c757d', fontSize: '14px' }}>
           <strong style={{ color: '#ffc107' }}>Private:</strong> {photos.filter(p => p.privacy === 'private').length}
+        </div>
+        {/* ✅ NEW: Show total user reports */}
+        <div style={{ color: '#6c757d', fontSize: '14px' }}>
+          <strong style={{ color: '#17a2b8' }}>User Reports:</strong> {flags.filter(f => f.flagStatus === 'pending').length}
         </div>
       </div>
 
@@ -340,175 +388,214 @@ const AdminPanel = ({ currentUser }) => {
             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
             gap: '20px'
           }}>
-            {filteredPhotos.map((photo) => (
-              <div
-                key={photo.id}
-                style={{
-                  backgroundColor: '#fff',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  border: photo.flagged ? '2px solid #dc3545' : '1px solid #dee2e6'
-                }}
-              >
-                {/* Photo */}
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src={photo.imageUrl}
-                    alt="User photo"
-                    style={{
+            {filteredPhotos.map((photo) => {
+              const photoFlags = getPhotoFlags(photo.id);
+              const hasUserReports = photoFlags.length > 0;
+              const pendingReports = photoFlags.filter(f => f.flagStatus === 'pending').length;
+              
+              return (
+                <div
+                  key={photo.id}
+                  style={{
+                    backgroundColor: '#fff',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    border: hasUserReports ? '2px solid #dc3545' : 
+                           photo.flagged ? '2px solid #ffc107' : '1px solid #dee2e6'
+                  }}
+                >
+                  {/* Photo */}
+                  <div style={{ position: 'relative' }}>
+                    <img
+                      src={photo.imageUrl}
+                      alt="User photo"
+                      style={{
+                        width: '100%',
+                        height: '200px',
+                        objectFit: 'cover',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => setSelectedPhoto(photo)}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    <div style={{
+                      display: 'none',
                       width: '100%',
                       height: '200px',
-                      objectFit: 'cover',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => setSelectedPhoto(photo)}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div style={{
-                    display: 'none',
-                    width: '100%',
-                    height: '200px',
-                    backgroundColor: '#f8f9fa',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#6c757d',
-                    fontSize: '14px'
-                  }}>
-                    Image failed to load
-                  </div>
-                  
-                  {/* Status badges */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    display: 'flex',
-                    gap: '4px'
-                  }}>
-                    {photo.flagged && (
-                      <div style={{
-                        backgroundColor: '#dc3545',
-                        color: '#fff',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}>
-                        FLAGGED
-                      </div>
-                    )}
-                    {photo.privacy && (
-                      <div style={{
-                        backgroundColor: getPrivacyColor(photo.privacy),
-                        color: '#fff',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}>
-                        {photo.privacy.toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Photo Info */}
-                <div style={{ padding: '16px' }}>
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ 
-                      fontWeight: '600', 
-                      color: '#343a40',
-                      fontSize: '14px',
-                      marginBottom: '4px'
+                      backgroundColor: '#f8f9fa',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#6c757d',
+                      fontSize: '14px'
                     }}>
-                      User ID: {formatUserId(photo.uid)}
+                      Image failed to load
                     </div>
-                    <div style={{ 
-                      color: '#6c757d', 
-                      fontSize: '12px'
+                    
+                    {/* ✅ UPDATED: Status badges with user reports */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      display: 'flex',
+                      gap: '4px',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end'
                     }}>
-                      {formatDate(photo.timestamp)}
+                      {pendingReports > 0 && (
+                        <div style={{
+                          backgroundColor: '#dc3545',
+                          color: '#fff',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}>
+                          {pendingReports} REPORT{pendingReports !== 1 ? 'S' : ''}
+                        </div>
+                      )}
+                      {photo.flagged && (
+                        <div style={{
+                          backgroundColor: '#ffc107',
+                          color: '#000',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}>
+                          ADMIN FLAGGED
+                        </div>
+                      )}
+                      {photo.privacy && (
+                        <div style={{
+                          backgroundColor: getPrivacyColor(photo.privacy),
+                          color: '#fff',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}>
+                          {photo.privacy.toUpperCase()}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {photo.caption && (
-                    <p style={{
-                      margin: '0 0 12px 0',
-                      color: '#343a40',
-                      fontSize: '14px',
-                      lineHeight: '1.4',
-                      wordBreak: 'break-word'
-                    }}>
-                      {photo.caption.length > 100 ? 
-                        photo.caption.substring(0, 100) + '...' : 
-                        photo.caption
-                      }
-                    </p>
-                  )}
+                  {/* Photo Info */}
+                  <div style={{ padding: '16px' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                      <div style={{ 
+                        fontWeight: '600', 
+                        color: '#343a40',
+                        fontSize: '14px',
+                        marginBottom: '4px'
+                      }}>
+                        User ID: {formatUserId(photo.uid)}
+                      </div>
+                      <div style={{ 
+                        color: '#6c757d', 
+                        fontSize: '12px'
+                      }}>
+                        {formatDate(photo.timestamp)}
+                      </div>
+                    </div>
 
-                  <div style={{
-                    color: '#6c757d',
-                    fontSize: '12px',
-                    marginBottom: '12px'
-                  }}>
-                    📍 {formatLocation(photo)}
-                  </div>
+                    {photo.caption && (
+                      <p style={{
+                        margin: '0 0 12px 0',
+                        color: '#343a40',
+                        fontSize: '14px',
+                        lineHeight: '1.4',
+                        wordBreak: 'break-word'
+                      }}>
+                        {photo.caption.length > 100 ? 
+                          photo.caption.substring(0, 100) + '...' : 
+                          photo.caption
+                        }
+                      </p>
+                    )}
 
-                  {photo.taggedUsers && photo.taggedUsers.length > 0 && (
                     <div style={{
                       color: '#6c757d',
                       fontSize: '12px',
                       marginBottom: '12px'
                     }}>
-                      👥 Tagged: {photo.taggedUsers.length} user{photo.taggedUsers.length !== 1 ? 's' : ''}
+                      📍 {formatLocation(photo)}
                     </div>
-                  )}
 
-                  {/* Action Buttons */}
-                  <div style={{ 
-                    display: 'flex', 
-                    gap: '8px',
-                    flexWrap: 'wrap'
-                  }}>
-                    <button
-                      onClick={() => handleFlagPhoto(photo.id, !photo.flagged)}
-                      style={{
-                        padding: '6px 12px',
-                        border: 'none',
+                    {/* ✅ NEW: Show user report details */}
+                    {photoFlags.length > 0 && (
+                      <div style={{
+                        backgroundColor: '#fef2f2',
+                        padding: '8px',
                         borderRadius: '6px',
+                        marginBottom: '12px',
+                        fontSize: '12px'
+                      }}>
+                        <strong>User Reports:</strong><br />
+                        {photoFlags.map((flag, index) => (
+                          <div key={flag.id} style={{ marginTop: '4px' }}>
+                            • {flag.reason} ({flag.flagStatus}) - {flag.flaggedByEmail}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {photo.taggedUsers && photo.taggedUsers.length > 0 && (
+                      <div style={{
+                        color: '#6c757d',
                         fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        backgroundColor: photo.flagged ? '#28a745' : '#ffc107',
-                        color: photo.flagged ? '#fff' : '#000'
-                      }}
-                    >
-                      {photo.flagged ? 'Unflag' : 'Flag'}
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDeletePhoto(photo.id)}
-                      style={{
-                        padding: '6px 12px',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        backgroundColor: '#dc3545',
-                        color: '#fff'
-                      }}
-                    >
-                      Delete
-                    </button>
+                        marginBottom: '12px'
+                      }}>
+                        👥 Tagged: {photo.taggedUsers.length} user{photo.taggedUsers.length !== 1 ? 's' : ''}
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '8px',
+                      flexWrap: 'wrap'
+                    }}>
+                      <button
+                        onClick={() => handleFlagPhoto(photo.id, !photo.flagged)}
+                        style={{
+                          padding: '6px 12px',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          backgroundColor: photo.flagged ? '#28a745' : '#ffc107',
+                          color: photo.flagged ? '#fff' : '#000'
+                        }}
+                      >
+                        {photo.flagged ? 'Unflag' : 'Admin Flag'}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDeletePhoto(photo.id)}
+                        style={{
+                          padding: '6px 12px',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          backgroundColor: '#dc3545',
+                          color: '#fff'
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -565,8 +652,19 @@ const AdminPanel = ({ currentUser }) => {
               )}
               {selectedPhoto.flagged && (
                 <p style={{ color: '#dc3545' }}>
-                  <strong>Flagged by:</strong> {selectedPhoto.flaggedBy} on {formatDate(selectedPhoto.flaggedAt)}
+                  <strong>Admin Flagged by:</strong> {selectedPhoto.flaggedBy} on {formatDate(selectedPhoto.flaggedAt)}
                 </p>
+              )}
+              {/* ✅ NEW: Show user reports in modal */}
+              {getPhotoFlags(selectedPhoto.id).length > 0 && (
+                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#fef2f2', borderRadius: '6px' }}>
+                  <p style={{ margin: '0 0 8px 0' }}><strong>User Reports:</strong></p>
+                  {getPhotoFlags(selectedPhoto.id).map((flag, index) => (
+                    <div key={flag.id} style={{ fontSize: '14px', marginBottom: '4px' }}>
+                      • <strong>{flag.reason}</strong> - Reported by {flag.flaggedByEmail} on {formatDate(flag.timestamp)} ({flag.flagStatus})
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
