@@ -9,8 +9,9 @@ import { useFollowing, filterPhotosByFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
 import MobilePhotoCard from "./MobilePhotoCard";
 import LocationDisplay from "./LocationDisplay";
-import DiscoveryTab from "./DiscoveryTab"; // ✅ NEW: Import Discovery component
+import DiscoveryTab from "./DiscoveryTab";
 import analytics from "./analyticsService";
+import '../styles.css';
 
 // Existing icon components + new Discovery icon + Flag icon
 const PublicIcon = ({ color = "#6c757d", size = 18 }) => (
@@ -44,7 +45,6 @@ const MyPostsIcon = ({ color = "#6c757d", size = 18 }) => (
   </svg>
 );
 
-// ✅ NEW: Discovery icon
 const DiscoveryIcon = ({ color = "#ff6b35", size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="12" cy="12" r="10"/>
@@ -52,7 +52,6 @@ const DiscoveryIcon = ({ color = "#ff6b35", size = 18 }) => (
   </svg>
 );
 
-// ✅ NEW: Flag icon for reporting
 const FlagIcon = ({ color = "#ff6b35", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
@@ -60,7 +59,7 @@ const FlagIcon = ({ color = "#ff6b35", size = 20 }) => (
   </svg>
 );
 
-const GlobalIcon = ({ color = "#007bff", size = 16 }) => (
+const GlobalIcon = ({ color = "#06b6d4", size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="12" cy="12" r="10"/>
     <line x1="2" y1="12" x2="22" y2="12"/>
@@ -68,7 +67,7 @@ const GlobalIcon = ({ color = "#007bff", size = 16 }) => (
   </svg>
 );
 
-const LocalIcon = ({ color = "#28a745", size = 16 }) => (
+const LocalIcon = ({ color = "#22c55e", size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
     <circle cx="12" cy="10" r="3"/>
@@ -101,12 +100,12 @@ const HomeFeed = ({ photos, currentUser }) => {
   const [photosViewedInSession, setPhotosViewedInSession] = useState(0);
   const [photosPostedInSession, setPhotosPostedInSession] = useState(0);
 
-  // ✅ NEW: Photo flagging state
+  // Photo flagging state
   const [flaggingPhoto, setFlaggingPhoto] = useState(false);
   const [showFlagMenu, setShowFlagMenu] = useState(false);
   const [flagSuccess, setFlagSuccess] = useState(false);
 
-  // ✅ NEW: Gesture state for modal
+  // Gesture state for modal
   const [modalTranslateY, setModalTranslateY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [imageScale, setImageScale] = useState(1);
@@ -165,7 +164,7 @@ const HomeFeed = ({ photos, currentUser }) => {
     return null;
   }, []);
 
-  // ✅ NEW: Photo flagging functions
+  // Photo flagging functions
   const handleFlagPhoto = useCallback(async (reason) => {
     if (!selectedPhoto || !currentUser || flaggingPhoto) return;
     
@@ -183,9 +182,8 @@ const HomeFeed = ({ photos, currentUser }) => {
         reason: reason,
         timestamp: serverTimestamp(),
         location: selectedPhoto.placeName || 'Unknown location',
-        flagStatus: 'pending', // pending, reviewed, dismissed, removed
+        flagStatus: 'pending',
         
-        // Additional metadata for analytics
         userLocation: currentLocation ? {
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude
@@ -193,7 +191,6 @@ const HomeFeed = ({ photos, currentUser }) => {
         flaggedFromMode: isGlobalMode ? 'global' : 'local',
         flaggedFromFilter: activeFilter,
         
-        // Photo metadata
         photoLocation: selectedPhoto.latitude && selectedPhoto.longitude ? {
           latitude: selectedPhoto.latitude,
           longitude: selectedPhoto.longitude
@@ -202,7 +199,6 @@ const HomeFeed = ({ photos, currentUser }) => {
 
       await addDoc(collection(db, "flags"), flagData);
       
-      // Track in analytics
       analytics.trackPhotoInteraction(
         'flag',
         selectedPhoto.latitude && selectedPhoto.longitude ? 
@@ -212,7 +208,6 @@ const HomeFeed = ({ photos, currentUser }) => {
         { reason, flaggedPhotoId: selectedPhoto.id }
       );
 
-      // Show success feedback
       setFlagSuccess(true);
       setTimeout(() => setFlagSuccess(false), 2000);
       
@@ -220,7 +215,6 @@ const HomeFeed = ({ photos, currentUser }) => {
       
     } catch (error) {
       console.error('❌ Error flagging photo:', error);
-      // You could add error toast notification here
     } finally {
       setFlaggingPhoto(false);
     }
@@ -230,7 +224,7 @@ const HomeFeed = ({ photos, currentUser }) => {
     setShowFlagMenu(prev => !prev);
   }, []);
 
-  // ✅ NEW: Reset zoom and position when photo changes
+  // Reset zoom and position when photo changes
   useEffect(() => {
     if (selectedPhoto) {
       setImageScale(1);
@@ -287,7 +281,6 @@ const HomeFeed = ({ photos, currentUser }) => {
       options
     );
 
-    // Update location every 30 seconds
     const locationInterval = setInterval(() => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -365,7 +358,7 @@ const HomeFeed = ({ photos, currentUser }) => {
     return nearbyPhotos;
   }, [currentLocation, calculateDistance, isGlobalMode]);
 
-  // ✅ NEW: Gesture helper functions
+  // Gesture helper functions
   const getTouchDistance = useCallback((touches) => {
     const touch1 = touches[0];
     const touch2 = touches[1];
@@ -384,7 +377,7 @@ const HomeFeed = ({ photos, currentUser }) => {
     };
   }, []);
 
-  // ✅ NEW: Touch gesture handlers
+  // Touch gesture handlers
   const handleTouchStart = useCallback((e) => {
     if (!selectedPhoto) return;
 
@@ -546,44 +539,19 @@ const HomeFeed = ({ photos, currentUser }) => {
     setPhotosPostedInSession(0);
   }, [isGlobalMode, currentLocation, modeSessionStart, photosViewedInSession, photosPostedInSession, detectVenue]);
 
-  // ✅ UPDATED: Filter options with Discovery
+  // Filter options with Discovery
   const filters = [
-  { 
-    id: "public", 
-    icon: PublicIcon, 
-    tooltip: "Public",
-    label: "Public"
-  },
-  { 
-    id: "friends", 
-    icon: FriendsIcon, 
-    tooltip: "Friends",
-    label: "Friends"
-  },
-  { 
-    id: "tagged", 
-    icon: TaggedIcon, 
-    tooltip: "Tagged",
-    label: "Tagged"
-  },
-  { 
-    id: "mine", 
-    icon: MyPostsIcon, 
-    tooltip: "My Posts",
-    label: "Mine"
-  },
-  { 
-    id: "discovery", 
-    icon: DiscoveryIcon, 
-    tooltip: "Trending & Discovery",
-    label: "Discovery"
-  },
-];
+    { id: "public", icon: PublicIcon, tooltip: "Public", label: "Public" },
+    { id: "friends", icon: FriendsIcon, tooltip: "Friends", label: "Friends" },
+    { id: "tagged", icon: TaggedIcon, tooltip: "Tagged", label: "Tagged" },
+    { id: "mine", icon: MyPostsIcon, tooltip: "My Posts", label: "Mine" },
+    { id: "discovery", icon: DiscoveryIcon, tooltip: "Trending & Discovery", label: "Discovery" },
+  ];
   
-  // Photo filtering (only for non-discovery filters)
+  // Photo filtering
   const filteredPhotos = useMemo(() => {
     if (activeFilter === "discovery") {
-      return []; // Discovery tab handles its own photos
+      return [];
     }
 
     console.log(`🔄 HomeFeed: Starting filter process - ${photos.length} total photos, filter: ${activeFilter}`);
@@ -649,7 +617,7 @@ const HomeFeed = ({ photos, currentUser }) => {
   // Enhanced photo modal with analytics
   const openPhotoModal = useCallback((photo) => {
     const photoIndex = activeFilter === "discovery" 
-      ? 0 // Discovery photos don't have a consistent index
+      ? 0
       : filteredPhotos.findIndex((p) => p.id === photo.id);
     
     setSelectedPhoto(photo);
@@ -665,7 +633,7 @@ const HomeFeed = ({ photos, currentUser }) => {
     setPhotosViewedInSession(prev => prev + 1);
   }, [filteredPhotos, currentLocation, isGlobalMode, activeFilter]);
 
-  // ✅ UPDATED: Close modal with gesture reset
+  // Close modal with gesture reset
   const closePhotoModal = useCallback(() => {
     setSelectedPhoto(null);
     setSelectedPhotoIndex(0);
@@ -675,43 +643,36 @@ const HomeFeed = ({ photos, currentUser }) => {
     setImageTranslateY(0);
     setIsDragging(false);
     setIsZooming(false);
-    setShowFlagMenu(false); // ✅ NEW: Close flag menu when modal closes
+    setShowFlagMenu(false);
   }, []);
 
   const formatTimeAgo = useCallback((timestamp) => {
     if (!timestamp) return "Unknown time";
     
-    // Convert Firestore timestamp to Date if needed
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diffInMilliseconds = now.getTime() - date.getTime();
     
-    // Convert to different time units
     const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
     const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
     
-    // Less than 1 minute
     if (diffInMinutes < 1) {
       return 'just now';
     }
     
-    // Less than 1 hour - show minutes
     if (diffInHours < 1) {
       return diffInMinutes === 1 ? '1m' : `${diffInMinutes}m`;
     }
     
-    // Less than 24 hours - show hours
     if (diffInDays < 1) {
       return diffInHours === 1 ? '1h' : `${diffInHours}h`;
     }
     
-    // Less than 7 days - show days
     if (diffInDays < 7) {
       return diffInDays === 1 ? '1d' : `${diffInDays}d`;
     }
     
-    // 7 days or more - show actual date
     const options = {
       month: 'short',
       day: 'numeric',
@@ -750,158 +711,81 @@ const HomeFeed = ({ photos, currentUser }) => {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: "500px", 
-        margin: "0 auto", 
-        backgroundColor: "#f8f9fa",
-        minHeight: "100vh",  
-        paddingTop: "16px",
-      }}
-    >
+    <div style={{ maxWidth: "500px", margin: "0 auto", minHeight: "100vh", paddingTop: "16px" }}>
       {/* Location Status Indicators */}
       {locationError && (
-        <div style={{
-          backgroundColor: "#f8d7da",
-          border: "1px solid #f5c6cb",
-          borderRadius: "8px",
-          padding: "8px 16px",
-          margin: "0 16px 16px 16px",
-          fontSize: "12px",
-          color: "#721c24"
-        }}>
+        <div className="alert alert-danger" style={{ margin: "0 16px 16px 16px" }}>
           📍 Location unavailable - showing all photos
         </div>
       )}
 
       {locationLoading && (
-        <div style={{
-          backgroundColor: "#fff3cd",
-          border: "1px solid #ffeaa7",
-          borderRadius: "8px",
-          padding: "8px 16px",
-          margin: "0 16px 16px 16px",
-          fontSize: "12px",
-          color: "#856404",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px"
-        }}>
+        <div className="alert alert-info" style={{ margin: "0 16px 16px 16px", display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ animation: "spin 1s linear infinite" }}>📍</div>
           Getting location...
         </div>
       )}
 
       {/* Filter Tabs with Global/Local Toggle */}
-      <div
-        style={{
-          backgroundColor: "#ffffff",
-          borderBottom: "1px solid #e9ecef",
-          padding: "12px 0",
-          position: "sticky",  
-          top: "0",           
-          zIndex: 100,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-start",
-            alignItems: "center",
-            gap: "2px",
-            padding: "0 8px",
-          }}
-        >
-          {/* Global/Local Toggle - Hide for Discovery tab */}
+      <div style={{
+        backgroundColor: "var(--color-bg-secondary)",
+        borderBottom: "1px solid var(--color-border)",
+        padding: "12px 0",
+        position: "sticky",
+        top: "0",
+        zIndex: 100,
+        boxShadow: "var(--shadow-sm)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "2px", padding: "0 8px" }}>
+          {/* Global/Local Toggle */}
           {activeFilter !== "discovery" && (
             <>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginRight: "8px",
-                }}
-              >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginRight: "8px" }}>
                 <button
                   onClick={handleModeToggle}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 12px",
-                    backgroundColor: isGlobalMode ? "#007bff" : "#28a745",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "20px",
-                    fontSize: "12px",
-                    fontWeight: "500",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  }}
+                  className="mode-toggle active"
                   title={`Switch to ${isGlobalMode ? 'local' : 'global'} mode`}
+                  style={{
+                    backgroundColor: isGlobalMode ? "rgba(6, 182, 212, 0.1)" : "rgba(34, 197, 94, 0.1)",
+                    borderColor: isGlobalMode ? "var(--color-primary)" : "var(--color-success)",
+                  }}
                 >
                   {isGlobalMode ? (
-                    <GlobalIcon color="white" size={14} />
+                    <GlobalIcon color="var(--color-primary)" size={14} />
                   ) : (
-                    <LocalIcon color="white" size={14} />
+                    <LocalIcon color="var(--color-success)" size={14} />
                   )}
-                  <span>
+                  <span style={{ color: isGlobalMode ? "var(--color-primary)" : "var(--color-success)" }}>
                     {isGlobalMode ? "Global" : "Local"}
                   </span>
                 </button>
               </div>
 
-              {/* Separator */}
-              <div
-                style={{
-                  width: "1px",
-                  height: "24px",
-                  backgroundColor: "#e9ecef",
-                }}
-              />
+              <div style={{ width: "1px", height: "24px", backgroundColor: "var(--color-border)" }} />
             </>
           )}
 
           {/* Filter Tabs */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "16px",
-              overflowX: "auto",
-              WebkitOverflowScrolling: "touch"
-            }}
-          >
+          <div className="filter-tabs">
             {filters.map((filter) => {
               const IconComponent = filter.icon;
               const isActive = activeFilter === filter.id;
-              const iconColor = isActive ? (filter.id === "discovery" ? "#ff6b35" : "#007bff") : "#6b7280";
+              const iconColor = isActive ? (filter.id === "discovery" ? "#ff6b35" : "var(--color-primary)") : "var(--color-text-muted)";
               
               return (
                 <button
                   key={filter.id}
                   onClick={() => setActiveFilter(filter.id)}
                   title={filter.tooltip}
+                  className="btn-icon"
                   style={{
-                    width: "44px",
-                    height: "44px",
-                    backgroundColor: isActive ? (filter.id === "discovery" ? "rgba(255, 107, 53, 0.08)" : "rgba(0, 123, 255, 0.08)") : "transparent",
-                    border: "none",
-                    borderRadius: "12px",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    backgroundColor: isActive ? (filter.id === "discovery" ? "rgba(255, 107, 53, 0.08)" : "rgba(6, 182, 212, 0.08)") : "transparent",
                     position: "relative",
                     flexShrink: 0
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.target.style.backgroundColor = "#f8f9fa";
+                      e.target.style.backgroundColor = "var(--color-bg-tertiary)";
                     }
                   }}
                   onMouseLeave={(e) => {
@@ -912,20 +796,17 @@ const HomeFeed = ({ photos, currentUser }) => {
                 >
                   <IconComponent color={iconColor} size={20} />
                   
-                  {/* Active indicator */}
                   {isActive && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "6px",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        width: "4px",
-                        height: "4px",
-                        backgroundColor: filter.id === "discovery" ? "#ff6b35" : "#007bff",
-                        borderRadius: "50%",
-                      }}
-                    />
+                    <div style={{
+                      position: "absolute",
+                      bottom: "6px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "4px",
+                      height: "4px",
+                      backgroundColor: filter.id === "discovery" ? "#ff6b35" : "var(--color-primary)",
+                      borderRadius: "50%",
+                    }} />
                   )}
                 </button>
               );
@@ -936,7 +817,6 @@ const HomeFeed = ({ photos, currentUser }) => {
 
       {/* Content Area */}
       {activeFilter === "discovery" ? (
-        // ✅ NEW: Discovery Tab Content
         <DiscoveryTab
           currentUser={currentUser}
           currentLocation={currentLocation}
@@ -944,33 +824,20 @@ const HomeFeed = ({ photos, currentUser }) => {
           onUserClick={handleUserClick}
         />
       ) : (
-        // Existing feed content
-        <div style={{ padding: "16px" }}>
+        <div className="feed">
           {filteredPhotos.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "60px 20px",
-                color: "#6c757d",
-              }}
-            >
-              <div style={{ fontSize: "48px", marginBottom: "16px" }}>
-                {activeFilter === "public" && <PublicIcon color="#6c757d" size={48} />}
-                {activeFilter === "friends" && <FriendsIcon color="#6c757d" size={48} />}
-                {activeFilter === "tagged" && <TaggedIcon color="#6c757d" size={48} />}
-                {activeFilter === "mine" && <MyPostsIcon color="#6c757d" size={48} />}
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                {activeFilter === "public" && <PublicIcon color="var(--color-text-muted)" size={48} />}
+                {activeFilter === "friends" && <FriendsIcon color="var(--color-text-muted)" size={48} />}
+                {activeFilter === "tagged" && <TaggedIcon color="var(--color-text-muted)" size={48} />}
+                {activeFilter === "mine" && <MyPostsIcon color="var(--color-text-muted)" size={48} />}
               </div>
-              <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
-                {currentLocation 
-                  ? (isGlobalMode ? "No photos found" : "No nearby photos")
-                  : (activeFilter === "public" && "No photos yet")}
-                {!currentLocation && activeFilter === "friends" && followingList.length === 0
-                  ? "No followed users"
-                  : !currentLocation && activeFilter === "friends" && "No photos from friends"}
-                {!currentLocation && activeFilter === "tagged" && "No tagged photos"}
-                {!currentLocation && activeFilter === "mine" && "No photos posted"}
+              <h3>{currentLocation 
+                ? (isGlobalMode ? "No photos found" : "No nearby photos")
+                : (activeFilter === "public" && "No photos yet")}
               </h3>
-              <p style={{ margin: 0, fontSize: "14px" }}>
+              <p>
                 {currentLocation 
                   ? (isGlobalMode 
                       ? "No photos found matching your current filters"
@@ -1003,7 +870,7 @@ const HomeFeed = ({ photos, currentUser }) => {
         </div>
       )}
 
-      {/* ✅ IMMERSIVE: Full-Screen Photo Modal with Flagging */}
+      {/* Full-Screen Photo Modal with Flagging */}
       {selectedPhoto && (
         <div
           ref={modalRef}
@@ -1044,108 +911,52 @@ const HomeFeed = ({ photos, currentUser }) => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* ✅ FLOATING: Header Overlay - UPDATED with Flag Button */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: 10,
-                background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)",
-                padding: "50px 20px 30px 20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <div
-                style={{ 
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: "12px",
-                  cursor: "pointer",
-                  flex: 1,
-                }}
-                onClick={() => handleUserClick(selectedPhoto.uid)}
-              >
+            {/* Header Overlay */}
+            <div style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 10,
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%)",
+              padding: "50px 20px 30px 20px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}>
+              <div className="user-info" onClick={() => handleUserClick(selectedPhoto.uid)}>
                 {getUserInfo(selectedPhoto).profilePicture ? (
                   <img
                     src={getUserInfo(selectedPhoto).profilePicture}
                     alt={getUserInfo(selectedPhoto).displayName}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      border: "2px solid rgba(255,255,255,0.3)",
-                    }}
+                    className="user-avatar"
                   />
                 ) : (
-                  <div
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "50%",
-                      backgroundColor: "#007bff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "white",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      border: "2px solid rgba(255,255,255,0.3)",
-                    }}
-                  >
+                  <div className="user-avatar-initials">
                     {getUserInfo(selectedPhoto).initials}
                   </div>
                 )}
                 <div>
-                  <div
-                    style={{
-                      fontWeight: "600",
-                      fontSize: "15px",
-                      color: "white",
-                      textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-                    }}
-                  >
+                  <div style={{ fontWeight: "600", fontSize: "15px", color: "white", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                     {getUserInfo(selectedPhoto).displayName}
                   </div>
-                  <div 
-                    style={{ 
-                      fontSize: "12px", 
-                      color: "rgba(255,255,255,0.8)",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-                    }}
-                  >
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
                     @{getUserInfo(selectedPhoto).screenName}
                   </div>
                 </div>
               </div>
               
-              {/* Header buttons container */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                {/* Flag Button - Only show if not own photo */}
                 {selectedPhoto.uid !== currentUser?.uid && (
                   <div style={{ position: "relative" }}>
                     <button
                       onClick={toggleFlagMenu}
                       disabled={flaggingPhoto}
+                      className="btn-icon"
                       style={{
                         background: "rgba(0,0,0,0.5)",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "white",
-                        padding: "8px",
-                        borderRadius: "50%",
-                        width: "36px",
-                        height: "36px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
                         backdropFilter: "blur(10px)",
                         WebkitBackdropFilter: "blur(10px)",
-                        transition: "all 0.2s ease",
                         opacity: flaggingPhoto ? 0.6 : 1,
                       }}
                       onMouseEnter={(e) => {
@@ -1169,41 +980,24 @@ const HomeFeed = ({ photos, currentUser }) => {
                       )}
                     </button>
 
-                    {/* Flag Menu Dropdown */}
                     {showFlagMenu && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "45px",
-                          right: "0",
-                          backgroundColor: "white",
-                          borderRadius: "12px",
-                          boxShadow: "0 8px 25px rgba(0,0,0,0.3)",
-                          padding: "8px",
-                          minWidth: "200px",
-                          zIndex: 1000,
-                          animation: "slideInFromTop 0.2s ease-out"
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div style={{
-                          padding: "12px 16px",
-                          borderBottom: "1px solid #f0f0f0",
-                          marginBottom: "8px"
-                        }}>
-                          <h4 style={{ 
-                            margin: "0 0 4px 0", 
-                            color: "#1a1a1a", 
-                            fontSize: "14px", 
-                            fontWeight: "600" 
-                          }}>
+                      <div style={{
+                        position: "absolute",
+                        top: "45px",
+                        right: "0",
+                        backgroundColor: "var(--color-bg-secondary)",
+                        borderRadius: "var(--radius-xl)",
+                        boxShadow: "var(--shadow-xl)",
+                        padding: "8px",
+                        minWidth: "200px",
+                        zIndex: 1000,
+                        animation: "slideInFromTop 0.2s ease-out"
+                      }} onClick={(e) => e.stopPropagation()}>
+                        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--color-border)", marginBottom: "8px" }}>
+                          <h4 style={{ margin: "0 0 4px 0", color: "var(--color-text-primary)", fontSize: "14px", fontWeight: "600" }}>
                             Report this photo
                           </h4>
-                          <p style={{ 
-                            margin: 0, 
-                            color: "#666", 
-                            fontSize: "12px" 
-                          }}>
+                          <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "12px" }}>
                             Help us keep the community safe
                           </p>
                         </div>
@@ -1224,18 +1018,18 @@ const HomeFeed = ({ photos, currentUser }) => {
                               padding: "12px 16px",
                               background: "none",
                               border: "none",
-                              borderRadius: "8px",
+                              borderRadius: "var(--radius-md)",
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
                               gap: "12px",
                               fontSize: "14px",
-                              color: "#1a1a1a",
-                              transition: "background-color 0.2s ease",
+                              color: "var(--color-text-primary)",
+                              transition: "background-color var(--transition-fast)",
                               marginBottom: "4px"
                             }}
                             onMouseEnter={(e) => {
-                              e.target.style.backgroundColor = "#f8f9fa";
+                              e.target.style.backgroundColor = "var(--color-bg-tertiary)";
                             }}
                             onMouseLeave={(e) => {
                               e.target.style.backgroundColor = "transparent";
@@ -1246,24 +1040,11 @@ const HomeFeed = ({ photos, currentUser }) => {
                           </button>
                         ))}
                         
-                        <div style={{
-                          padding: "8px 16px",
-                          borderTop: "1px solid #f0f0f0",
-                          marginTop: "8px"
-                        }}>
+                        <div style={{ padding: "8px 16px", borderTop: "1px solid var(--color-border)", marginTop: "8px" }}>
                           <button
                             onClick={() => setShowFlagMenu(false)}
-                            style={{
-                              width: "100%",
-                              padding: "8px",
-                              background: "none",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "6px",
-                              cursor: "pointer",
-                              fontSize: "13px",
-                              color: "#666",
-                              fontWeight: "500"
-                            }}
+                            className="btn-secondary"
+                            style={{ width: "100%", padding: "8px" }}
                           >
                             Cancel
                           </button>
@@ -1273,25 +1054,15 @@ const HomeFeed = ({ photos, currentUser }) => {
                   </div>
                 )}
                 
-                {/* Close Button */}
                 <button
                   onClick={closePhotoModal}
+                  className="btn-icon"
                   style={{
                     background: "rgba(0,0,0,0.5)",
-                    border: "none",
-                    fontSize: "18px",
-                    cursor: "pointer",
-                    color: "white",
-                    padding: "8px",
-                    borderRadius: "50%",
-                    width: "36px",
-                    height: "36px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
                     backdropFilter: "blur(10px)",
                     WebkitBackdropFilter: "blur(10px)",
-                    transition: "all 0.2s ease",
+                    fontSize: "18px",
+                    color: "white",
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = "rgba(0,0,0,0.7)";
@@ -1307,45 +1078,41 @@ const HomeFeed = ({ photos, currentUser }) => {
 
             {/* Success Toast */}
             {flagSuccess && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100px",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  backgroundColor: "rgba(34, 197, 94, 0.9)",
-                  color: "white",
-                  padding: "12px 20px",
-                  borderRadius: "25px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  zIndex: 1100,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  backdropFilter: "blur(10px)",
-                  WebkitBackdropFilter: "blur(10px)",
-                  animation: "slideInFromTop 0.3s ease-out"
-                }}
-              >
+              <div style={{
+                position: "absolute",
+                top: "100px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                backgroundColor: "rgba(34, 197, 94, 0.9)",
+                color: "white",
+                padding: "12px 20px",
+                borderRadius: "var(--radius-full)",
+                fontSize: "14px",
+                fontWeight: "500",
+                zIndex: 1100,
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                animation: "slideInFromTop 0.3s ease-out"
+              }}>
                 <span>✅</span>
                 <span>Thank you for reporting this content</span>
               </div>
             )}
 
-            {/* ✅ FULL-SCREEN: Photo Container */}
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "black",
-                overflow: "hidden",
-                position: "relative",
-                touchAction: "none",
-              }}
-            >
+            {/* Photo Container */}
+            <div style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "black",
+              overflow: "hidden",
+              position: "relative",
+              touchAction: "none",
+            }}>
               <img
                 ref={imageRef}
                 src={selectedPhoto.imageUrl}
@@ -1362,56 +1129,41 @@ const HomeFeed = ({ photos, currentUser }) => {
                 draggable={false}
               />
               
-              {/* Zoom indicator */}
               {imageScale > 1.1 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "20px",
-                    right: "20px",
-                    backgroundColor: "rgba(0,0,0,0.7)",
-                    color: "white",
-                    padding: "6px 12px",
-                    borderRadius: "20px",
-                    fontSize: "12px",
-                    fontWeight: "500",
-                    pointerEvents: "none",
-                    backdropFilter: "blur(10px)",
-                    WebkitBackdropFilter: "blur(10px)",
-                  }}
-                >
+                <div style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  backgroundColor: "rgba(0,0,0,0.7)",
+                  color: "white",
+                  padding: "6px 12px",
+                  borderRadius: "var(--radius-full)",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                  pointerEvents: "none",
+                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(10px)",
+                }}>
                   {Math.round(imageScale * 100)}%
                 </div>
               )}
             </div>
 
-            {/* ✅ BOTTOM: Details Overlay */}
+            {/* Details Overlay */}
             {(selectedPhoto.caption || selectedPhoto.placeName) && (
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)",
-                  padding: "30px 20px 50px 20px",
-                  color: "white",
-                }}
-              >
+              <div style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)",
+                padding: "30px 20px 50px 20px",
+                color: "white",
+              }}>
                 {selectedPhoto.caption && (
-                  <p
-                    style={{
-                      margin: "0 0 8px 0",
-                      fontSize: "15px",
-                      lineHeight: "1.4",
-                      textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-                    }}
-                  >
+                  <p style={{ margin: "0 0 8px 0", fontSize: "15px", lineHeight: "1.4", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                     <span 
-                      style={{ 
-                        fontWeight: "600",
-                        cursor: "pointer",
-                      }}
+                      style={{ fontWeight: "600", cursor: "pointer" }}
                       onClick={() => handleUserClick(selectedPhoto.uid)}
                     >
                       {getUserInfo(selectedPhoto).displayName}
@@ -1421,16 +1173,7 @@ const HomeFeed = ({ photos, currentUser }) => {
                 )}
 
                 {selectedPhoto.placeName && (
-                  <div 
-                    style={{ 
-                      fontSize: "12px", 
-                      color: "rgba(255,255,255,0.8)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-                    }}
-                  >
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", gap: "6px", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
                     <span>📍</span>
                     <span>{selectedPhoto.placeName}</span>
                     {currentLocation && selectedPhoto.latitude && selectedPhoto.longitude && (
