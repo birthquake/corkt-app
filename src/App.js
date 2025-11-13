@@ -135,17 +135,17 @@ export default function App() {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          backgroundColor: "#f8f9fa",
+          backgroundColor: "var(--color-bg-primary)",
           position: "relative",
         }}
       >
-        <div style={{ textAlign: "center", color: "#343a40" }}>
+        <div style={{ textAlign: "center", color: "var(--color-text-primary)" }}>
           <h1
             style={{
               fontSize: "32px",
               fontWeight: "300",
               marginBottom: "10px",
-              color: "#007bff",
+              color: "var(--color-primary)",
               letterSpacing: "1px",
             }}
           >
@@ -155,8 +155,8 @@ export default function App() {
             style={{
               width: "32px",
               height: "32px",
-              border: "3px solid #e9ecef",
-              borderTop: "3px solid #007bff",
+              border: "3px solid var(--color-border)",
+              borderTop: "3px solid var(--color-primary)",
               borderRadius: "50%",
               animation: "spin 1s linear infinite",
               margin: "20px auto",
@@ -184,16 +184,16 @@ export default function App() {
             justifyContent: "center",
             alignItems: "center",
             height: "100vh",
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "var(--color-bg-primary)",
           }}
         >
-          <div style={{ textAlign: "center", color: "#343a40" }}>
+          <div style={{ textAlign: "center", color: "var(--color-text-primary)" }}>
             <h1
               style={{
                 fontSize: "32px",
                 fontWeight: "300",
                 marginBottom: "10px",
-                color: "#007bff",
+                color: "var(--color-primary)",
                 letterSpacing: "1px",
               }}
             >
@@ -203,8 +203,8 @@ export default function App() {
               style={{
                 width: "32px",
                 height: "32px",
-                border: "3px solid #e9ecef",
-                borderTop: "3px solid #007bff",
+                border: "3px solid var(--color-border)",
+                borderTop: "3px solid var(--color-primary)",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
                 margin: "20px auto",
@@ -223,8 +223,8 @@ export default function App() {
           <div
             style={{
               height: "100vh",
-              backgroundColor: "#f8f9fa",
-              color: "#343a40",
+              backgroundColor: "var(--color-bg-primary)",
+              color: "var(--color-text-primary)",
               fontFamily:
                 '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               display: "flex",
@@ -327,7 +327,7 @@ export default function App() {
                 paddingBottom: bottomPadding,
                 overflow: "hidden",
                 position: "relative",
-                backgroundColor: "#f8f9fa",
+                backgroundColor: "var(--color-bg-primary)",
               }}
             >
               <div
@@ -382,9 +382,9 @@ export default function App() {
             <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
           </div>
         ) : (
-          // ✅ Updated: Enhanced authentication section with password recovery
+          // ✅ Updated: Enhanced authentication section with password recovery + dark theme
           <div style={{
-            background: "#e3f2fd",
+            background: "var(--color-bg-primary)",
             padding: "20px 20px 300px 20px", // HUGE bottom padding for iOS
             fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }}>
@@ -395,22 +395,22 @@ export default function App() {
               {/* ✅ Login View */}
               {authView === 'login' && (
                 <div style={{
-                  background: "white",
+                  background: "var(--color-bg-secondary)",
                   borderRadius: "20px",
                   padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)"
+                  boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
                 }}>
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
                       fontSize: "36px",
-                      color: "#007bff",
+                      color: "var(--color-primary)",
                       fontWeight: "700",
                       margin: "0 0 8px 0"
                     }}>
                       Corkt
                     </h1>
                     <p style={{
-                      color: "#6b7280",
+                      color: "var(--color-text-muted)",
                       fontSize: "16px",
                       margin: "0"
                     }}>
@@ -423,13 +423,13 @@ export default function App() {
                   {/* ✅ Updated: Navigation section with forgot password */}
                   <div style={{
                     textAlign: "center",
-                    color: "#6b7280",
+                    color: "var(--color-text-muted)",
                     margin: "24px 0 16px 0"
                   }}>
                     <span 
                       onClick={() => setAuthView('forgot')}
                       style={{
-                        color: "#007bff",
+                        color: "var(--color-primary)",
                         cursor: "pointer",
                         fontSize: "14px",
                         textDecoration: "underline"
@@ -441,7 +441,7 @@ export default function App() {
 
                   <div style={{
                     textAlign: "center",
-                    color: "#6b7280",
+                    color: "var(--color-text-muted)",
                     margin: "16px 0",
                     position: "relative"
                   }}>
@@ -451,10 +451,10 @@ export default function App() {
                       left: "0",
                       right: "0",
                       height: "1px",
-                      background: "#e5e7eb"
+                      background: "var(--color-border)"
                     }}></div>
                     <span style={{
-                      background: "white",
+                      background: "var(--color-bg-secondary)",
                       padding: "0 16px"
                     }}>
                       or
@@ -463,14 +463,14 @@ export default function App() {
 
                   <div style={{
                     textAlign: "center",
-                    color: "#6b7280",
+                    color: "var(--color-text-muted)",
                     fontSize: "14px"
                   }}>
                     Don't have an account?{" "}
                     <span 
                       onClick={() => setAuthView('signup')}
                       style={{
-                        color: "#007bff",
+                        color: "var(--color-primary)",
                         cursor: "pointer",
                         fontWeight: "600"
                       }}
@@ -484,22 +484,22 @@ export default function App() {
               {/* ✅ Signup View */}
               {authView === 'signup' && (
                 <div style={{
-                  background: "white",
+                  background: "var(--color-bg-secondary)",
                   borderRadius: "20px",
                   padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)"
+                  boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
                 }}>
                   <div style={{ textAlign: "center", marginBottom: "30px" }}>
                     <h1 style={{
                       fontSize: "36px",
-                      color: "#007bff",
+                      color: "var(--color-primary)",
                       fontWeight: "700",
                       margin: "0 0 8px 0"
                     }}>
                       Corkt
                     </h1>
                     <p style={{
-                      color: "#6b7280",
+                      color: "var(--color-text-muted)",
                       fontSize: "16px",
                       margin: "0"
                     }}>
@@ -511,7 +511,7 @@ export default function App() {
 
                   <div style={{
                     textAlign: "center",
-                    color: "#6b7280",
+                    color: "var(--color-text-muted)",
                     margin: "24px 0",
                     position: "relative"
                   }}>
@@ -521,10 +521,10 @@ export default function App() {
                       left: "0",
                       right: "0",
                       height: "1px",
-                      background: "#e5e7eb"
+                      background: "var(--color-border)"
                     }}></div>
                     <span style={{
-                      background: "white",
+                      background: "var(--color-bg-secondary)",
                       padding: "0 16px"
                     }}>
                       or
@@ -533,14 +533,14 @@ export default function App() {
 
                   <div style={{
                     textAlign: "center",
-                    color: "#6b7280",
+                    color: "var(--color-text-muted)",
                     fontSize: "14px"
                   }}>
                     Already have an account?{" "}
                     <span 
                       onClick={() => setAuthView('login')}
                       style={{
-                        color: "#007bff",
+                        color: "var(--color-primary)",
                         cursor: "pointer",
                         fontWeight: "600"
                       }}
@@ -554,10 +554,10 @@ export default function App() {
               {/* ✅ New: Forgot Password View */}
               {authView === 'forgot' && (
                 <div style={{
-                  background: "white",
+                  background: "var(--color-bg-secondary)",
                   borderRadius: "20px",
                   padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(0,123,255,0.1)"
+                  boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
                 }}>
                   <ForgotPassword 
                     onBackToLogin={() => setAuthView('login')} 
