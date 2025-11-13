@@ -20,7 +20,7 @@ const BugIcon = ({ color = "#00ff00", size = 16 }) => (
   </svg>
 );
 
-const LocationIcon = ({ color = "#007bff", size = 14 }) => (
+const LocationIcon = ({ color = "var(--color-primary)", size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
     <circle cx="12" cy="10" r="3"/>
@@ -42,7 +42,7 @@ const CameraIcon = ({ color = "#ffffff", size = 24 }) => (
   </svg>
 );
 
-const RefreshIcon = ({ color = "#007bff", size = 18 }) => (
+const RefreshIcon = ({ color = "var(--color-primary)", size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <polyline points="23 4 23 10 17 10"/>
     <polyline points="1 20 1 14 7 14"/>
@@ -57,7 +57,7 @@ const CheckCircleIcon = ({ color = "#28a745", size = 64 }) => (
   </svg>
 );
 
-const GlobeIcon = ({ color = "#007bff", size = 16 }) => (
+const GlobeIcon = ({ color = "var(--color-primary)", size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="12" cy="12" r="10"/>
     <line x1="2" y1="12" x2="22" y2="12"/>
@@ -65,7 +65,7 @@ const GlobeIcon = ({ color = "#007bff", size = 16 }) => (
   </svg>
 );
 
-const UsersIcon = ({ color = "#007bff", size = 16 }) => (
+const UsersIcon = ({ color = "var(--color-primary)", size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
     <circle cx="9" cy="7" r="4"/>
@@ -74,7 +74,7 @@ const UsersIcon = ({ color = "#007bff", size = 16 }) => (
   </svg>
 );
 
-const TagIcon = ({ color = "#007bff", size = 16 }) => (
+const TagIcon = ({ color = "var(--color-primary)", size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
     <line x1="7" y1="7" x2="7.01" y2="7"/>
@@ -219,7 +219,6 @@ const CaptureComponent = ({ user }) => {
           },
         };
       } else {
-        // ✅ IMPROVED: Higher resolution for non-iOS devices
         constraints = {
           video: {
             facingMode: facingMode,
@@ -239,7 +238,6 @@ const CaptureComponent = ({ user }) => {
         const video = videoRef.current;
         video.srcObject = stream;
 
-        // iOS Safari specific setup
         video.playsInline = true;
         video.autoplay = true;
         video.muted = true;
@@ -320,7 +318,6 @@ const CaptureComponent = ({ user }) => {
 
     try {
       const size = Math.min(video.videoWidth, video.videoHeight);
-      // ✅ IMPROVED: Higher resolution canvas output
       const maxSize = isMobile ? 1200 : 1600;
       const actualSize = Math.min(size, maxSize);
 
@@ -342,7 +339,6 @@ const CaptureComponent = ({ user }) => {
         actualSize,
         actualSize
       );
-      // ✅ IMPROVED: Higher JPEG quality
       const imageData = canvas.toDataURL("image/jpeg", isMobile ? 0.8 : 0.9);
 
       await stopCamera();
@@ -399,7 +395,7 @@ const CaptureComponent = ({ user }) => {
     }
   };
 
-  // 📱 MOBILE DEBUG UPLOAD FUNCTION WITH HASHTAG INTEGRATION
+  // Upload function with hashtag integration
   const uploadPhoto = async () => {
     addDebugLog("🚀 Starting upload process...", 'info');
     
@@ -408,7 +404,6 @@ const CaptureComponent = ({ user }) => {
       return;
     }
 
-    // Location validation with mobile debugging
     addDebugLog("📍 Checking location...", 'info');
     addDebugLog(`Location state: ${selectedLocation ? 'EXISTS' : 'MISSING'}`, selectedLocation ? 'success' : 'error');
     
@@ -428,7 +423,6 @@ const CaptureComponent = ({ user }) => {
     }
     addDebugLog("✅ Location validation PASSED", 'success');
 
-    // Privacy validation
     if (privacy === "tagged" && taggedUsers.length === 0) {
       addDebugLog("❌ Tagged privacy but no users tagged", 'error');
       setError("Please tag at least one user to share with tagged privacy.");
@@ -436,7 +430,6 @@ const CaptureComponent = ({ user }) => {
     }
     addDebugLog(`✅ Privacy validation PASSED (${privacy})`, 'success');
 
-    // ✅ NEW: Hashtag extraction from caption
     const hashtags = extractHashtags(caption || "");
     addDebugLog(`🏷️ Extracted hashtags: [${hashtags.join(', ') || 'none'}]`, hashtags.length > 0 ? 'success' : 'info');
     if (hashtags.length > 0) {
@@ -464,7 +457,6 @@ const CaptureComponent = ({ user }) => {
       const photoRef = ref(storage, `photos/${currentUser.uid}_${timestamp}`);
       addDebugLog("📁 Storage reference created", 'success');
 
-      // Upload with mobile debugging
       let uploadAttempts = 0;
       const maxAttempts = isIOS ? 3 : 2;
       addDebugLog(`⚡ Starting upload (${maxAttempts} max attempts)`, 'info');
@@ -490,12 +482,11 @@ const CaptureComponent = ({ user }) => {
       const downloadURL = await getDownloadURL(photoRef);
       addDebugLog("✅ Download URL obtained", 'success');
 
-      // ✅ ENHANCED: Create photo data with hashtags
       const photoData = {
         uid: currentUser.uid,
         imageUrl: downloadURL,
         caption: caption || null,
-        hashtags: hashtags, // ✅ NEW: Add hashtags array to photo data
+        hashtags: hashtags,
         privacy: currentPrivacy,
         timestamp: serverTimestamp(),
         latitude: selectedLocation.latitude,
@@ -555,7 +546,7 @@ const CaptureComponent = ({ user }) => {
         style={{
           position: "relative",
           height: "100%",
-          backgroundColor: "#f8f9fa",
+          backgroundColor: "var(--color-bg-primary)",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -565,11 +556,11 @@ const CaptureComponent = ({ user }) => {
       >
         <div
           style={{
-            backgroundColor: "#ffffff",
+            backgroundColor: "var(--color-bg-secondary)",
             padding: "40px",
             borderRadius: "16px",
             boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-            border: "1px solid #e9ecef",
+            border: "1px solid var(--color-border)",
             maxWidth: "300px",
           }}
         >
@@ -596,7 +587,7 @@ const CaptureComponent = ({ user }) => {
           <p
             style={{
               margin: "0 0 8px 0",
-              color: "#6c757d",
+              color: "var(--color-text-muted)",
               fontSize: "16px",
             }}
           >
@@ -605,7 +596,7 @@ const CaptureComponent = ({ user }) => {
           <p
             style={{
               margin: "0 0 20px 0",
-              color: "#007bff",
+              color: "var(--color-primary)",
               fontSize: "14px",
               fontWeight: "500",
               display: "flex",
@@ -617,17 +608,17 @@ const CaptureComponent = ({ user }) => {
             Privacy:{" "}
             {uploadedPrivacy === "public" ? (
               <>
-                <GlobeIcon color="#007bff" size={16} />
+                <GlobeIcon color="var(--color-primary)" size={16} />
                 Public
               </>
             ) : uploadedPrivacy === "friends" ? (
               <>
-                <UsersIcon color="#007bff" size={16} />
+                <UsersIcon color="var(--color-primary)" size={16} />
                 Friends
               </>
             ) : (
               <>
-                <TagIcon color="#007bff" size={16} />
+                <TagIcon color="var(--color-primary)" size={16} />
                 Tagged
               </>
             )}
@@ -636,7 +627,7 @@ const CaptureComponent = ({ user }) => {
             style={{
               width: "100%",
               height: "4px",
-              backgroundColor: "#e9ecef",
+              backgroundColor: "var(--color-border)",
               borderRadius: "2px",
               overflow: "hidden",
             }}
@@ -645,7 +636,7 @@ const CaptureComponent = ({ user }) => {
               style={{
                 width: "100%",
                 height: "100%",
-                backgroundColor: "#007bff",
+                backgroundColor: "var(--color-primary)",
                 animation: "progress 1.5s ease-out",
               }}
             />
@@ -653,7 +644,7 @@ const CaptureComponent = ({ user }) => {
           <p
             style={{
               margin: "12px 0 0 0",
-              color: "#6c757d",
+              color: "var(--color-text-muted)",
               fontSize: "14px",
             }}
           >
@@ -669,7 +660,7 @@ const CaptureComponent = ({ user }) => {
       style={{
         position: "relative",
         height: "100%",
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--color-bg-primary)",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -745,8 +736,6 @@ const CaptureComponent = ({ user }) => {
           </div>
         </div>
       )}
-
-      
 
       {/* Location error display */}
       {locationError && (
@@ -888,7 +877,7 @@ const CaptureComponent = ({ user }) => {
                     onClick={startCamera}
                     style={{
                       padding: "12px 24px",
-                      backgroundColor: "#007bff",
+                      backgroundColor: "var(--color-primary)",
                       color: "white",
                       border: "none",
                       borderRadius: "8px",
@@ -1017,8 +1006,8 @@ const CaptureComponent = ({ user }) => {
       <div
         style={{
           padding: "20px 20px 110px 20px",
-          backgroundColor: "#ffffff",
-          borderTop: "1px solid #e9ecef",
+          backgroundColor: "var(--color-bg-secondary)",
+          borderTop: "1px solid var(--color-border)",
           maxHeight: "50vh",
           overflowY: "auto",
           flexShrink: 0,
@@ -1037,12 +1026,12 @@ const CaptureComponent = ({ user }) => {
               onClick={flipCamera}
               disabled={!cameraActive}
               style={{
-                backgroundColor: "#ffffff",
-                border: "2px solid #007bff",
+                backgroundColor: "var(--color-bg-secondary)",
+                border: "2px solid var(--color-primary)",
                 borderRadius: "50%",
                 width: "50px",
                 height: "50px",
-                color: "#007bff",
+                color: "var(--color-primary)",
                 cursor: cameraActive ? "pointer" : "not-allowed",
                 display: "flex",
                 alignItems: "center",
@@ -1050,13 +1039,13 @@ const CaptureComponent = ({ user }) => {
                 opacity: cameraActive ? 1 : 0.5,
               }}
             >
-              <RefreshIcon color="#007bff" size={18} />
+              <RefreshIcon color="var(--color-primary)" size={18} />
             </button>
 
             <button
               onClick={cameraActive ? capturePhoto : startCamera}
               style={{
-                backgroundColor: cameraActive ? "#007bff" : "#28a745",
+                backgroundColor: cameraActive ? "var(--color-primary)" : "#28a745",
                 border: "4px solid white",
                 borderRadius: "50%",
                 width: "80px",
@@ -1085,18 +1074,18 @@ const CaptureComponent = ({ user }) => {
               style={{
                 width: "100%",
                 padding: "16px",
-                backgroundColor: "#f8f9fa",
-                border: "1px solid #e9ecef",
+                backgroundColor: "var(--color-bg-tertiary)",
+                border: "1px solid var(--color-border)",
                 borderRadius: "12px",
-                color: "#343a40",
+                color: "var(--color-text-primary)",
                 fontSize: "16px",
                 marginBottom: "16px",
                 outline: "none",
                 transition: "border-color 0.2s ease",
                 boxSizing: "border-box",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#007bff")}
-              onBlur={(e) => (e.target.style.borderColor = "#e9ecef")}
+              onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+              onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
             />
 
             {/* ENHANCED LOCATION SECTION */}
@@ -1108,19 +1097,19 @@ const CaptureComponent = ({ user }) => {
                   gap: "6px",
                   fontSize: "14px",
                   fontWeight: "500",
-                  color: "#343a40",
+                  color: "var(--color-text-primary)",
                   marginBottom: "8px",
                 }}
               >
-                <LocationIcon color="#343a40" size={14} />
+                <LocationIcon color="var(--color-text-primary)" size={14} />
                 Location {selectedLocation ? "✅" : "❌"}
               </label>
 
               {selectedLocation ? (
                 <div
                   style={{
-                    backgroundColor: "#e3f2fd",
-                    border: "1px solid #007bff",
+                    backgroundColor: "var(--color-bg-tertiary)",
+                    border: "1px solid var(--color-primary)",
                     borderRadius: "8px",
                     padding: "12px",
                     display: "flex",
@@ -1134,13 +1123,13 @@ const CaptureComponent = ({ user }) => {
                         margin: "0 0 4px 0",
                         fontWeight: "600",
                         fontSize: "14px",
-                        color: "#007bff",
+                        color: "var(--color-primary)",
                         display: "flex",
                         alignItems: "center",
                         gap: "6px",
                       }}
                     >
-                      <LocationIcon color="#007bff" size={14} />
+                      <LocationIcon color="var(--color-primary)" size={14} />
                       {selectedLocation.placeName ||
                         (selectedLocation === autoLocation
                           ? "Current Location"
@@ -1151,7 +1140,7 @@ const CaptureComponent = ({ user }) => {
                         style={{
                           margin: 0,
                           fontSize: "12px",
-                          color: "#6c757d",
+                          color: "var(--color-text-muted)",
                         }}
                       >
                         {selectedLocation.placeAddress}
@@ -1161,7 +1150,7 @@ const CaptureComponent = ({ user }) => {
                       style={{
                         margin: "4px 0 0 0",
                         fontSize: "11px",
-                        color: "#6c757d",
+                        color: "var(--color-text-muted)",
                       }}
                     >
                       {selectedLocation.latitude.toFixed(6)},{" "}
@@ -1175,7 +1164,7 @@ const CaptureComponent = ({ user }) => {
                     style={{
                       backgroundColor: "transparent",
                       border: "none",
-                      color: "#007bff",
+                      color: "var(--color-primary)",
                       fontSize: "12px",
                       cursor: "pointer",
                       padding: "4px",
@@ -1234,7 +1223,7 @@ const CaptureComponent = ({ user }) => {
                   display: "block",
                   fontSize: "14px",
                   fontWeight: "500",
-                  color: "#343a40",
+                  color: "var(--color-text-primary)",
                   marginBottom: "8px",
                 }}
               >
@@ -1277,9 +1266,9 @@ const CaptureComponent = ({ user }) => {
                         flex: 1,
                         minWidth: "120px",
                         padding: "12px 8px",
-                        backgroundColor: isSelected ? "#007bff" : "#f8f9fa",
-                        color: isSelected ? "white" : "#343a40",
-                        border: isSelected ? "none" : "1px solid #e9ecef",
+                        backgroundColor: isSelected ? "var(--color-primary)" : "var(--color-bg-tertiary)",
+                        color: isSelected ? "white" : "var(--color-text-primary)",
+                        border: isSelected ? "none" : "1px solid var(--color-border)",
                         borderRadius: "8px",
                         fontSize: "14px",
                         fontWeight: "500",
@@ -1294,7 +1283,7 @@ const CaptureComponent = ({ user }) => {
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <IconComponent 
-                          color={isSelected ? "white" : "#007bff"} 
+                          color={isSelected ? "white" : "var(--color-primary)"} 
                           size={16} 
                         />
                         {option.label}
@@ -1318,11 +1307,11 @@ const CaptureComponent = ({ user }) => {
                     gap: "6px",
                     fontSize: "14px",
                     fontWeight: "500",
-                    color: "#343a40",
+                    color: "var(--color-text-primary)",
                     marginBottom: "8px",
                   }}
                 >
-                  <TagIcon color="#343a40" size={14} />
+                  <TagIcon color="var(--color-text-primary)" size={14} />
                   Tag Users (required)
                 </label>
 
@@ -1343,14 +1332,14 @@ const CaptureComponent = ({ user }) => {
                             display: "flex",
                             alignItems: "center",
                             gap: "6px",
-                            backgroundColor: "#e3f2fd",
+                            backgroundColor: "var(--color-bg-tertiary)",
                             padding: "6px 10px",
                             borderRadius: "16px",
                             fontSize: "14px",
-                            border: "1px solid #007bff",
+                            border: "1px solid var(--color-primary)",
                           }}
                         >
-                          <span style={{ color: "#007bff", fontWeight: "500" }}>
+                          <span style={{ color: "var(--color-primary)", fontWeight: "500" }}>
                             @{user.displayScreenName || user.screenName}
                           </span>
                           <button
@@ -1384,17 +1373,17 @@ const CaptureComponent = ({ user }) => {
                     style={{
                       width: "100%",
                       padding: "12px",
-                      backgroundColor: "#f8f9fa",
-                      border: "1px solid #e9ecef",
+                      backgroundColor: "var(--color-bg-tertiary)",
+                      border: "1px solid var(--color-border)",
                       borderRadius: "8px",
-                      color: "#343a40",
+                      color: "var(--color-text-primary)",
                       fontSize: "14px",
                       outline: "none",
                       transition: "border-color 0.2s ease",
                       boxSizing: "border-box",
                     }}
-                    onFocus={(e) => (e.target.style.borderColor = "#007bff")}
-                    onBlur={(e) => (e.target.style.borderColor = "#e9ecef")}
+                    onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+                    onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
                   />
 
                   {/* User Search Results */}
@@ -1405,8 +1394,8 @@ const CaptureComponent = ({ user }) => {
                         top: "100%",
                         left: 0,
                         right: 0,
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #e9ecef",
+                        backgroundColor: "var(--color-bg-secondary)",
+                        border: "1px solid var(--color-border)",
                         borderRadius: "8px",
                         marginTop: "4px",
                         maxHeight: "200px",
@@ -1423,7 +1412,7 @@ const CaptureComponent = ({ user }) => {
                             onClick={() => addTaggedUser(searchUser)}
                             style={{
                               padding: "12px",
-                              borderBottom: "1px solid #f8f9fa",
+                              borderBottom: "1px solid var(--color-border)",
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
@@ -1431,7 +1420,7 @@ const CaptureComponent = ({ user }) => {
                               transition: "background-color 0.2s ease",
                             }}
                             onMouseEnter={(e) =>
-                              (e.target.style.backgroundColor = "#f8f9fa")
+                              (e.target.style.backgroundColor = "var(--color-bg-tertiary)")
                             }
                             onMouseLeave={(e) =>
                               (e.target.style.backgroundColor = "transparent")
@@ -1454,7 +1443,7 @@ const CaptureComponent = ({ user }) => {
                                   width: "32px",
                                   height: "32px",
                                   borderRadius: "50%",
-                                  backgroundColor: "#007bff",
+                                  backgroundColor: "var(--color-primary)",
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "center",
@@ -1474,7 +1463,7 @@ const CaptureComponent = ({ user }) => {
                                   margin: "0 0 2px 0",
                                   fontWeight: "600",
                                   fontSize: "14px",
-                                  color: "#343a40",
+                                  color: "var(--color-text-primary)",
                                 }}
                               >
                                 {searchUser.realName}
@@ -1483,7 +1472,7 @@ const CaptureComponent = ({ user }) => {
                                 style={{
                                   margin: 0,
                                   fontSize: "12px",
-                                  color: "#6c757d",
+                                  color: "var(--color-text-muted)",
                                 }}
                               >
                                 @
@@ -1506,13 +1495,13 @@ const CaptureComponent = ({ user }) => {
                           top: "100%",
                           left: 0,
                           right: 0,
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #e9ecef",
+                          backgroundColor: "var(--color-bg-secondary)",
+                          border: "1px solid var(--color-border)",
                           borderRadius: "8px",
                           marginTop: "4px",
                           padding: "16px",
                           textAlign: "center",
-                          color: "#6c757d",
+                          color: "var(--color-text-muted)",
                           fontSize: "14px",
                           zIndex: 1000,
                           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
@@ -1546,10 +1535,10 @@ const CaptureComponent = ({ user }) => {
                 style={{
                   flex: 1,
                   padding: "16px",
-                  backgroundColor: uploading ? "#e9ecef" : "#6c757d",
+                  backgroundColor: uploading ? "var(--color-text-muted)" : "var(--color-text-muted)",
                   border: "none",
                   borderRadius: "12px",
-                  color: uploading ? "#6c757d" : "white",
+                  color: uploading ? "var(--color-text-muted)" : "white",
                   fontSize: "16px",
                   cursor: uploading ? "not-allowed" : "pointer",
                   fontWeight: "500",
@@ -1572,8 +1561,8 @@ const CaptureComponent = ({ user }) => {
                     uploading ||
                     !selectedLocation ||
                     (privacy === "tagged" && taggedUsers.length === 0)
-                      ? "#6c757d"
-                      : "#007bff",
+                      ? "var(--color-text-muted)"
+                      : "var(--color-primary)",
                   border: "none",
                   borderRadius: "12px",
                   color: "white",
