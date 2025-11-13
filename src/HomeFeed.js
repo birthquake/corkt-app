@@ -710,8 +710,7 @@ const HomeFeed = ({ photos, currentUser }) => {
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "0 auto", minHeight: "100vh", paddingTop: "16px" }}>
-      {/* Location Status Indicators */}
+<div style={{ maxWidth: "500px", margin: "0 auto", backgroundColor: "var(--color-bg-primary)", minHeight: "100vh", paddingTop: "16px" }}>      {/* Location Status Indicators */}
       {locationError && (
         <div className="alert alert-danger" style={{ margin: "0 16px 16px 16px" }}>
           📍 Location unavailable - showing all photos
