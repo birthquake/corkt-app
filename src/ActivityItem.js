@@ -1,19 +1,16 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // ✅ NEW: Import useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const ActivityItem = ({ activity, currentUser }) => {
-  const navigate = useNavigate(); // ✅ NEW: Initialize navigation hook
+  const navigate = useNavigate();
 
-  // ✅ NEW: Handle user click to navigate to profile
   const handleUserClick = (e, userId) => {
     e.preventDefault();
-    e.stopPropagation(); // Prevent activity tap from firing
+    e.stopPropagation();
     
     if (userId === currentUser?.uid) {
-      // Navigate to own profile without userId parameter
       navigate('/profile');
     } else {
-      // Navigate to other user's profile with userId parameter
       navigate(`/profile/${userId}`);
     }
   };
@@ -34,14 +31,13 @@ const ActivityItem = ({ activity, currentUser }) => {
     if (diffInHours < 24) return `${diffInHours}h ago`;
     if (diffInDays < 7) return `${diffInDays}d ago`;
     
-    // For older activities, show actual date
     return activityTime.toLocaleDateString();
   };
 
-  // ✅ UPDATED: Get activity message with clickable username
+  // Get activity message with clickable username
   const getActivityMessage = () => {
     const actorName = activity.actorName || 'Someone';
-    const actorId = activity.actorId; // Assuming this field exists
+    const actorId = activity.actorId;
     
     switch (activity.type) {
       case 'like':
@@ -95,9 +91,8 @@ const ActivityItem = ({ activity, currentUser }) => {
     }
   };
 
-  // Handle activity item tap (for future navigation)
+  // Handle activity item tap
   const handleActivityTap = () => {
-    // Future: Navigate to photo detail or other relevant screen
     console.log('Activity tapped:', activity);
   };
 
@@ -105,14 +100,14 @@ const ActivityItem = ({ activity, currentUser }) => {
     <div 
       style={{
         ...styles.container,
-        backgroundColor: activity.read ? '#ffffff' : '#f8f9fa', // Slightly darker for unread
+        backgroundColor: activity.read ? 'var(--color-bg-secondary)' : 'var(--color-bg-tertiary)',
       }}
       onClick={handleActivityTap}
     >
-      {/* ✅ UPDATED: Clickable Actor Avatar */}
+      {/* Clickable Actor Avatar */}
       <div 
         style={styles.avatarContainer}
-        onClick={(e) => handleUserClick(e, activity.actorId)} // ✅ NEW: Make avatar clickable
+        onClick={(e) => handleUserClick(e, activity.actorId)}
       >
         {activity.actorAvatar ? (
           <img 
@@ -158,38 +153,38 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     padding: '16px 20px',
-    borderBottom: '1px solid #e9ecef',
+    borderBottom: '1px solid var(--color-border)',
     cursor: 'pointer',
     transition: 'background-color 0.2s ease',
     position: 'relative',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--color-bg-secondary)',
   },
   avatarContainer: {
     marginRight: '12px',
     flexShrink: 0,
-    cursor: 'pointer', // ✅ NEW: Show pointer cursor for clickable avatar
+    cursor: 'pointer',
   },
   avatar: {
     width: '44px',
     height: '44px',
     borderRadius: '22px',
     objectFit: 'cover',
-    border: '2px solid #e9ecef',
-    transition: 'transform 0.2s ease', // ✅ NEW: Smooth hover effect
+    border: '2px solid var(--color-border)',
+    transition: 'transform 0.2s ease',
   },
   defaultAvatar: {
     width: '44px',
     height: '44px',
     borderRadius: '22px',
-    backgroundColor: '#007bff',
+    backgroundColor: 'var(--color-primary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '18px',
     fontWeight: 'bold',
     color: '#fff',
-    border: '2px solid #e9ecef',
-    transition: 'transform 0.2s ease', // ✅ NEW: Smooth hover effect
+    border: '2px solid var(--color-border)',
+    transition: 'transform 0.2s ease',
   },
   content: {
     flex: 1,
@@ -206,25 +201,25 @@ const styles = {
   },
   message: {
     fontSize: '15px',
-    color: '#343a40',
+    color: 'var(--color-text-primary)',
     fontWeight: '500',
     lineHeight: '1.3',
   },
-  // ✅ NEW: Style for clickable usernames
   clickableUsername: {
-    color: '#007bff',
+    color: 'var(--color-primary)',
     fontWeight: '600',
     cursor: 'pointer',
     textDecoration: 'none',
     transition: 'color 0.2s ease',
     ':hover': {
-      color: '#0056b3',
+      color: 'var(--color-primary)',
+      opacity: '0.8',
       textDecoration: 'underline',
     },
   },
   timestamp: {
     fontSize: '13px',
-    color: '#6c757d',
+    color: 'var(--color-text-muted)',
   },
   photoContainer: {
     flexShrink: 0,
@@ -234,7 +229,7 @@ const styles = {
     height: '50px',
     borderRadius: '8px',
     objectFit: 'cover',
-    border: '1px solid #e9ecef',
+    border: '1px solid var(--color-border)',
   },
   unreadDot: {
     position: 'absolute',
@@ -244,7 +239,7 @@ const styles = {
     width: '8px',
     height: '8px',
     borderRadius: '4px',
-    backgroundColor: '#007AFF', // iOS blue for unread indicator
+    backgroundColor: 'var(--color-primary)',
   },
 };
 
