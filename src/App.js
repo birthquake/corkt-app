@@ -15,6 +15,7 @@ import AdminPanel from "./AdminPanel";
 import AnalyticsDashboard from "./AnalyticsDashboard";
 import MobileBottomNavigation from "./MobileBottomNavigation";
 import { LoadScript } from "@react-google-maps/api";
+import './styles.css';
 
 console.log('🔧 APP: App.js file loading...');
 
