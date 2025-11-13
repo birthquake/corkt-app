@@ -46,14 +46,14 @@ const Login = () => {
   };
 
   const handleInputFocus = (e) => {
-    e.target.style.borderColor = "#007bff";
-    e.target.style.background = "white";
-    e.target.style.boxShadow = "0 0 0 3px rgba(0,123,255,0.1)";
+    e.target.style.borderColor = "var(--color-primary)";
+    e.target.style.background = "var(--color-bg-secondary)";
+    e.target.style.boxShadow = "0 0 0 3px rgba(var(--color-primary-rgb), 0.1)";
   };
 
   const handleInputBlur = (e) => {
-    e.target.style.borderColor = "#e5e7eb";
-    e.target.style.background = "#fafafa";
+    e.target.style.borderColor = "var(--color-border)";
+    e.target.style.background = "var(--color-bg-tertiary)";
     e.target.style.boxShadow = "none";
   };
 
@@ -64,7 +64,7 @@ const Login = () => {
         <div style={{ marginBottom: "24px" }}>
           <label style={{
             display: "block",
-            color: "#1a1a1a",
+            color: "var(--color-text-primary)",
             fontWeight: "600",
             marginBottom: "8px",
             fontSize: "14px"
@@ -82,13 +82,15 @@ const Login = () => {
             style={{
               width: "100%",
               padding: "16px",
-              border: "2px solid #e5e7eb",
+              border: "2px solid var(--color-border)",
               borderRadius: "12px",
               fontSize: "16px",
-              background: loading ? "#f9fafb" : "#fafafa",
+              background: "var(--color-bg-tertiary)",
+              color: "var(--color-text-primary)",
               transition: "all 0.3s ease",
               boxSizing: "border-box",
-              outline: "none"
+              outline: "none",
+              opacity: loading ? 0.6 : 1
             }}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
@@ -99,7 +101,7 @@ const Login = () => {
         <div style={{ marginBottom: "24px" }}>
           <label style={{
             display: "block",
-            color: "#1a1a1a",
+            color: "var(--color-text-primary)",
             fontWeight: "600",
             marginBottom: "8px",
             fontSize: "14px"
@@ -117,13 +119,15 @@ const Login = () => {
             style={{
               width: "100%",
               padding: "16px",
-              border: "2px solid #e5e7eb",
+              border: "2px solid var(--color-border)",
               borderRadius: "12px",
               fontSize: "16px",
-              background: loading ? "#f9fafb" : "#fafafa",
+              background: "var(--color-bg-tertiary)",
+              color: "var(--color-text-primary)",
               transition: "all 0.3s ease",
               boxSizing: "border-box",
-              outline: "none"
+              outline: "none",
+              opacity: loading ? 0.6 : 1
             }}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
@@ -137,7 +141,7 @@ const Login = () => {
           style={{
             width: "100%",
             padding: "18px",
-            background: loading ? "#9ca3af" : "#007bff",
+            background: loading ? "var(--color-text-muted)" : "var(--color-primary)",
             color: "white",
             border: "none",
             borderRadius: "12px",
@@ -149,14 +153,14 @@ const Login = () => {
           }}
           onMouseEnter={(e) => {
             if (!loading) {
-              e.target.style.background = "#0056b3";
+              e.target.style.background = "rgba(var(--color-primary-rgb), 0.85)";
               e.target.style.transform = "translateY(-2px)";
-              e.target.style.boxShadow = "0 8px 25px rgba(0,123,255,0.3)";
+              e.target.style.boxShadow = "0 8px 25px rgba(0,0,0,0.3)";
             }
           }}
           onMouseLeave={(e) => {
             if (!loading) {
-              e.target.style.background = "#007bff";
+              e.target.style.background = "var(--color-primary)";
               e.target.style.transform = "translateY(0)";
               e.target.style.boxShadow = "none";
             }
