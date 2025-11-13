@@ -11,7 +11,6 @@ import MobilePhotoCard from "./MobilePhotoCard";
 import LocationDisplay from "./LocationDisplay";
 import DiscoveryTab from "./DiscoveryTab";
 import analytics from "./analyticsService";
-import '../styles.css';
 
 // Existing icon components + new Discovery icon + Flag icon
 const PublicIcon = ({ color = "#6c757d", size = 18 }) => (
