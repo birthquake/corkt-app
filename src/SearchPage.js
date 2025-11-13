@@ -8,17 +8,17 @@ import {
 import { useFollow, useFollowing } from "./useFollows";
 import { getDisplayName, getScreenName } from "./useUserData";
 import { getTrendingHashtags, formatTextWithHashtags } from "./hashtagService";
-import LocationDisplay from "./LocationDisplay"; // ✅ NEW: Import LocationDisplay component
+import LocationDisplay from "./LocationDisplay";
 
-// Minimal SVG icon components - matching MobileBottomNavigation style
-const SearchIcon = ({ color = "#6c757d", size = 20 }) => (
+// Minimal SVG icon components
+const SearchIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="11" cy="11" r="8"/>
     <path d="M21 21l-4.35-4.35"/>
   </svg>
 );
 
-const PhotoIcon = ({ color = "#6c757d", size = 20 }) => (
+const PhotoIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
     <circle cx="9" cy="9" r="2"/>
@@ -26,7 +26,7 @@ const PhotoIcon = ({ color = "#6c757d", size = 20 }) => (
   </svg>
 );
 
-const UsersIcon = ({ color = "#6c757d", size = 20 }) => (
+const UsersIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
     <circle cx="9" cy="7" r="4"/>
@@ -35,20 +35,20 @@ const UsersIcon = ({ color = "#6c757d", size = 20 }) => (
   </svg>
 );
 
-const TrendingIcon = ({ color = "#6c757d", size = 20 }) => (
+const TrendingIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
   </svg>
 );
 
-const CloseIcon = ({ color = "#6c757d", size = 20 }) => (
+const CloseIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <line x1="18" y1="6" x2="6" y2="18"/>
     <line x1="6" y1="6" x2="18" y2="18"/>
   </svg>
 );
 
-const SearchNotFoundIcon = ({ color = "#6c757d", size = 48 }) => (
+const SearchNotFoundIcon = ({ color = "var(--color-text-muted)", size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="11" cy="11" r="8"/>
     <path d="M21 21l-4.35-4.35"/>
@@ -56,7 +56,7 @@ const SearchNotFoundIcon = ({ color = "#6c757d", size = 48 }) => (
   </svg>
 );
 
-const UsersNotFoundIcon = ({ color = "#6c757d", size = 48 }) => (
+const UsersNotFoundIcon = ({ color = "var(--color-text-muted)", size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
     <circle cx="9" cy="7" r="4"/>
@@ -66,7 +66,7 @@ const UsersNotFoundIcon = ({ color = "#6c757d", size = 48 }) => (
   </svg>
 );
 
-const GalleryIcon = ({ color = "#6c757d", size = 20 }) => (
+const GalleryIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <rect x="3" y="3" width="7" height="7"/>
     <rect x="14" y="3" width="7" height="7"/>
@@ -75,15 +75,14 @@ const GalleryIcon = ({ color = "#6c757d", size = 20 }) => (
   </svg>
 );
 
-// ✅ NEW: Clean clock icon for time display
-const ClockIcon = ({ color = "#6c757d", size = 14 }) => (
+const ClockIcon = ({ color = "var(--color-text-muted)", size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="12" cy="12" r="10"/>
     <polyline points="12,6 12,12 16,14"/>
   </svg>
 );
 
-// 🚀 NEW: Memoized User Card component for better performance
+// Memoized User Card component
 const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
   const {
     isFollowing,
@@ -99,26 +98,24 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
     [toggleFollow]
   );
 
-  // Don't show follow button for current user
   const showFollowButton = currentUser?.uid !== user.id;
 
   return (
     <div
       style={{
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--color-bg-secondary)",
         padding: "16px",
         borderRadius: "12px",
-        border: "1px solid #e9ecef",
+        border: "1px solid var(--color-border)",
         display: "flex",
         alignItems: "center",
         gap: "12px",
         cursor: "pointer",
         transition: "all 0.2s ease",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8f9fa")}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ffffff")}
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--color-bg-tertiary)")}
+      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--color-bg-secondary)")}
     >
-      {/* Profile Picture */}
       {user.profilePicture ? (
         <img
           src={user.profilePicture}
@@ -128,7 +125,7 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
             height: "48px",
             borderRadius: "50%",
             objectFit: "cover",
-            border: "2px solid #007bff",
+            border: "2px solid var(--color-primary)",
           }}
           loading="lazy"
         />
@@ -138,11 +135,11 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
             width: "48px",
             height: "48px",
             borderRadius: "50%",
-            backgroundColor: "#007bff",
+            backgroundColor: "var(--color-primary)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "white",
+            color: "var(--color-bg-primary)",
             fontSize: "18px",
             fontWeight: "600",
           }}
@@ -156,7 +153,7 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
           style={{
             margin: "0 0 4px 0",
             fontWeight: "600",
-            color: "#343a40",
+            color: "var(--color-text-primary)",
             fontSize: "16px",
           }}
         >
@@ -166,7 +163,7 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
           style={{
             margin: "0 0 4px 0",
             fontSize: "14px",
-            color: "#007bff",
+            color: "var(--color-primary)",
           }}
         >
           @{user.displayScreenName || user.screenName || "unknown"}
@@ -175,7 +172,7 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
           style={{
             margin: 0,
             fontSize: "12px",
-            color: "#6c757d",
+            color: "var(--color-text-muted)",
           }}
         >
           {getUserPhotoCount(user.id)} photo
@@ -195,7 +192,7 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
           disabled={followLoading}
           style={{
             padding: "6px 16px",
-            backgroundColor: isFollowing ? "#6c757d" : "#007bff",
+            backgroundColor: isFollowing ? "var(--color-text-muted)" : "var(--color-primary)",
             color: "white",
             border: "none",
             borderRadius: "16px",
@@ -209,15 +206,15 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
           onMouseEnter={(e) => {
             if (!followLoading) {
               e.target.style.backgroundColor = isFollowing
-                ? "#5a6268"
-                : "#0056b3";
+                ? "var(--color-text-secondary)"
+                : "var(--color-primary-dark)";
             }
           }}
           onMouseLeave={(e) => {
             if (!followLoading) {
               e.target.style.backgroundColor = isFollowing
-                ? "#6c757d"
-                : "#007bff";
+                ? "var(--color-text-muted)"
+                : "var(--color-primary)";
             }
           }}
         >
@@ -230,7 +227,7 @@ const UserCard = React.memo(({ user, currentUser, getUserPhotoCount }) => {
 
 UserCard.displayName = "UserCard";
 
-// 🚀 NEW: Memoized Photo Grid Item for better performance
+// Memoized Photo Grid Item
 const PhotoGridItem = React.memo(({ photo, onClick }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -259,11 +256,10 @@ const PhotoGridItem = React.memo(({ photo, onClick }) => {
         cursor: imageError ? "default" : "pointer",
         overflow: "hidden",
         position: "relative",
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--color-bg-secondary)",
       }}
     >
       {!imageLoaded && !imageError && (
-        // Loading placeholder
         <div
           style={{
             width: "100%",
@@ -271,15 +267,15 @@ const PhotoGridItem = React.memo(({ photo, onClick }) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "var(--color-bg-secondary)",
           }}
         >
           <div
             style={{
               width: "20px",
               height: "20px",
-              border: "2px solid #e9ecef",
-              borderTop: "2px solid #007bff",
+              border: "2px solid var(--color-border)",
+              borderTop: "2px solid var(--color-primary)",
               borderRadius: "50%",
               animation: "spin 1s linear infinite",
             }}
@@ -288,7 +284,6 @@ const PhotoGridItem = React.memo(({ photo, onClick }) => {
       )}
 
       {imageError && (
-        // Error state
         <div
           style={{
             width: "100%",
@@ -296,8 +291,8 @@ const PhotoGridItem = React.memo(({ photo, onClick }) => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#f8f9fa",
-            color: "#6c757d",
+            backgroundColor: "var(--color-bg-secondary)",
+            color: "var(--color-text-muted)",
             fontSize: "24px",
           }}
         >
@@ -350,14 +345,12 @@ const SearchPage = ({ photos, currentUser }) => {
   const [activeTab, setActiveTab] = useState("photos");
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [trendingHashtags, setTrendingHashtags] = useState([]);
-
-  // ✅ NEW: Location state for distance calculations
   const [currentLocation, setCurrentLocation] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ NEW: Get current location for distance calculations
+  // Get current location
   useEffect(() => {
     if (!navigator.geolocation) return;
 
@@ -383,9 +376,9 @@ const SearchPage = ({ photos, currentUser }) => {
     );
   }, []);
 
-  // ✅ NEW: Distance calculation function
+  // Distance calculation
   const calculateDistance = useCallback((lat1, lon1, lat2, lon2) => {
-    const R = 6371000; // Earth's radius in meters
+    const R = 6371000;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -395,25 +388,25 @@ const SearchPage = ({ photos, currentUser }) => {
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in meters
+    return R * c;
   }, []);
 
-  // ✅ NEW: Helper function to format distance in miles
+  // Format distance
   const formatDistance = useCallback((distanceInMeters) => {
-    const distanceInMiles = distanceInMeters * 0.000621371; // Convert meters to miles
+    const distanceInMiles = distanceInMeters * 0.000621371;
     
     if (distanceInMiles < 0.1) {
-      return `${Math.round(distanceInMeters)}m`; // Show meters for very short distances
+      return `${Math.round(distanceInMeters)}m`;
     } else if (distanceInMiles < 1) {
-      return `${(distanceInMiles * 5280).toFixed(0)}ft`; // Show feet for distances under 1 mile
+      return `${(distanceInMiles * 5280).toFixed(0)}ft`;
     } else if (distanceInMiles < 10) {
-      return `${distanceInMiles.toFixed(1)}mi`; // Show 1 decimal for distances under 10 miles
+      return `${distanceInMiles.toFixed(1)}mi`;
     } else {
-      return `${Math.round(distanceInMiles)}mi`; // Show whole miles for longer distances
+      return `${Math.round(distanceInMiles)}mi`;
     }
   }, []);
 
-  // ✅ NEW: Handle hashtag search from URL parameters or MobilePhotoCard clicks
+  // Handle hashtag search from URL
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const hashtagParam = urlParams.get("hashtag");
@@ -425,11 +418,11 @@ const SearchPage = ({ photos, currentUser }) => {
     }
   }, [location.search]);
 
-  // ✅ NEW: Load trending hashtags using the service
+  // Load trending hashtags
   useEffect(() => {
     const loadTrendingHashtags = async () => {
       try {
-        const trending = await getTrendingHashtags(7, 15); // Last 7 days, max 15 hashtags
+        const trending = await getTrendingHashtags(7, 15);
         setTrendingHashtags(trending);
         console.log(
           `✅ SearchPage: Loaded ${trending.length} trending hashtags`
@@ -441,59 +434,43 @@ const SearchPage = ({ photos, currentUser }) => {
     };
 
     loadTrendingHashtags();
-  }, [photos]); // Reload when photos change
+  }, [photos]);
 
-  // 🚀 NEW: Debounce search query to reduce API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-
-  // Get following list for privacy checking
   const { followingList } = useFollowing(currentUser?.uid);
-
-  // 🚀 NEW: Optimized user search with caching
   const { searchResults: userSearchResults, loading: userSearchLoading } =
     useOptimizedUserSearch(activeTab === "users" ? debouncedSearchQuery : "");
 
-  // 🚀 NEW: Get user data for photos with optimized fetching
   const uniqueUserIds = useMemo(() => {
     return [...new Set(photos.map((photo) => photo.uid).filter(Boolean))];
   }, [photos.map((p) => p.uid).join(",")]);
 
   const { usersData } = useOptimizedUsersData(uniqueUserIds);
 
-  // 🚀 NEW: Memoized privacy checking function
   const canUserSeePhoto = useCallback(
     (photo) => {
-      // User can always see their own photos
       if (photo.uid === currentUser?.uid) {
         return true;
       }
 
-      // Handle privacy settings
       switch (photo.privacy) {
         case "public":
           return true;
-
         case "friends":
-          // Only followers of the photo owner can see
           return followingList.includes(photo.uid);
-
         case "tagged":
-          // Check if current user is in the taggedUsers array
           return (
             photo.taggedUsers?.some(
               (taggedUser) => taggedUser.uid === currentUser?.uid
             ) || false
           );
-
         default:
-          // For photos without privacy setting (legacy), treat as public
           return true;
       }
     },
     [currentUser?.uid, followingList]
   );
 
-  // ✅ ENHANCED: Memoized photo search results with improved hashtag search
   const photoSearchResults = useMemo(() => {
     if (!debouncedSearchQuery.trim() || activeTab !== "photos") {
       return [];
@@ -504,8 +481,6 @@ const SearchPage = ({ photos, currentUser }) => {
     );
 
     const query = debouncedSearchQuery.toLowerCase().trim();
-
-    // First filter by privacy, then by search criteria
     const privacyFilteredPhotos = photos.filter(canUserSeePhoto);
 
     const filteredPhotos = privacyFilteredPhotos.filter((photo) => {
@@ -514,11 +489,9 @@ const SearchPage = ({ photos, currentUser }) => {
       const userName = (userData?.realName || "").toLowerCase();
       const screenName = (userData?.displayScreenName || "").toLowerCase();
 
-      // ✅ ENHANCED: Improved hashtag search using hashtags array
       if (query.startsWith("#")) {
-        const searchHashtag = query.substring(1); // Remove # symbol
+        const searchHashtag = query.substring(1);
 
-        // First check the hashtags array (new method)
         if (photo.hashtags && Array.isArray(photo.hashtags)) {
           const hashtagMatch = photo.hashtags.some((hashtag) =>
             hashtag.toLowerCase().includes(searchHashtag)
@@ -526,11 +499,9 @@ const SearchPage = ({ photos, currentUser }) => {
           if (hashtagMatch) return true;
         }
 
-        // Fallback: check caption for hashtags (for older photos)
         return caption.includes(`#${searchHashtag}`);
       }
 
-      // Regular search in caption, username, or screen name
       return (
         caption.includes(query) ||
         userName.includes(query) ||
@@ -542,12 +513,10 @@ const SearchPage = ({ photos, currentUser }) => {
     return filteredPhotos;
   }, [debouncedSearchQuery, activeTab, photos, canUserSeePhoto, usersData]);
 
-  // 🚀 NEW: Memoized recent photos
   const recentPhotos = useMemo(() => {
     return photos.filter(canUserSeePhoto).slice(0, 9);
   }, [photos, canUserSeePhoto]);
 
-  // ✅ NEW: Handle hashtag clicks from trending hashtags
   const handleHashtagClick = useCallback((hashtag) => {
     const cleanHashtag = hashtag.startsWith("#") ? hashtag : `#${hashtag}`;
     setSearchQuery(cleanHashtag);
@@ -555,7 +524,6 @@ const SearchPage = ({ photos, currentUser }) => {
     console.log(`🏷️ SearchPage: Searching for hashtag ${cleanHashtag}`);
   }, []);
 
-  // ✅ NEW: Handle hashtag clicks in photo captions
   const handleCaptionHashtagClick = useCallback(
     (hashtag) => {
       handleHashtagClick(`#${hashtag}`);
@@ -584,7 +552,6 @@ const SearchPage = ({ photos, currentUser }) => {
     return date.toLocaleDateString();
   }, []);
 
-  // Helper function to get user info for a photo
   const getUserInfo = useCallback(
     (photo) => {
       const userData = usersData[photo.uid];
@@ -601,7 +568,6 @@ const SearchPage = ({ photos, currentUser }) => {
     [usersData, currentUser?.uid]
   );
 
-  // Helper function to get user photo count (only photos current user can see)
   const getUserPhotoCount = useCallback(
     (userId) => {
       return photos.filter(
@@ -616,7 +582,7 @@ const SearchPage = ({ photos, currentUser }) => {
       style={{
         maxWidth: "500px",
         margin: "0 auto",
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--color-bg-primary)",
         minHeight: "100vh",
         paddingTop: "16px",
       }}
@@ -624,9 +590,9 @@ const SearchPage = ({ photos, currentUser }) => {
       {/* Search Header */}
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--color-bg-secondary)",
           padding: "16px",
-          borderBottom: "1px solid #e9ecef",
+          borderBottom: "1px solid var(--color-border)",
           position: "sticky",
           top: "0",
           zIndex: 100,
@@ -640,7 +606,7 @@ const SearchPage = ({ photos, currentUser }) => {
           }}
         >
           <SearchIcon
-            color="#6c757d"
+            color="var(--color-text-muted)"
             size={20}
             style={{
               position: "absolute",
@@ -662,13 +628,14 @@ const SearchPage = ({ photos, currentUser }) => {
             style={{
               width: "100%",
               padding: "12px 12px 12px 44px",
-              backgroundColor: "#f8f9fa",
-              border: "1px solid #e9ecef",
+              backgroundColor: "var(--color-bg-tertiary)",
+              border: "1px solid var(--color-border)",
               borderRadius: "24px",
               fontSize: "16px",
               outline: "none",
               transition: "border-color 0.2s ease",
               boxSizing: "border-box",
+              color: "var(--color-text-primary)",
             }}
           />
         </div>
@@ -686,9 +653,9 @@ const SearchPage = ({ photos, currentUser }) => {
               flex: 1,
               padding: "8px 16px",
               backgroundColor:
-                activeTab === "photos" ? "#007bff" : "transparent",
-              color: activeTab === "photos" ? "white" : "#6c757d",
-              border: activeTab === "photos" ? "none" : "1px solid #e9ecef",
+                activeTab === "photos" ? "var(--color-primary)" : "transparent",
+              color: activeTab === "photos" ? "white" : "var(--color-text-muted)",
+              border: activeTab === "photos" ? "none" : "1px solid var(--color-border)",
               borderRadius: "20px",
               fontSize: "14px",
               fontWeight: "500",
@@ -701,7 +668,7 @@ const SearchPage = ({ photos, currentUser }) => {
             }}
           >
             <PhotoIcon 
-              color={activeTab === "photos" ? "white" : "#6c757d"} 
+              color={activeTab === "photos" ? "white" : "var(--color-text-muted)"} 
               size={16} 
             />
             Photos
@@ -712,9 +679,9 @@ const SearchPage = ({ photos, currentUser }) => {
               flex: 1,
               padding: "8px 16px",
               backgroundColor:
-                activeTab === "users" ? "#007bff" : "transparent",
-              color: activeTab === "users" ? "white" : "#6c757d",
-              border: activeTab === "users" ? "none" : "1px solid #e9ecef",
+                activeTab === "users" ? "var(--color-primary)" : "transparent",
+              color: activeTab === "users" ? "white" : "var(--color-text-muted)",
+              border: activeTab === "users" ? "none" : "1px solid var(--color-border)",
               borderRadius: "20px",
               fontSize: "14px",
               fontWeight: "500",
@@ -727,7 +694,7 @@ const SearchPage = ({ photos, currentUser }) => {
             }}
           >
             <UsersIcon 
-              color={activeTab === "users" ? "white" : "#6c757d"} 
+              color={activeTab === "users" ? "white" : "var(--color-text-muted)"} 
               size={16} 
             />
             Users
@@ -747,13 +714,13 @@ const SearchPage = ({ photos, currentUser }) => {
                 marginBottom: "16px",
               }}
             >
-              <TrendingIcon color="#007bff" size={20} />
+              <TrendingIcon color="var(--color-primary)" size={20} />
               <h3
                 style={{
                   margin: 0,
                   fontSize: "18px",
                   fontWeight: "600",
-                  color: "#343a40",
+                  color: "var(--color-text-primary)",
                 }}
               >
                 Trending Hashtags
@@ -775,22 +742,22 @@ const SearchPage = ({ photos, currentUser }) => {
                     onClick={() => handleHashtagClick(`#${hashtag}`)}
                     style={{
                       padding: "8px 16px",
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #e9ecef",
+                      backgroundColor: "var(--color-bg-secondary)",
+                      border: "1px solid var(--color-border)",
                       borderRadius: "20px",
                       fontSize: "14px",
-                      color: "#007bff",
+                      color: "var(--color-primary)",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                      boxShadow: "var(--shadow-sm)",
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = "#f8f9fa";
-                      e.target.style.borderColor = "#007bff";
+                      e.target.style.backgroundColor = "var(--color-bg-tertiary)";
+                      e.target.style.borderColor = "var(--color-primary)";
                     }}
                     onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = "#ffffff";
-                      e.target.style.borderColor = "#e9ecef";
+                      e.target.style.backgroundColor = "var(--color-bg-secondary)";
+                      e.target.style.borderColor = "var(--color-border)";
                     }}
                   >
                     #{hashtag} ({count})
@@ -800,7 +767,7 @@ const SearchPage = ({ photos, currentUser }) => {
             ) : (
               <p
                 style={{
-                  color: "#6c757d",
+                  color: "var(--color-text-muted)",
                   fontSize: "14px",
                   marginBottom: "32px",
                 }}
@@ -818,13 +785,13 @@ const SearchPage = ({ photos, currentUser }) => {
                 marginBottom: "16px",
               }}
             >
-              <GalleryIcon color="#007bff" size={20} />
+              <GalleryIcon color="var(--color-primary)" size={20} />
               <h3
                 style={{
                   margin: 0,
                   fontSize: "18px",
                   fontWeight: "600",
-                  color: "#343a40",
+                  color: "var(--color-text-primary)",
                 }}
               >
                 Recent Photos
@@ -856,7 +823,7 @@ const SearchPage = ({ photos, currentUser }) => {
                 <div>
                   <p
                     style={{
-                      color: "#6c757d",
+                      color: "var(--color-text-muted)",
                       fontSize: "14px",
                       marginBottom: "16px",
                     }}
@@ -890,13 +857,13 @@ const SearchPage = ({ photos, currentUser }) => {
                   style={{
                     textAlign: "center",
                     padding: "60px 20px",
-                    color: "#6c757d",
+                    color: "var(--color-text-muted)",
                   }}
                 >
                   <div style={{ marginBottom: "16px" }}>
-                    <SearchNotFoundIcon color="#6c757d" size={48} />
+                    <SearchNotFoundIcon color="var(--color-text-muted)" size={48} />
                   </div>
-                  <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
+                  <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>
                     No photos found
                   </h3>
                   <p style={{ margin: 0, fontSize: "14px" }}>
@@ -906,21 +873,20 @@ const SearchPage = ({ photos, currentUser }) => {
                   </p>
                 </div>
               )
-            ) : // Users tab
-            userSearchLoading ? (
+            ) : userSearchLoading ? (
               <div
                 style={{
                   textAlign: "center",
                   padding: "40px 20px",
-                  color: "#6c757d",
+                  color: "var(--color-text-muted)",
                 }}
               >
                 <div
                   style={{
                     width: "32px",
                     height: "32px",
-                    border: "3px solid #e9ecef",
-                    borderTop: "3px solid #007bff",
+                    border: "3px solid var(--color-border)",
+                    borderTop: "3px solid var(--color-primary)",
                     borderRadius: "50%",
                     animation: "spin 1s linear infinite",
                     margin: "0 auto 16px",
@@ -932,7 +898,7 @@ const SearchPage = ({ photos, currentUser }) => {
               <div>
                 <p
                   style={{
-                    color: "#6c757d",
+                    color: "var(--color-text-muted)",
                     fontSize: "14px",
                     marginBottom: "16px",
                   }}
@@ -963,13 +929,13 @@ const SearchPage = ({ photos, currentUser }) => {
                 style={{
                   textAlign: "center",
                   padding: "60px 20px",
-                  color: "#6c757d",
+                  color: "var(--color-text-muted)",
                 }}
               >
                 <div style={{ marginBottom: "16px" }}>
-                  <UsersNotFoundIcon color="#6c757d" size={48} />
+                  <UsersNotFoundIcon color="var(--color-text-muted)" size={48} />
                 </div>
-                <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
+                <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>
                   No users found
                 </h3>
                 <p style={{ margin: 0, fontSize: "14px" }}>
@@ -981,7 +947,7 @@ const SearchPage = ({ photos, currentUser }) => {
         )}
       </div>
 
-      {/* ✅ ENHANCED: Photo Modal with clean icons and improved location display */}
+      {/* Photo Modal */}
       {selectedPhoto && (
         <div
           style={{
@@ -1001,7 +967,7 @@ const SearchPage = ({ photos, currentUser }) => {
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--color-bg-secondary)",
               borderRadius: "16px",
               overflow: "hidden",
               maxWidth: "90vw",
@@ -1015,7 +981,7 @@ const SearchPage = ({ photos, currentUser }) => {
             <div
               style={{
                 padding: "16px 20px",
-                borderBottom: "1px solid #f0f0f0",
+                borderBottom: "1px solid var(--color-border)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -1042,11 +1008,11 @@ const SearchPage = ({ photos, currentUser }) => {
                       width: "32px",
                       height: "32px",
                       borderRadius: "50%",
-                      backgroundColor: "#007bff",
+                      backgroundColor: "var(--color-primary)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: "white",
+                      color: "var(--color-bg-primary)",
                       fontSize: "14px",
                       fontWeight: "600",
                     }}
@@ -1059,12 +1025,12 @@ const SearchPage = ({ photos, currentUser }) => {
                     style={{
                       fontWeight: "600",
                       fontSize: "14px",
-                      color: "#343a40",
+                      color: "var(--color-text-primary)",
                     }}
                   >
                     {getUserInfo(selectedPhoto).displayName}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                  <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
                     @{getUserInfo(selectedPhoto).screenName}
                   </div>
                 </div>
@@ -1075,7 +1041,7 @@ const SearchPage = ({ photos, currentUser }) => {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "#6c757d",
+                  color: "var(--color-text-muted)",
                   padding: "4px",
                   borderRadius: "50%",
                   width: "32px",
@@ -1086,13 +1052,13 @@ const SearchPage = ({ photos, currentUser }) => {
                   transition: "background-color 0.2s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = "#f8f9fa";
+                  e.target.style.backgroundColor = "var(--color-bg-tertiary)";
                 }}
                 onMouseLeave={(e) => {
                   e.target.style.backgroundColor = "transparent";
                 }}
               >
-                <CloseIcon color="#6c757d" size={20} />
+                <CloseIcon color="var(--color-text-muted)" size={20} />
               </button>
             </div>
 
@@ -1104,7 +1070,7 @@ const SearchPage = ({ photos, currentUser }) => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: "#f8f9fa",
+                backgroundColor: "var(--color-bg-tertiary)",
               }}
             >
               <img
@@ -1127,7 +1093,7 @@ const SearchPage = ({ photos, currentUser }) => {
                 maxHeight: "25vh",
               }}
             >
-              <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
+              <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>
                 {selectedPhoto.caption
                   ? formatTextWithHashtags(
                       selectedPhoto.caption,
@@ -1139,21 +1105,20 @@ const SearchPage = ({ photos, currentUser }) => {
                 style={{
                   margin: "0 0 12px 0",
                   fontSize: "14px",
-                  color: "#6c757d",
+                  color: "var(--color-text-muted)",
                 }}
               >
                 By {getUserInfo(selectedPhoto).displayName} (@
                 {getUserInfo(selectedPhoto).screenName})
               </p>
 
-              {/* Show tagged users in modal */}
               {selectedPhoto.taggedUsers &&
                 selectedPhoto.taggedUsers.length > 0 && (
                   <p
                     style={{
                       margin: "0 0 12px 0",
                       fontSize: "12px",
-                      color: "#007bff",
+                      color: "var(--color-primary)",
                     }}
                   >
                     with{" "}
@@ -1168,30 +1133,26 @@ const SearchPage = ({ photos, currentUser }) => {
                   </p>
                 )}
 
-              {/* ✅ ENHANCED: Time and location with clean icons and miles */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "flex-start",
                   gap: "12px",
                   fontSize: "12px",
-                  color: "#6c757d",
+                  color: "var(--color-text-muted)",
                   marginBottom: "16px",
                   flexDirection: "column",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <ClockIcon color="#6c757d" size={14} />
+                  <ClockIcon color="var(--color-text-muted)" size={14} />
                   <span>{formatTimeAgo(selectedPhoto.timestamp)}</span>
                 </div>
 
-                {/* ✅ NEW: Enhanced location display matching HomeFeed logic */}
                 {selectedPhoto.placeName ? (
-                  // Show specific place name if available
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <span>📍</span>
                     <span>{selectedPhoto.placeName}</span>
-                    {/* Show distance if current location available */}
                     {currentLocation && selectedPhoto.latitude && selectedPhoto.longitude && (
                       <span style={{ marginLeft: "8px", fontWeight: "500" }}>
                         ({formatDistance(calculateDistance(
@@ -1204,14 +1165,12 @@ const SearchPage = ({ photos, currentUser }) => {
                     )}
                   </div>
                 ) : selectedPhoto.latitude && selectedPhoto.longitude ? (
-                  // Fallback to LocationDisplay component for neighborhood/city/state
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <span>📍</span>
                     <LocationDisplay
                       latitude={selectedPhoto.latitude}
                       longitude={selectedPhoto.longitude}
                     />
-                    {/* Show distance if current location available */}
                     {currentLocation && (
                       <span style={{ marginLeft: "8px", fontWeight: "500" }}>
                         ({formatDistance(calculateDistance(
@@ -1227,12 +1186,12 @@ const SearchPage = ({ photos, currentUser }) => {
               </div>
             </div>
 
-            {/* Fixed Bottom Button */}
+            {/* Footer */}
             <div
               style={{
                 padding: "16px 20px",
-                borderTop: "1px solid #f0f0f0",
-                backgroundColor: "#ffffff",
+                borderTop: "1px solid var(--color-border)",
+                backgroundColor: "var(--color-bg-secondary)",
                 flexShrink: 0,
               }}
             >
@@ -1241,7 +1200,7 @@ const SearchPage = ({ photos, currentUser }) => {
                 style={{
                   width: "100%",
                   padding: "12px",
-                  backgroundColor: "#007bff",
+                  backgroundColor: "var(--color-primary)",
                   border: "none",
                   borderRadius: "8px",
                   color: "white",
@@ -1257,7 +1216,6 @@ const SearchPage = ({ photos, currentUser }) => {
         </div>
       )}
 
-      {/* Add CSS animations */}
       <style>
         {`
           @keyframes spin {
