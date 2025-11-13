@@ -36,7 +36,7 @@ const ActivityIcon = ({ color = "#5352ed", size = 20 }) => (
   </svg>
 );
 
-const ClockIcon = ({ color = "#6c757d", size = 14 }) => (
+const ClockIcon = ({ color = "var(--color-text-muted)", size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <circle cx="12" cy="12" r="10"/>
     <polyline points="12,6 12,12 16,14"/>
@@ -121,7 +121,7 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
             return;
           }
           photos = await discoveryService.getPopularNearby(currentLocation, {
-            radius: 5000, // 5km
+            radius: 5000,
             limit: 15,
             timeframe: timeframe
           });
@@ -129,7 +129,6 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
 
         case 'activity':
           if (followingLoading) {
-            // Wait for following list to load
             setLoading(false);
             return;
           }
@@ -208,9 +207,9 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
     <div style={{ padding: '0' }}>
       {/* Discovery Filter Tabs */}
       <div style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--color-bg-secondary)',
         padding: '16px 16px 12px 16px',
-        borderBottom: '1px solid #f0f0f0',
+        borderBottom: '1px solid var(--color-border)',
         position: 'sticky',
         top: '0',
         zIndex: 50
@@ -237,9 +236,9 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
                   gap: '6px',
                   padding: '8px 12px',
                   backgroundColor: isActive ? filter.color + '15' : 'transparent',
-                  border: `2px solid ${isActive ? filter.color : '#e5e7eb'}`,
+                  border: `2px solid ${isActive ? filter.color : 'var(--color-border)'}`,
                   borderRadius: '20px',
-                  color: isActive ? filter.color : '#6b7280',
+                  color: isActive ? filter.color : 'var(--color-text-muted)',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
@@ -248,7 +247,7 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
                   justifyContent: 'center'
                 }}
               >
-                <IconComponent color={isActive ? filter.color : '#6b7280'} size={16} />
+                <IconComponent color={isActive ? filter.color : 'var(--color-text-muted)'} size={16} />
                 <span>{filter.label}</span>
               </button>
             );
@@ -260,7 +259,7 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
           display: 'flex',
           justifyContent: 'center',
           gap: '4px',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: 'var(--color-bg-tertiary)',
           padding: '4px',
           borderRadius: '12px',
           maxWidth: '200px',
@@ -274,12 +273,12 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
               style={{
                 flex: 1,
                 padding: '6px 8px',
-                backgroundColor: timeframe === option.value ? '#ffffff' : 'transparent',
+                backgroundColor: timeframe === option.value ? 'var(--color-bg-secondary)' : 'transparent',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '12px',
                 fontWeight: '600',
-                color: timeframe === option.value ? '#1f2937' : '#6b7280',
+                color: timeframe === option.value ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 boxShadow: timeframe === option.value ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
@@ -297,13 +296,13 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
           <div style={{
             textAlign: 'center',
             padding: '40px 20px',
-            color: '#6b7280'
+            color: 'var(--color-text-muted)'
           }}>
             <div style={{
               width: '32px',
               height: '32px',
-              border: '3px solid #f3f4f6',
-              borderTop: '3px solid #007bff',
+              border: '3px solid var(--color-border)',
+              borderTop: '3px solid var(--color-primary)',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 16px'
@@ -326,14 +325,14 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
           <div style={{
             textAlign: 'center',
             padding: '60px 20px',
-            color: '#6b7280'
+            color: 'var(--color-text-muted)'
           }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>
               {activeDiscoveryFilter === 'trending' && '📈'}
               {activeDiscoveryFilter === 'nearby' && '📍'}
               {activeDiscoveryFilter === 'activity' && '👥'}
             </div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>
+            <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-text-primary)' }}>
               {activeDiscoveryFilter === 'trending' && 'No trending photos'}
               {activeDiscoveryFilter === 'nearby' && 'No popular photos nearby'}
               {activeDiscoveryFilter === 'activity' && 'No recent activity'}
@@ -358,7 +357,7 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
                 margin: 0,
                 fontSize: '18px',
                 fontWeight: '600',
-                color: '#1f2937',
+                color: 'var(--color-text-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -384,8 +383,8 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
               </h3>
               <span style={{
                 fontSize: '12px',
-                color: '#6b7280',
-                backgroundColor: '#f3f4f6',
+                color: 'var(--color-text-muted)',
+                backgroundColor: 'var(--color-bg-tertiary)',
                 padding: '4px 8px',
                 borderRadius: '12px'
               }}>
@@ -454,11 +453,10 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
                       onUserClick={onUserClick}
                       showUserInfo={true}
                       enhancedInfo={
-                        // Show additional trending info
                         activeDiscoveryFilter === 'trending' && photo.trending ? (
                           <div style={{
                             fontSize: '11px',
-                            color: '#6b7280',
+                            color: 'var(--color-text-muted)',
                             marginTop: '4px',
                             display: 'flex',
                             alignItems: 'center',
