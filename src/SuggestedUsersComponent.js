@@ -34,7 +34,7 @@ const StarIcon = ({ color = "#ffc107", size = 14 }) => (
   </svg>
 );
 
-const RefreshIcon = ({ color = "#6b7280", size = 16 }) => (
+const RefreshIcon = ({ color = "var(--color-text-muted)", size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <polyline points="23,4 23,10 17,10"/>
     <polyline points="1,20 1,14 7,14"/>
@@ -342,7 +342,7 @@ const SuggestedUsersComponent = ({
   if (loading) {
     return (
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: "var(--color-bg-secondary)",
         borderRadius: '12px',
         padding: compact ? '12px' : '16px',
         margin: compact ? '8px 0' : '16px 0',
@@ -357,12 +357,12 @@ const SuggestedUsersComponent = ({
           <div style={{
             width: '16px',
             height: '16px',
-            border: '2px solid #f3f4f6',
-            borderTop: '2px solid #007bff',
+            border: '2px solid var(--color-border)',
+            borderTop: '2px solid var(--color-primary)',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite'
           }} />
-          <span style={{ color: '#6b7280', fontSize: '14px' }}>
+          <span style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>
             Finding people you might know...
           </span>
         </div>
@@ -376,12 +376,12 @@ const SuggestedUsersComponent = ({
 
   return (
     <div style={{
-      backgroundColor: 'white',
+      backgroundColor: "var(--color-bg-secondary)",
       borderRadius: '12px',
       padding: compact ? '12px' : '16px',
       margin: compact ? '8px 0' : '16px 0',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      border: '1px solid #f0f0f0'
+      border: "1px solid var(--color-border)"
     }}>
       {/* Header */}
       <div style={{
@@ -394,12 +394,12 @@ const SuggestedUsersComponent = ({
           margin: 0,
           fontSize: compact ? '16px' : '18px',
           fontWeight: '600',
-          color: '#1f2937',
+          color: "var(--color-text-primary)",
           display: 'flex',
           alignItems: 'center',
           gap: '8px'
         }}>
-          <UsersIcon color="#007bff" size={20} />
+          <UsersIcon color="var(--color-primary)" size={20} />
           Suggested for you
         </h3>
         
@@ -413,18 +413,18 @@ const SuggestedUsersComponent = ({
             borderRadius: '6px',
             display: 'flex',
             alignItems: 'center',
-            color: '#6b7280',
+            color: "var(--color-text-muted)",
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#f3f4f6';
+            e.target.style.backgroundColor = "var(--color-bg-tertiary)";
           }}
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = 'transparent';
           }}
           title="Refresh suggestions"
         >
-          <RefreshIcon color="#6b7280" size={16} />
+          <RefreshIcon color="var(--color-text-muted)" size={16} />
         </button>
       </div>
 
@@ -448,7 +448,7 @@ const SuggestedUsersComponent = ({
                 alignItems: 'center',
                 gap: '12px',
                 padding: compact ? '8px' : '12px',
-                backgroundColor: '#f8f9fa',
+                backgroundColor: "var(--color-bg-tertiary)",
                 borderRadius: '8px',
                 transition: 'all 0.2s ease'
               }}
@@ -475,7 +475,7 @@ const SuggestedUsersComponent = ({
                       width: compact ? '32px' : '40px',
                       height: compact ? '32px' : '40px',
                       borderRadius: '50%',
-                      backgroundColor: '#007bff',
+                      backgroundColor: "var(--color-primary)",
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -498,7 +498,7 @@ const SuggestedUsersComponent = ({
                   <div style={{
                     fontWeight: '600',
                     fontSize: compact ? '14px' : '15px',
-                    color: '#1f2937',
+                    color: "var(--color-text-primary)",
                     marginBottom: '2px',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -508,7 +508,7 @@ const SuggestedUsersComponent = ({
                   </div>
                   <div style={{
                     fontSize: '12px',
-                    color: '#6b7280',
+                    color: "var(--color-text-muted)",
                     marginBottom: '4px'
                   }}>
                     @{userInfo.screenName}
@@ -536,8 +536,8 @@ const SuggestedUsersComponent = ({
                   style={{
                     width: '28px',
                     height: '28px',
-                    border: '1px solid #e5e7eb',
-                    backgroundColor: 'white',
+                    border: "1px solid var(--color-border)",
+                    backgroundColor: "var(--color-bg-secondary)",
                     borderRadius: '6px',
                     cursor: 'pointer',
                     display: 'flex',
@@ -546,12 +546,12 @@ const SuggestedUsersComponent = ({
                     transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#fef2f2';
-                    e.target.style.borderColor = '#fecaca';
+                    e.target.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+                    e.target.style.borderColor = "#ef4444";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'white';
-                    e.target.style.borderColor = '#e5e7eb';
+                    e.target.style.backgroundColor = "var(--color-bg-secondary)";
+                    e.target.style.borderColor = "var(--color-border)";
                   }}
                   title="Dismiss suggestion"
                 >
@@ -565,7 +565,7 @@ const SuggestedUsersComponent = ({
                   style={{
                     padding: '6px 12px',
                     backgroundColor: followState === 'following' ? '#10b981' : 
-                                   followState === 'error' ? '#ef4444' : '#007bff',
+                                   followState === 'error' ? '#ef4444' : "var(--color-primary)",
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
