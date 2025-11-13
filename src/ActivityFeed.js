@@ -5,14 +5,14 @@ import ActivityItem from './ActivityItem';
 import SuggestedUsersComponent from './SuggestedUsersComponent';
 
 // Minimal SVG icon components - matching MobileBottomNavigation style
-const BellIcon = ({ color = "#6c757d", size = 48 }) => (
+const BellIcon = ({ color = "var(--color-text-muted)", size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
   </svg>
 );
 
-const BellOffIcon = ({ color = "#6c757d", size = 48 }) => (
+const BellOffIcon = ({ color = "var(--color-text-muted)", size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M6.87 6.87a6 6 0 0 1 8.13 8.13"/>
     <path d="M19 17v-6a7 7 0 0 0-1-3.67"/>
@@ -78,7 +78,7 @@ const ActivityFeed = ({ currentUser }) => {
   const handleUserClick = (userId) => {
     // Navigate to user profile - adjust this based on your routing setup
     window.location.href = `/profile/${userId}`;
-    // Or use your router: navigate(`/profile/${userId}`);
+    // Or use your router: navigate`/profile/${userId}`);
   };
 
   useEffect(() => {
@@ -154,10 +154,12 @@ const ActivityFeed = ({ currentUser }) => {
             style={styles.retryButton}
             onClick={() => window.location.reload()}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#0056b3';
+              e.target.style.backgroundColor = 'var(--color-primary)';
+              e.target.style.opacity = '0.9';
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#007bff';
+              e.target.style.backgroundColor = 'var(--color-primary)';
+              e.target.style.opacity = '1';
             }}
           >
             <RefreshIcon color="#ffffff" size={16} />
@@ -176,7 +178,7 @@ const ActivityFeed = ({ currentUser }) => {
         </div>
         <div style={styles.emptyContainer}>
           <div style={styles.emptyIconContainer}>
-            <BellIcon color="#6c757d" size={48} />
+            <BellIcon color="var(--color-text-muted)" size={48} />
           </div>
           <h3 style={styles.emptyTitle}>Please log in</h3>
           <p style={styles.emptyText}>
@@ -199,18 +201,17 @@ const ActivityFeed = ({ currentUser }) => {
           <div style={{ padding: '0 20px' }}>
             <SuggestedUsersComponent
               currentUser={currentUser}
-              currentLocation={null} // Will be enhanced with location later
+              currentLocation={null}
               onUserClick={handleUserClick}
               compact={true}
               maxSuggestions={3}
             />
           </div>
         )}
-
         {activities.length === 0 ? (
           <div style={styles.emptyContainer}>
             <div style={styles.emptyIconContainer}>
-              <BellOffIcon color="#6c757d" size={48} />
+              <BellOffIcon color="var(--color-text-muted)" size={48} />
             </div>
             <h3 style={styles.emptyTitle}>No activity yet</h3>
             <p style={styles.emptyText}>
@@ -236,16 +237,16 @@ const ActivityFeed = ({ currentUser }) => {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f8f9fa',
-    color: '#343a40',
-    paddingBottom: '120px', // Increased space for bottom nav
+    backgroundColor: 'var(--color-bg-primary)',
+    color: 'var(--color-text-primary)',
+    paddingBottom: '120px',
     maxWidth: '500px',
     margin: '0 auto',
   },
   header: {
     padding: '20px 20px 10px 20px',
-    borderBottom: '1px solid #e9ecef',
-    backgroundColor: '#ffffff',
+    borderBottom: '1px solid var(--color-border)',
+    backgroundColor: 'var(--color-bg-secondary)',
     position: 'sticky',
     top: 0,
     zIndex: 10,
@@ -254,7 +255,7 @@ const styles = {
     margin: 0,
     fontSize: '24px',
     fontWeight: '600',
-    color: '#343a40',
+    color: 'var(--color-text-primary)',
   },
   feedContainer: {
     flex: 1,
@@ -269,14 +270,14 @@ const styles = {
   loadingSpinner: {
     width: '40px',
     height: '40px',
-    border: '3px solid #e9ecef',
-    borderTop: '3px solid #007bff',
+    border: '3px solid var(--color-border)',
+    borderTop: '3px solid var(--color-primary)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '20px',
   },
   loadingText: {
-    color: '#6c757d',
+    color: 'var(--color-text-muted)',
     fontSize: '16px',
     margin: 0,
   },
@@ -299,7 +300,7 @@ const styles = {
     margin: '0 0 20px 0',
   },
   retryButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: 'var(--color-primary)',
     color: '#fff',
     border: 'none',
     padding: '12px 24px',
@@ -328,11 +329,11 @@ const styles = {
     fontSize: '20px',
     fontWeight: '600',
     marginBottom: '10px',
-    color: '#343a40',
+    color: 'var(--color-text-primary)',
     margin: '0 0 10px 0',
   },
   emptyText: {
-    color: '#6c757d',
+    color: 'var(--color-text-muted)',
     fontSize: '16px',
     lineHeight: '1.5',
     maxWidth: '300px',
