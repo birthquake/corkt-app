@@ -9,8 +9,8 @@ import LocationDisplay from "./LocationDisplay";
 import { formatTextWithHashtags } from "./hashtagService";
 import analytics from "./analyticsService";
 
-// ✅ NEW: Flag icon component
-const FlagIcon = ({ color = "#6c757d", size = 18 }) => (
+// ✅ Flag icon component
+const FlagIcon = ({ color = "var(--color-text-muted)", size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
     <line x1="4" y1="22" x2="4" y2="15"/>
@@ -27,19 +27,17 @@ const MobilePhotoCard = ({
   showUserInfo = true,
   showTimestamp = false,
   formatTimeAgo,
-  // ✅ NEW: Add these props for location/mode context (if available)
   currentLocation = null,
   isGlobalMode = true,
   activeFilter = 'public'
 }) => {
   const navigate = useNavigate();
 
-  // ✅ UPDATED: Enhanced useLikes integration with activity creation parameters
   const { likesCount, isLiked, toggleLike, liking } = useLikes(
     photo?.id,
     currentUser?.uid,
-    photo?.uid,       // ✅ FIXED: Photo owner ID (correct field name)
-    photo?.imageUrl   // Photo URL for activity thumbnail
+    photo?.uid,
+    photo?.imageUrl
   );
 
   // Double-tap to like state
@@ -48,12 +46,12 @@ const MobilePhotoCard = ({
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const heartAnimationRef = useRef(null);
 
-  // ✅ NEW: Flag-related state
+  // Flag-related state
   const [showFlagMenu, setShowFlagMenu] = useState(false);
   const [flaggingPhoto, setFlaggingPhoto] = useState(false);
   const [flagSuccess, setFlagSuccess] = useState(false);
 
-  // ✅ NEW: Handle user click navigation
+  // Handle user click navigation
   const handleUserClick = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -62,21 +60,19 @@ const MobilePhotoCard = ({
     }
   }, [onUserClick, photo.uid]);
 
-  // ✅ ENHANCED: Handle hashtag clicks with navigation to search
+  // Handle hashtag clicks with navigation to search
   const handleHashtagClick = useCallback((hashtag) => {
     console.log(`🏷️ Hashtag clicked: #${hashtag}`);
     
     if (onHashtagClick) {
-      // Use custom handler if provided
       onHashtagClick(hashtag);
     } else {
-      // Default behavior: navigate to search page with hashtag
       navigate(`/search?hashtag=${encodeURIComponent(hashtag)}`);
       console.log(`🔍 Navigating to search for hashtag: #${hashtag}`);
     }
   }, [onHashtagClick, navigate]);
 
-  // ✅ NEW: Photo flagging functions
+  // Photo flagging functions
   const handleFlagPhoto = useCallback(async (reason) => {
     if (!photo || !currentUser || flaggingPhoto) return;
     
@@ -96,16 +92,14 @@ const MobilePhotoCard = ({
         location: photo.placeName || 'Unknown location',
         flagStatus: 'pending',
         
-        // Additional metadata for analytics
         userLocation: currentLocation ? {
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude
         } : null,
         flaggedFromMode: isGlobalMode ? 'global' : 'local',
         flaggedFromFilter: activeFilter,
-        flaggedFromSource: 'feed_card', // ✅ NEW: Track source of flag
+        flaggedFromSource: 'feed_card',
         
-        // Photo metadata
         photoLocation: photo.latitude && photo.longitude ? {
           latitude: photo.latitude,
           longitude: photo.longitude
@@ -114,7 +108,6 @@ const MobilePhotoCard = ({
 
       await addDoc(collection(db, "flags"), flagData);
       
-      // Track in analytics
       analytics.trackPhotoInteraction(
         'flag',
         photo.latitude && photo.longitude ? 
@@ -124,7 +117,6 @@ const MobilePhotoCard = ({
         { reason, flaggedPhotoId: photo.id, source: 'feed_card' }
       );
 
-      // Show success feedback
       setFlagSuccess(true);
       setTimeout(() => setFlagSuccess(false), 2000);
       
@@ -144,10 +136,8 @@ const MobilePhotoCard = ({
   // Handle double-tap to like
   const handleDoubleTap = useCallback(async () => {
     if (!isLiked && !liking) {
-      // Trigger heart animation
       setShowHeartAnimation(true);
 
-      // Auto-hide heart after animation
       if (heartAnimationRef.current) {
         clearTimeout(heartAnimationRef.current);
       }
@@ -155,7 +145,6 @@ const MobilePhotoCard = ({
         setShowHeartAnimation(false);
       }, 1000);
 
-      // Like the photo
       try {
         await toggleLike();
       } catch (error) {
@@ -190,17 +179,14 @@ const MobilePhotoCard = ({
           Math.pow(touchEnd.y - touchStart.y, 2)
       );
 
-      // Check if it's a tap (not a drag) and quick enough
       if (distance < 30 && timeDiff < 300) {
         const now = Date.now();
         const tapGap = now - lastTap;
 
         if (tapGap < 300 && tapGap > 0) {
-          // Double tap detected!
           e.preventDefault();
           handleDoubleTap();
         } else {
-          // Single tap - open photo after delay to check for double tap
           setTimeout(() => {
             const newTapGap = Date.now() - now;
             if (newTapGap >= 300 && onPhotoClick) {
@@ -215,7 +201,7 @@ const MobilePhotoCard = ({
     [lastTap, handleDoubleTap, onPhotoClick, photo]
   );
 
-  // Long press for additional actions (future feature)
+  // Long press for additional actions
   const [longPressTimer, setLongPressTimer] = useState(null);
 
   const handleTouchStartLongPress = useCallback(
@@ -223,12 +209,10 @@ const MobilePhotoCard = ({
       handleTouchStart(e);
 
       const timer = setTimeout(() => {
-        // Trigger haptic feedback if available
         if (navigator.vibrate) {
           navigator.vibrate(50);
         }
 
-        // Show additional actions menu (future feature)
         console.log("Long press detected - could show context menu");
       }, 500);
 
@@ -248,41 +232,34 @@ const MobilePhotoCard = ({
     [longPressTimer, handleTouchEnd]
   );
 
-  // ✅ UPDATED: Enhanced formatTimeAgo function (fallback if not provided as prop)
+  // Enhanced formatTimeAgo function (fallback if not provided as prop)
   const defaultFormatTimeAgo = useCallback((timestamp) => {
     if (!timestamp) return "Unknown time";
     
-    // Convert Firestore timestamp to Date if needed
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diffInMilliseconds = now.getTime() - date.getTime();
     
-    // Convert to different time units
     const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
     const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
     
-    // Less than 1 minute
     if (diffInMinutes < 1) {
       return 'just now';
     }
     
-    // Less than 1 hour - show minutes
     if (diffInHours < 1) {
       return diffInMinutes === 1 ? '1m' : `${diffInMinutes}m`;
     }
     
-    // Less than 24 hours - show hours
     if (diffInDays < 1) {
       return diffInHours === 1 ? '1h' : `${diffInHours}h`;
     }
     
-    // Less than 7 days - show days
     if (diffInDays < 7) {
       return diffInDays === 1 ? '1d' : `${diffInDays}d`;
     }
     
-    // 7 days or more - show actual date
     const options = {
       month: 'short',
       day: 'numeric',
@@ -292,22 +269,21 @@ const MobilePhotoCard = ({
     return date.toLocaleDateString('en-US', options);
   }, []);
 
-  // Use provided formatTimeAgo or fall back to default
   const timeFormatter = formatTimeAgo || defaultFormatTimeAgo;
 
   return (
     <div
       style={{
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--color-bg-secondary)",
         borderRadius: "12px",
         overflow: "hidden",
         marginBottom: "16px",
         boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-        border: "1px solid #f0f0f0",
-        position: "relative", // ✅ NEW: For absolute positioning of success message
+        border: "1px solid var(--color-border)",
+        position: "relative",
       }}
     >
-      {/* ✅ UPDATED: Clickable User Header with Conditional Timestamp */}
+      {/* Clickable User Header with Conditional Timestamp */}
       {showUserInfo && (
         <div
           style={{
@@ -315,14 +291,14 @@ const MobilePhotoCard = ({
             display: "flex",
             alignItems: "center",
             gap: "12px",
-            borderBottom: "1px solid #f8f9fa",
+            borderBottom: "1px solid var(--color-border)",
             cursor: onUserClick ? "pointer" : "default",
             transition: "background-color 0.2s ease",
           }}
           onClick={handleUserClick}
           onMouseEnter={(e) => {
             if (onUserClick) {
-              e.target.style.backgroundColor = "#f8f9fa";
+              e.target.style.backgroundColor = "var(--color-bg-tertiary)";
             }
           }}
           onMouseLeave={(e) => {
@@ -348,7 +324,7 @@ const MobilePhotoCard = ({
                 width: "32px",
                 height: "32px",
                 borderRadius: "50%",
-                backgroundColor: "#007bff",
+                backgroundColor: "var(--color-primary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -367,17 +343,16 @@ const MobilePhotoCard = ({
                 style={{
                   fontWeight: "600",
                   fontSize: "14px",
-                  color: onUserClick ? "#007bff" : "#1a1a1a",
+                  color: onUserClick ? "var(--color-primary)" : "var(--color-text-primary)",
                 }}
               >
                 {userInfo.displayName}
               </span>
-              {/* ✅ UPDATED: Conditional timestamp display */}
               {showTimestamp && (
                 <span
                   style={{
                     fontSize: "12px",
-                    color: "#8e8e8e",
+                    color: "var(--color-text-muted)",
                   }}
                 >
                   • {timeFormatter(photo.timestamp)}
@@ -387,11 +362,10 @@ const MobilePhotoCard = ({
 
             {/* ENHANCED LOCATION DISPLAY */}
             {photo.placeName ? (
-              // Existing: Show specific place name
               <div
                 style={{
                   fontSize: "12px",
-                  color: "#8e8e8e",
+                  color: "var(--color-text-muted)",
                   display: "flex",
                   alignItems: "center",
                   gap: "4px",
@@ -402,7 +376,6 @@ const MobilePhotoCard = ({
                 <span>{photo.placeName}</span>
               </div>
             ) : photo.latitude && photo.longitude ? (
-              // NEW: Show reverse geocoded location for coordinate-only photos
               <LocationDisplay
                 latitude={photo.latitude}
                 longitude={photo.longitude}
@@ -421,7 +394,7 @@ const MobilePhotoCard = ({
           overflow: "hidden",
           userSelect: "none",
           WebkitUserSelect: "none",
-          touchAction: "manipulation", // Prevents zoom on double-tap
+          touchAction: "manipulation",
         }}
         onTouchStart={handleTouchStartLongPress}
         onTouchEnd={handleTouchEndLongPress}
@@ -472,13 +445,13 @@ const MobilePhotoCard = ({
         />
       </div>
 
-      {/* ✅ UPDATED: Actions Bar with Flag Button */}
+      {/* Actions Bar with Flag Button */}
       <div
         style={{
           padding: "8px 16px 12px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between", // ✅ CHANGED: Back to space-between for flag button
+          justifyContent: "space-between",
         }}
       >
         {/* Like Button - Left side */}
@@ -493,7 +466,7 @@ const MobilePhotoCard = ({
             display: "flex",
             alignItems: "center",
             gap: "4px",
-            color: isLiked ? "#ff3040" : "#262626",
+            color: isLiked ? "#ff3040" : "var(--color-text-primary)",
             fontSize: "24px",
             transition: "transform 0.1s ease",
             borderRadius: "50%",
@@ -519,7 +492,7 @@ const MobilePhotoCard = ({
           )}
         </button>
 
-        {/* ✅ NEW: Flag Button - Right side (only for other users' photos) */}
+        {/* Flag Button - Right side (only for other users' photos) */}
         {photo.uid !== currentUser?.uid && (
           <div style={{ position: "relative" }}>
             <button
@@ -530,7 +503,7 @@ const MobilePhotoCard = ({
                 border: "none",
                 padding: "8px",
                 cursor: "pointer",
-                color: "#6c757d",
+                color: "var(--color-text-muted)",
                 fontSize: "18px",
                 transition: "all 0.2s ease",
                 borderRadius: "50%",
@@ -541,10 +514,10 @@ const MobilePhotoCard = ({
               }}
               onMouseEnter={(e) => {
                 e.target.style.color = "#dc3545";
-                e.target.style.backgroundColor = "#f8f9fa";
+                e.target.style.backgroundColor = "var(--color-bg-tertiary)";
               }}
               onMouseLeave={(e) => {
-                e.target.style.color = "#6c757d";
+                e.target.style.color = "var(--color-text-muted)";
                 e.target.style.backgroundColor = "transparent";
               }}
             >
@@ -552,7 +525,7 @@ const MobilePhotoCard = ({
                 <div style={{
                   width: "14px",
                   height: "14px",
-                  border: "2px solid #6c757d",
+                  border: "2px solid var(--color-text-muted)",
                   borderTop: "2px solid transparent",
                   borderRadius: "50%",
                   animation: "spin 1s linear infinite"
@@ -569,24 +542,25 @@ const MobilePhotoCard = ({
                   position: "absolute",
                   bottom: "45px",
                   right: "0",
-                  backgroundColor: "white",
+                  backgroundColor: "var(--color-bg-secondary)",
                   borderRadius: "12px",
                   boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
                   padding: "8px",
                   minWidth: "200px",
                   zIndex: 1000,
-                  animation: "slideUpFromBottom 0.2s ease-out"
+                  animation: "slideUpFromBottom 0.2s ease-out",
+                  border: "1px solid var(--color-border)"
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div style={{
                   padding: "12px 16px",
-                  borderBottom: "1px solid #f0f0f0",
+                  borderBottom: "1px solid var(--color-border)",
                   marginBottom: "8px"
                 }}>
                   <h4 style={{ 
                     margin: "0 0 4px 0", 
-                    color: "#1a1a1a", 
+                    color: "var(--color-text-primary)", 
                     fontSize: "14px", 
                     fontWeight: "600" 
                   }}>
@@ -594,7 +568,7 @@ const MobilePhotoCard = ({
                   </h4>
                   <p style={{ 
                     margin: 0, 
-                    color: "#666", 
+                    color: "var(--color-text-muted)", 
                     fontSize: "12px" 
                   }}>
                     Help us keep the community safe
@@ -623,12 +597,12 @@ const MobilePhotoCard = ({
                       alignItems: "center",
                       gap: "12px",
                       fontSize: "14px",
-                      color: "#1a1a1a",
+                      color: "var(--color-text-primary)",
                       transition: "background-color 0.2s ease",
                       marginBottom: "4px"
                     }}
                     onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = "#f8f9fa";
+                      e.target.style.backgroundColor = "var(--color-bg-tertiary)";
                     }}
                     onMouseLeave={(e) => {
                       e.target.style.backgroundColor = "transparent";
@@ -641,7 +615,7 @@ const MobilePhotoCard = ({
                 
                 <div style={{
                   padding: "8px 16px",
-                  borderTop: "1px solid #f0f0f0",
+                  borderTop: "1px solid var(--color-border)",
                   marginTop: "8px"
                 }}>
                   <button
@@ -650,12 +624,19 @@ const MobilePhotoCard = ({
                       width: "100%",
                       padding: "8px",
                       background: "none",
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid var(--color-border)",
                       borderRadius: "6px",
                       cursor: "pointer",
                       fontSize: "13px",
-                      color: "#666",
-                      fontWeight: "500"
+                      color: "var(--color-text-muted)",
+                      fontWeight: "500",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = "var(--color-bg-tertiary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = "transparent";
                     }}
                   >
                     Cancel
@@ -667,7 +648,7 @@ const MobilePhotoCard = ({
         )}
       </div>
 
-      {/* ✅ NEW: Success Toast for Flag Submission */}
+      {/* Success Toast for Flag Submission */}
       {flagSuccess && (
         <div
           style={{
@@ -695,7 +676,7 @@ const MobilePhotoCard = ({
         </div>
       )}
 
-      {/* ✅ ENHANCED: Caption with Clickable Hashtags and Clickable Username */}
+      {/* Caption with Clickable Hashtags and Clickable Username */}
       {photo.caption && (
         <div style={{ padding: "0 16px 16px" }}>
           <p
@@ -703,14 +684,14 @@ const MobilePhotoCard = ({
               margin: 0,
               fontSize: "14px",
               lineHeight: "20px",
-              color: "#262626",
+              color: "var(--color-text-primary)",
             }}
           >
             <span 
               style={{ 
                 fontWeight: "600",
                 cursor: onUserClick ? "pointer" : "default",
-                color: onUserClick ? "#007bff" : "#262626",
+                color: onUserClick ? "var(--color-primary)" : "var(--color-text-primary)",
                 transition: "color 0.2s ease"
               }}
               onClick={handleUserClick}
