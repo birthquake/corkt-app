@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom"; // ✅ NEW: Import useParams
+import { useParams } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import {
   doc,
@@ -20,14 +20,14 @@ import SignOut from "./SignOut";
 import "./ProfilePage.css";
 
 // Minimal SVG icon components - matching MobileBottomNavigation style
-const EditIcon = ({ color = "#6c757d", size = 16 }) => (
+const EditIcon = ({ color = "var(--color-text-muted)", size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
   </svg>
 );
 
-const PhotoIcon = ({ color = "#6c757d", size = 20 }) => (
+const PhotoIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
     <circle cx="9" cy="9" r="2"/>
@@ -35,7 +35,7 @@ const PhotoIcon = ({ color = "#6c757d", size = 20 }) => (
   </svg>
 );
 
-const MapIcon = ({ color = "#6c757d", size = 20 }) => (
+const MapIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
     <line x1="8" y1="2" x2="8" y2="18"/>
@@ -43,7 +43,7 @@ const MapIcon = ({ color = "#6c757d", size = 20 }) => (
   </svg>
 );
 
-const TrophyIcon = ({ color = "#6c757d", size = 20 }) => (
+const TrophyIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
     <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
@@ -53,14 +53,14 @@ const TrophyIcon = ({ color = "#6c757d", size = 20 }) => (
   </svg>
 );
 
-const CloseIcon = ({ color = "#6c757d", size = 20 }) => (
+const CloseIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <line x1="18" y1="6" x2="6" y2="18"/>
     <line x1="6" y1="6" x2="18" y2="18"/>
   </svg>
 );
 
-const TrashIcon = ({ color = "#6c757d", size = 48 }) => (
+const TrashIcon = ({ color = "var(--color-text-muted)", size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <polyline points="3,6 5,6 21,6"/>
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -69,7 +69,7 @@ const TrashIcon = ({ color = "#6c757d", size = 48 }) => (
   </svg>
 );
 
-const PhotoEmptyIcon = ({ color = "#6c757d", size = 48 }) => (
+const PhotoEmptyIcon = ({ color = "var(--color-text-muted)", size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
     <circle cx="9" cy="9" r="2"/>
@@ -78,7 +78,7 @@ const PhotoEmptyIcon = ({ color = "#6c757d", size = 48 }) => (
   </svg>
 );
 
-const MapEmptyIcon = ({ color = "#6c757d", size = 48 }) => (
+const MapEmptyIcon = ({ color = "var(--color-text-muted)", size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
     <line x1="8" y1="2" x2="8" y2="18"/>
@@ -87,14 +87,13 @@ const MapEmptyIcon = ({ color = "#6c757d", size = 48 }) => (
   </svg>
 );
 
-const BackIcon = ({ color = "#6c757d", size = 20 }) => (
+const BackIcon = ({ color = "var(--color-text-muted)", size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M19 12H5"/>
     <path d="M12 19l-7-7 7-7"/>
   </svg>
 );
 
-// 🎨 NEW: Achievement Badge Icons
 const CameraIcon = ({ color = "#ffffff", size = 24 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -177,7 +176,7 @@ const SparkleIcon = ({ color = "#ffffff", size = 24 }) => (
   </svg>
 );
 
-const LockIcon = ({ color = "#6c757d", size = 24 }) => (
+const LockIcon = ({ color = "var(--color-text-muted)", size = 24 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
     <circle cx="12" cy="16" r="1"/>
@@ -186,7 +185,7 @@ const LockIcon = ({ color = "#6c757d", size = 24 }) => (
 );
 
 const ProfilePage = ({ currentUser, photos }) => {
-  const { userId } = useParams(); // ✅ NEW: Get userId from URL params
+  const { userId } = useParams();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -198,65 +197,46 @@ const ProfilePage = ({ currentUser, photos }) => {
   const [activeTab, setActiveTab] = useState("photos");
   const [mapsLoaded, setMapsLoaded] = useState(false);
 
-  // Avatar picker state
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-
-  // Edit mode states
   const [editMode, setEditMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // ✅ NEW: Determine if viewing own profile or another user's profile
   const isOwnProfile = !userId || userId === currentUser?.uid;
   const profileUserId = userId || currentUser?.uid;
 
-  // ✅ NEW: Follow functionality for other users' profiles
   const { isFollowing, actionLoading: followLoading, toggleFollow } = useFollow(
     isOwnProfile ? null : profileUserId, 
     currentUser?.uid
   );
 
-  // 🎨 EXPANDED: More avatar variety with different styles
   const stockAvatars = [
-    // Avataaars style (cartoon people)
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4",
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=c0aede",
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily&backgroundColor=d1d4f9",
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Princess&backgroundColor=ffb3ba",
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob&backgroundColor=bae1ff",
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie&backgroundColor=baffc9",
-
-    // Personas style (professional avatars)
     "https://api.dicebear.com/7.x/personas/svg?seed=Alex&backgroundColor=ffd93d",
     "https://api.dicebear.com/7.x/personas/svg?seed=Sam&backgroundColor=c0aede",
     "https://api.dicebear.com/7.x/personas/svg?seed=Jordan&backgroundColor=ffdfba",
     "https://api.dicebear.com/7.x/personas/svg?seed=Riley&backgroundColor=baffc9",
-
-    // Big Ears style (cute/fun)
     "https://api.dicebear.com/7.x/big-ears/svg?seed=Mittens&backgroundColor=b6e3f4",
     "https://api.dicebear.com/7.x/big-ears/svg?seed=Fluffy&backgroundColor=ffffba",
     "https://api.dicebear.com/7.x/big-ears/svg?seed=Tiger&backgroundColor=ffb3ba",
     "https://api.dicebear.com/7.x/big-ears/svg?seed=Luna&backgroundColor=c7ceea",
-
-    // Adventurer style (illustrated people)
     "https://api.dicebear.com/7.x/adventurer/svg?seed=Max&backgroundColor=ffc9de",
     "https://api.dicebear.com/7.x/adventurer/svg?seed=Maya&backgroundColor=d1d4f9",
     "https://api.dicebear.com/7.x/adventurer/svg?seed=Quinn&backgroundColor=bae1ff",
     "https://api.dicebear.com/7.x/adventurer/svg?seed=River&backgroundColor=c0aede",
-
-    // Fun styles
     "https://api.dicebear.com/7.x/big-smile/svg?seed=Happy&backgroundColor=ffd93d",
     "https://api.dicebear.com/7.x/big-smile/svg?seed=Joy&backgroundColor=baffc9",
     "https://api.dicebear.com/7.x/bottts/svg?seed=Robot1&backgroundColor=c7ceea",
     "https://api.dicebear.com/7.x/bottts/svg?seed=Robot2&backgroundColor=ffdfba",
-
-    // More variety
     "https://api.dicebear.com/7.x/lorelei/svg?seed=Ocean&backgroundColor=b6e3f4",
     "https://api.dicebear.com/7.x/lorelei/svg?seed=Forest&backgroundColor=baffc9",
     "https://api.dicebear.com/7.x/thumbs/svg?seed=Thumbs1&backgroundColor=ffffba",
     "https://api.dicebear.com/7.x/thumbs/svg?seed=Thumbs2&backgroundColor=ffb3ba",
-
-    // Even more options
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Morgan&backgroundColor=ffc9de",
     "https://api.dicebear.com/7.x/avataaars/svg?seed=Casey&backgroundColor=c7ceea",
     "https://api.dicebear.com/7.x/personas/svg?seed=Blake&backgroundColor=b6e3f4",
@@ -265,30 +245,25 @@ const ProfilePage = ({ currentUser, photos }) => {
     "https://api.dicebear.com/7.x/big-smile/svg?seed=Sunny&backgroundColor=ffd93d",
   ];
 
-  // ✅ UPDATED: Get follow counts for the profile being viewed
   const {
     followersCount,
     followingCount,
     loading: followCountsLoading,
   } = useFollowCounts(profileUserId);
 
-  // 🔧 FIX: Body scroll lock when modal opens
   useEffect(() => {
     if (showAvatarPicker) {
-      // Prevent body scroll when modal is open
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.width = "100%";
       document.body.classList.add("modal-open");
     } else {
-      // Restore body scroll when modal closes
       document.body.style.overflow = "";
       document.body.style.position = "";
       document.body.style.width = "";
       document.body.classList.remove("modal-open");
     }
 
-    // Cleanup on unmount
     return () => {
       document.body.style.overflow = "";
       document.body.style.position = "";
@@ -297,7 +272,6 @@ const ProfilePage = ({ currentUser, photos }) => {
     };
   }, [showAvatarPicker]);
 
-  // Check if Google Maps is loaded
   useEffect(() => {
     const checkMapsLoaded = () => {
       if (window.google && window.google.maps) {
@@ -309,7 +283,6 @@ const ProfilePage = ({ currentUser, photos }) => {
     checkMapsLoaded();
   }, []);
 
-  // ✅ UPDATED: Effect that responds to userId changes
   useEffect(() => {
     if (profileUserId) {
       fetchUserData();
@@ -317,14 +290,12 @@ const ProfilePage = ({ currentUser, photos }) => {
     }
   }, [profileUserId, photos, currentUser]);
 
-  // ✅ UPDATED: Calculate achievements for the profile being viewed
   useEffect(() => {
     if (profileUserId && userPhotos.length >= 0) {
       calculateAchievements();
     }
   }, [profileUserId, userPhotos, followersCount]);
 
-  // ✅ UPDATED: Fetch user data for the specified user
   const fetchUserData = async () => {
     try {
       setLoading(true);
@@ -340,9 +311,7 @@ const ProfilePage = ({ currentUser, photos }) => {
         });
         setProfileImage(userData.profilePicture || stockAvatars[0]);
       } else {
-        // ✅ NEW: Handle case where user doesn't exist
         if (isOwnProfile) {
-          // Create default user profile for current user with first stock avatar
           const defaultUserData = {
             email: currentUser.email,
             username: `User${currentUser.uid.slice(0, 6)}`,
@@ -359,7 +328,6 @@ const ProfilePage = ({ currentUser, photos }) => {
           });
           setProfileImage(stockAvatars[0]);
         } else {
-          // User doesn't exist
           setError("User not found");
           setUserData(null);
         }
@@ -372,13 +340,11 @@ const ProfilePage = ({ currentUser, photos }) => {
     }
   };
 
-  // ✅ UPDATED: Filter photos for the user being viewed
   const filterUserPhotos = () => {
     const userSpecificPhotos = photos.filter((photo) => photo.uid === profileUserId);
     setUserPhotos(userSpecificPhotos);
   };
 
-  // 🎨 UPDATED: Achievement icon mapping
   const getAchievementIcon = (achievementId, unlocked) => {
     const iconProps = { 
       color: "#ffffff", 
@@ -403,10 +369,9 @@ const ProfilePage = ({ currentUser, photos }) => {
       legend: <CrownIcon {...iconProps} />,
     };
 
-    return unlocked ? iconMap[achievementId] : <LockIcon color="#6c757d" size={20} />;
+    return unlocked ? iconMap[achievementId] : <LockIcon color="var(--color-text-muted)" size={20} />;
   };
 
-  // ✅ UPDATED: Calculate achievements for the user being viewed
   const calculateAchievements = () => {
     const userSpecificPhotos = photos.filter((photo) => photo.uid === profileUserId);
     const photosWithLocation = userSpecificPhotos.filter(
@@ -415,7 +380,6 @@ const ProfilePage = ({ currentUser, photos }) => {
 
     const achievements = [];
 
-    // Photo count achievements
     if (userSpecificPhotos.length >= 1)
       achievements.push({
         id: "first_photo",
@@ -438,7 +402,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         unlocked: true,
       });
 
-    // Location achievements
     if (photosWithLocation.length >= 1)
       achievements.push({
         id: "explorer",
@@ -454,7 +417,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         unlocked: true,
       });
 
-    // Unique locations
     const uniqueLocations = new Set();
     photosWithLocation.forEach((photo) => {
       const locationKey = `${photo.latitude.toFixed(
@@ -478,7 +440,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         unlocked: true,
       });
 
-    // Streak achievements
     const photosByDate = {};
     userSpecificPhotos.forEach((photo) => {
       if (photo.timestamp) {
@@ -518,7 +479,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         unlocked: true,
       });
 
-    // Follow-based achievements
     if (followersCount >= 10)
       achievements.push({
         id: "popular",
@@ -534,7 +494,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         unlocked: true,
       });
 
-    // Add some locked achievements for motivation
     achievements.push(
       {
         id: "century",
@@ -570,9 +529,8 @@ const ProfilePage = ({ currentUser, photos }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // 🎨 Avatar selection with debugging (only for own profile)
   const handleAvatarSelect = async (avatarUrl) => {
-    if (!isOwnProfile) return; // ✅ NEW: Prevent editing other users' profiles
+    if (!isOwnProfile) return;
 
     try {
       console.log("🎨 Avatar update attempt:");
@@ -600,19 +558,17 @@ const ProfilePage = ({ currentUser, photos }) => {
     }
   };
 
-  // 🔧 FIXED: Updated handleSave function to update both realName and username
   const handleSave = async () => {
-    if (!isOwnProfile) return; // ✅ NEW: Prevent editing other users' profiles
+    if (!isOwnProfile) return;
 
     try {
       const userDocRef = doc(db, "users", currentUser.uid);
       await updateDoc(userDocRef, {
         username: formData.username,
-        realName: formData.username,  // ✅ FIXED: Update realName too
+        realName: formData.username,
         bio: formData.bio,
       });
 
-      // ✅ FIXED: Update local state with both fields
       setUserData({ 
         ...userData, 
         ...formData, 
@@ -625,9 +581,8 @@ const ProfilePage = ({ currentUser, photos }) => {
     }
   };
 
-  // Delete photo functionality (only for own photos)
   const deletePhoto = async (photo) => {
-    if (!isOwnProfile) return; // ✅ NEW: Prevent deleting other users' photos
+    if (!isOwnProfile) return;
 
     setDeleting(true);
     try {
@@ -667,13 +622,13 @@ const ProfilePage = ({ currentUser, photos }) => {
   };
 
   const toggleEditMode = () => {
-    if (!isOwnProfile) return; // ✅ NEW: Prevent editing other users' profiles
+    if (!isOwnProfile) return;
     setEditMode(!editMode);
     setDeleteConfirm(null);
   };
 
   const handleDeleteClick = (photo) => {
-    if (!isOwnProfile) return; // ✅ NEW: Prevent deleting other users' photos
+    if (!isOwnProfile) return;
     setDeleteConfirm(photo);
   };
 
@@ -767,8 +722,9 @@ const ProfilePage = ({ currentUser, photos }) => {
           justifyContent: "center",
           alignItems: "center",
           height: "50vh",
-          color: "#6c757d",
+          color: "var(--color-text-muted)",
           paddingTop: "16px",
+          backgroundColor: "var(--color-bg-primary)",
         }}
       >
         Loading profile...
@@ -783,9 +739,10 @@ const ProfilePage = ({ currentUser, photos }) => {
           padding: "40px 20px",
           color: "#dc3545",
           paddingTop: "56px",
+          backgroundColor: "var(--color-bg-primary)",
+          minHeight: "100vh",
         }}
       >
-        {/* ✅ NEW: Back button for error state */}
         {!isOwnProfile && (
           <button
             onClick={() => window.history.back()}
@@ -796,15 +753,15 @@ const ProfilePage = ({ currentUser, photos }) => {
               marginBottom: "20px",
               padding: "8px 16px",
               backgroundColor: "transparent",
-              color: "#007bff",
-              border: "1px solid #007bff",
+              color: "var(--color-primary)",
+              border: "1px solid var(--color-primary)",
               borderRadius: "8px",
               fontSize: "14px",
               cursor: "pointer",
               margin: "0 auto 20px auto",
             }}
           >
-            <BackIcon color="#007bff" size={16} />
+            <BackIcon color="var(--color-primary)" size={16} />
             Back
           </button>
         )}
@@ -817,13 +774,12 @@ const ProfilePage = ({ currentUser, photos }) => {
       style={{
         maxWidth: "500px",
         margin: "0 auto",
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "var(--color-bg-primary)",
         minHeight: "100vh",
         paddingTop: "16px",
         paddingBottom: "120px",
       }}
     >
-      {/* ✅ NEW: Back button for viewing other users' profiles */}
       {!isOwnProfile && (
         <div style={{ padding: "0 16px 16px 16px" }}>
           <button
@@ -834,20 +790,19 @@ const ProfilePage = ({ currentUser, photos }) => {
               gap: "8px",
               padding: "8px 16px",
               backgroundColor: "transparent",
-              color: "#007bff",
-              border: "1px solid #007bff",
+              color: "var(--color-primary)",
+              border: "1px solid var(--color-primary)",
               borderRadius: "8px",
               fontSize: "14px",
               cursor: "pointer",
             }}
           >
-            <BackIcon color="#007bff" size={16} />
+            <BackIcon color="var(--color-primary)" size={16} />
             Back
           </button>
         </div>
       )}
 
-      {/* 🔧 FIXED: Avatar Picker Modal (only show for own profile) */}
       {showAvatarPicker && isOwnProfile && (
         <div
           className="modal-backdrop avatar-modal-backdrop"
@@ -857,7 +812,7 @@ const ProfilePage = ({ currentUser, photos }) => {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -875,7 +830,7 @@ const ProfilePage = ({ currentUser, photos }) => {
           <div
             className="modal-content avatar-modal-content"
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--color-bg-secondary)",
               borderRadius: "16px",
               padding: "24px",
               maxWidth: "400px",
@@ -895,10 +850,10 @@ const ProfilePage = ({ currentUser, photos }) => {
                 flexShrink: 0,
               }}
             >
-              <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
+              <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>
                 Choose Your Avatar
               </h3>
-              <p style={{ margin: 0, fontSize: "14px", color: "#6c757d" }}>
+              <p style={{ margin: 0, fontSize: "14px", color: "var(--color-text-muted)" }}>
                 Choose from 32 unique avatars
               </p>
             </div>
@@ -930,8 +885,8 @@ const ProfilePage = ({ currentUser, photos }) => {
                     overflow: "hidden",
                     border:
                       profileImage === avatar
-                        ? "3px solid #007bff"
-                        : "2px solid #e9ecef",
+                        ? "3px solid var(--color-primary)"
+                        : "2px solid var(--color-border)",
                     transition: "all 0.2s ease",
                     aspectRatio: "1",
                     touchAction: "manipulation",
@@ -960,7 +915,7 @@ const ProfilePage = ({ currentUser, photos }) => {
               style={{
                 width: "100%",
                 padding: "12px",
-                backgroundColor: "#6c757d",
+                backgroundColor: "var(--color-text-muted)",
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
@@ -977,12 +932,11 @@ const ProfilePage = ({ currentUser, photos }) => {
         </div>
       )}
 
-      {/* Profile Header */}
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--color-bg-secondary)",
           padding: "24px",
-          borderBottom: "1px solid #e9ecef",
+          borderBottom: "1px solid var(--color-border)",
         }}
       >
         <div
@@ -993,7 +947,6 @@ const ProfilePage = ({ currentUser, photos }) => {
             marginBottom: "20px",
           }}
         >
-          {/* Profile Picture */}
           <div style={{ position: "relative" }}>
             <img
               src={profileImage || userData?.profilePicture || stockAvatars[0]}
@@ -1003,10 +956,9 @@ const ProfilePage = ({ currentUser, photos }) => {
                 height: "80px",
                 borderRadius: "50%",
                 objectFit: "cover",
-                border: "3px solid #007bff",
+                border: "3px solid var(--color-primary)",
               }}
             />
-            {/* ✅ UPDATED: Only show edit button for own profile */}
             {isEditing && isOwnProfile && (
               <button
                 onClick={() => setShowAvatarPicker(true)}
@@ -1014,7 +966,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                   position: "absolute",
                   bottom: "0",
                   right: "0",
-                  backgroundColor: "#007bff",
+                  backgroundColor: "var(--color-primary)",
                   borderRadius: "50%",
                   width: "24px",
                   height: "24px",
@@ -1031,7 +983,6 @@ const ProfilePage = ({ currentUser, photos }) => {
             )}
           </div>
 
-          {/* Profile Stats */}
           <div style={{ flex: 1 }}>
             <div
               style={{
@@ -1045,26 +996,26 @@ const ProfilePage = ({ currentUser, photos }) => {
                   style={{
                     fontSize: "20px",
                     fontWeight: "600",
-                    color: "#343a40",
+                    color: "var(--color-text-primary)",
                   }}
                 >
                   {userPhotos.length}
                 </div>
-                <div style={{ fontSize: "12px", color: "#6c757d" }}>Photos</div>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Photos</div>
               </div>
               <div>
                 <div
                   style={{
                     fontSize: "20px",
                     fontWeight: "600",
-                    color: "#343a40",
+                    color: "var(--color-text-primary)",
                   }}
                 >
                   {followCountsLoading
                     ? "..."
                     : formatFollowCount(followersCount)}
                 </div>
-                <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
                   Followers
                 </div>
               </div>
@@ -1073,14 +1024,14 @@ const ProfilePage = ({ currentUser, photos }) => {
                   style={{
                     fontSize: "20px",
                     fontWeight: "600",
-                    color: "#343a40",
+                    color: "var(--color-text-primary)",
                   }}
                 >
                   {followCountsLoading
                     ? "..."
                     : formatFollowCount(followingCount)}
                 </div>
-                <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
                   Following
                 </div>
               </div>
@@ -1089,19 +1040,17 @@ const ProfilePage = ({ currentUser, photos }) => {
                   style={{
                     fontSize: "20px",
                     fontWeight: "600",
-                    color: "#343a40",
+                    color: "var(--color-text-primary)",
                   }}
                 >
                   {achievements.filter((a) => a.unlocked).length}
                 </div>
-                <div style={{ fontSize: "12px", color: "#6c757d" }}>Badges</div>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Badges</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Profile Info */}
-        {/* ✅ UPDATED: Only allow editing for own profile */}
         {isEditing && isOwnProfile ? (
           <div style={{ marginBottom: "20px" }}>
             <input
@@ -1114,11 +1063,13 @@ const ProfilePage = ({ currentUser, photos }) => {
                 width: "100%",
                 padding: "12px",
                 marginBottom: "12px",
-                border: "1px solid #e9ecef",
+                border: "1px solid var(--color-border)",
                 borderRadius: "8px",
                 fontSize: "16px",
                 fontWeight: "600",
                 boxSizing: "border-box",
+                backgroundColor: "var(--color-bg-tertiary)",
+                color: "var(--color-text-primary)",
               }}
             />
             <textarea
@@ -1130,11 +1081,13 @@ const ProfilePage = ({ currentUser, photos }) => {
               style={{
                 width: "100%",
                 padding: "12px",
-                border: "1px solid #e9ecef",
+                border: "1px solid var(--color-border)",
                 borderRadius: "8px",
                 fontSize: "14px",
                 resize: "vertical",
                 boxSizing: "border-box",
+                backgroundColor: "var(--color-bg-tertiary)",
+                color: "var(--color-text-primary)",
               }}
             />
           </div>
@@ -1145,17 +1098,16 @@ const ProfilePage = ({ currentUser, photos }) => {
                 margin: "0 0 8px 0",
                 fontSize: "20px",
                 fontWeight: "600",
-                color: "#343a40",
+                color: "var(--color-text-primary)",
               }}
             >
               {getDisplayName(userData, currentUser?.uid) || "User"}
             </h2>
-            {/* ✅ NEW: Show screen name for other users */}
             {!isOwnProfile && userData && (
               <p style={{
                 margin: "0 0 8px 0",
                 fontSize: "14px",
-                color: "#6c757d",
+                color: "var(--color-primary)",
               }}>
                 @{getScreenName(userData)}
               </p>
@@ -1164,7 +1116,7 @@ const ProfilePage = ({ currentUser, photos }) => {
               style={{
                 margin: 0,
                 fontSize: "14px",
-                color: "#343a40",
+                color: "var(--color-text-primary)",
                 lineHeight: "1.4",
               }}
             >
@@ -1173,9 +1125,7 @@ const ProfilePage = ({ currentUser, photos }) => {
           </div>
         )}
 
-        {/* ✅ UPDATED: Different buttons for own profile vs other users */}
         {isOwnProfile ? (
-          // Own profile - show edit/sign out buttons
           isEditing ? (
             <div style={{ display: "flex", gap: "8px" }}>
               <button
@@ -1183,7 +1133,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                 style={{
                   flex: 1,
                   padding: "8px 16px",
-                  backgroundColor: "#007bff",
+                  backgroundColor: "var(--color-primary)",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
@@ -1199,7 +1149,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                 style={{
                   flex: 1,
                   padding: "8px 16px",
-                  backgroundColor: "#6c757d",
+                  backgroundColor: "var(--color-text-muted)",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
@@ -1219,8 +1169,8 @@ const ProfilePage = ({ currentUser, photos }) => {
                   flex: 1,
                   padding: "8px 16px",
                   backgroundColor: "transparent",
-                  color: "#007bff",
-                  border: "1px solid #007bff",
+                  color: "var(--color-primary)",
+                  border: "1px solid var(--color-primary)",
                   borderRadius: "8px",
                   fontSize: "14px",
                   fontWeight: "500",
@@ -1235,7 +1185,6 @@ const ProfilePage = ({ currentUser, photos }) => {
             </div>
           )
         ) : (
-          // Other user's profile - show follow/unfollow button
           <div style={{ display: "flex", gap: "8px" }}>
             <button
               onClick={toggleFollow}
@@ -1243,7 +1192,7 @@ const ProfilePage = ({ currentUser, photos }) => {
               style={{
                 flex: 1,
                 padding: "8px 16px",
-                backgroundColor: isFollowing ? "#6c757d" : "#007bff",
+                backgroundColor: isFollowing ? "var(--color-text-muted)" : "var(--color-primary)",
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
@@ -1276,11 +1225,10 @@ const ProfilePage = ({ currentUser, photos }) => {
         )}
       </div>
 
-      {/* Tab Navigation */}
       <div
         style={{
-          backgroundColor: "#ffffff",
-          borderBottom: "1px solid #e9ecef",
+          backgroundColor: "var(--color-bg-secondary)",
+          borderBottom: "1px solid var(--color-border)",
           display: "flex",
         }}
       >
@@ -1290,7 +1238,7 @@ const ProfilePage = ({ currentUser, photos }) => {
           { id: "achievements", label: "Badges", IconComponent: TrophyIcon },
         ].map((tab) => {
           const isActive = activeTab === tab.id;
-          const iconColor = isActive ? "#007bff" : "#6c757d";
+          const iconColor = isActive ? "var(--color-primary)" : "var(--color-text-muted)";
           
           return (
             <button
@@ -1302,9 +1250,9 @@ const ProfilePage = ({ currentUser, photos }) => {
                 backgroundColor: "transparent",
                 border: "none",
                 borderBottom: isActive
-                  ? "2px solid #007bff"
+                  ? "2px solid var(--color-primary)"
                   : "2px solid transparent",
-                color: isActive ? "#007bff" : "#6c757d",
+                color: isActive ? "var(--color-primary)" : "var(--color-text-muted)",
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
@@ -1322,11 +1270,9 @@ const ProfilePage = ({ currentUser, photos }) => {
         })}
       </div>
 
-      {/* Tab Content */}
       <div style={{ padding: "16px" }}>
         {activeTab === "photos" && (
           <div>
-            {/* ✅ UPDATED: Only show edit button for own profile */}
             {userPhotos.length > 0 && isOwnProfile && (
               <div style={{ marginBottom: "16px", textAlign: "right" }}>
                 <button
@@ -1334,7 +1280,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                   disabled={deleting}
                   style={{
                     padding: "8px 16px",
-                    backgroundColor: editMode ? "#6c757d" : "#007bff",
+                    backgroundColor: editMode ? "var(--color-text-muted)" : "var(--color-primary)",
                     color: "white",
                     border: "none",
                     borderRadius: "8px",
@@ -1390,7 +1336,6 @@ const ProfilePage = ({ currentUser, photos }) => {
                       }}
                     />
 
-                    {/* ✅ UPDATED: Only show delete button for own profile in edit mode */}
                     {editMode && isOwnProfile && (
                       <button
                         onClick={() => handleDeleteClick(photo)}
@@ -1423,13 +1368,13 @@ const ProfilePage = ({ currentUser, photos }) => {
                 style={{
                   textAlign: "center",
                   padding: "60px 20px",
-                  color: "#6c757d",
+                  color: "var(--color-text-muted)",
                 }}
               >
                 <div style={{ marginBottom: "16px" }}>
-                  <PhotoEmptyIcon color="#6c757d" size={48} />
+                  <PhotoEmptyIcon color="var(--color-text-muted)" size={48} />
                 </div>
-                <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
+                <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>
                   {isOwnProfile ? "No photos yet" : "No photos"}
                 </h3>
                 <p style={{ margin: 0, fontSize: "14px" }}>
@@ -1460,7 +1405,6 @@ const ProfilePage = ({ currentUser, photos }) => {
                       fullscreenControl: false,
                     }}
                   >
-                    {/* ✅ UPDATED: Only show current location for own profile */}
                     {userCurrentLocation && isOwnProfile && (
                       <Marker
                         position={userCurrentLocation}
@@ -1469,7 +1413,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                             "data:image/svg+xml;charset=UTF-8," +
                             encodeURIComponent(`
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="12" cy="12" r="8" fill="#007bff" stroke="white" stroke-width="3"/>
+                              <circle cx="12" cy="12" r="8" fill="#06B6D4" stroke="white" stroke-width="3"/>
                               <circle cx="12" cy="12" r="3" fill="white"/>
                             </svg>
                           `),
@@ -1480,7 +1424,6 @@ const ProfilePage = ({ currentUser, photos }) => {
                       />
                     )}
 
-                    {/* Photo location markers */}
                     {getPhotoLocations().map((photo, index) => (
                       <Marker
                         key={photo.id || index}
@@ -1507,22 +1450,22 @@ const ProfilePage = ({ currentUser, photos }) => {
                     style={{
                       width: "100%",
                       height: "300px",
-                      backgroundColor: "#f8f9fa",
+                      backgroundColor: "var(--color-bg-secondary)",
                       borderRadius: "12px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      border: "1px solid #e9ecef",
+                      border: "1px solid var(--color-border)",
                     }}
                   >
                     <div
                       style={{
                         textAlign: "center",
-                        color: "#6c757d",
+                        color: "var(--color-text-muted)",
                       }}
                     >
                       <div style={{ marginBottom: "8px" }}>
-                        <MapIcon color="#6c757d" size={24} />
+                        <MapIcon color="var(--color-text-muted)" size={24} />
                       </div>
                       <p style={{ margin: 0, fontSize: "14px" }}>
                         Loading map...
@@ -1535,7 +1478,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                   style={{
                     marginTop: "16px",
                     textAlign: "center",
-                    color: "#6c757d",
+                    color: "var(--color-text-muted)",
                     fontSize: "14px",
                   }}
                 >
@@ -1547,13 +1490,13 @@ const ProfilePage = ({ currentUser, photos }) => {
                 style={{
                   textAlign: "center",
                   padding: "60px 20px",
-                  color: "#6c757d",
+                  color: "var(--color-text-muted)",
                 }}
               >
                 <div style={{ marginBottom: "16px" }}>
-                  <MapEmptyIcon color="#6c757d" size={48} />
+                  <MapEmptyIcon color="var(--color-text-muted)" size={48} />
                 </div>
-                <h3 style={{ margin: "0 0 8px 0", color: "#343a40" }}>
+                <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>
                   {isOwnProfile ? "No locations yet" : "No locations"}
                 </h3>
                 <p style={{ margin: 0, fontSize: "14px" }}>
@@ -1580,10 +1523,10 @@ const ProfilePage = ({ currentUser, photos }) => {
                 <div
                   key={achievement.id}
                   style={{
-                    backgroundColor: "#ffffff",
+                    backgroundColor: "var(--color-bg-secondary)",
                     padding: "16px",
                     borderRadius: "12px",
-                    border: "1px solid #e9ecef",
+                    border: "1px solid var(--color-border)",
                     display: "flex",
                     alignItems: "center",
                     gap: "12px",
@@ -1598,7 +1541,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                       borderRadius: "50%",
                       backgroundColor: achievement.unlocked
                         ? "#28a745"
-                        : "#e9ecef",
+                        : "var(--color-bg-tertiary)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1613,7 +1556,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                         margin: "0 0 4px 0",
                         fontSize: "16px",
                         fontWeight: "600",
-                        color: achievement.unlocked ? "#343a40" : "#6c757d",
+                        color: achievement.unlocked ? "var(--color-text-primary)" : "var(--color-text-muted)",
                       }}
                     >
                       {achievement.title}
@@ -1622,7 +1565,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                       style={{
                         margin: 0,
                         fontSize: "14px",
-                        color: "#6c757d",
+                        color: "var(--color-text-muted)",
                       }}
                     >
                       {achievement.description}
@@ -1647,7 +1590,6 @@ const ProfilePage = ({ currentUser, photos }) => {
         )}
       </div>
 
-      {/* ✅ UPDATED: Delete Confirmation Modal (only for own profile) */}
       {deleteConfirm && isOwnProfile && (
         <div
           style={{
@@ -1656,7 +1598,7 @@ const ProfilePage = ({ currentUser, photos }) => {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -1666,7 +1608,7 @@ const ProfilePage = ({ currentUser, photos }) => {
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: "var(--color-bg-secondary)",
               borderRadius: "16px",
               padding: "24px",
               maxWidth: "300px",
@@ -1682,7 +1624,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                 margin: "0 0 8px 0",
                 fontSize: "18px",
                 fontWeight: "600",
-                color: "#343a40",
+                color: "var(--color-text-primary)",
               }}
             >
               Delete Photo?
@@ -1691,7 +1633,7 @@ const ProfilePage = ({ currentUser, photos }) => {
               style={{
                 margin: "0 0 24px 0",
                 fontSize: "14px",
-                color: "#6c757d",
+                color: "var(--color-text-muted)",
                 lineHeight: "1.4",
               }}
             >
@@ -1705,7 +1647,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                 style={{
                   flex: 1,
                   padding: "12px",
-                  backgroundColor: "#6c757d",
+                  backgroundColor: "var(--color-text-muted)",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
