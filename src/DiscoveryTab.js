@@ -214,35 +214,14 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
         top: '0',
         zIndex: 50
       }}>
-        {/* Branding + Filter Buttons Row */}
+        {/* Filter Buttons - Centered */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '12px'
+          justifyContent: 'center',
+          marginBottom: '12px',
+          gap: '4px'
         }}>
-          {/* Corkt Branding on Left */}
-          <div style={{
-            minWidth: '60px'
-          }}>
-            <h2 style={{
-              margin: 0,
-              fontSize: '20px',
-              fontWeight: '700',
-              color: 'var(--color-primary)',
-              letterSpacing: '0.5px'
-            }}>
-              Corkt
-            </h2>
-          </div>
-
-          {/* Centered Filter Buttons Container */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '4px'
-          }}>
             {availableFilters.map(filter => {
               const IconComponent = filter.icon;
               const isActive = activeDiscoveryFilter === filter.id;
@@ -275,10 +254,6 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
                 </button>
               );
             })}
-          </div>
-
-          {/* Empty space on right for balance */}
-          <div style={{ flex: 0 }}></div>
         </div>
 
         {/* Timeframe Selector */}
