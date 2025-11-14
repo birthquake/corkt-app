@@ -205,7 +205,7 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
 
   return (
     <div style={{ padding: '0' }}>
-      {/* Discovery Filter Tabs */}
+      {/* Discovery Filter Tabs with Corkt Branding */}
       <div style={{
         backgroundColor: 'var(--color-bg-secondary)',
         padding: '16px 16px 12px 16px',
@@ -214,44 +214,73 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
         top: '0',
         zIndex: 50
       }}>
-        {/* Filter Buttons */}
+        {/* Branding + Filter Buttons Row */}
         <div style={{
           display: 'flex',
-          justifyContent: 'center',
-          gap: '8px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           marginBottom: '12px'
         }}>
-          {availableFilters.map(filter => {
-            const IconComponent = filter.icon;
-            const isActive = activeDiscoveryFilter === filter.id;
-            
-            return (
-              <button
-                key={filter.id}
-                onClick={() => setActiveDiscoveryFilter(filter.id)}
-                title={filter.tooltip}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 12px',
-                  backgroundColor: isActive ? filter.color + '15' : 'transparent',
-                  border: `2px solid ${isActive ? filter.color : 'var(--color-border)'}`,
-                  borderRadius: '20px',
-                  color: isActive ? filter.color : 'var(--color-text-muted)',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  minWidth: '80px',
-                  justifyContent: 'center'
-                }}
-              >
-                <IconComponent color={isActive ? filter.color : 'var(--color-text-muted)'} size={16} />
-                <span>{filter.label}</span>
-              </button>
-            );
-          })}
+          {/* Corkt Branding on Left */}
+          <div style={{
+            minWidth: '60px'
+          }}>
+            <h2 style={{
+              margin: 0,
+              fontSize: '20px',
+              fontWeight: '700',
+              color: 'var(--color-primary)',
+              letterSpacing: '0.5px'
+            }}>
+              Corkt
+            </h2>
+          </div>
+
+          {/* Centered Filter Buttons Container */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            {availableFilters.map(filter => {
+              const IconComponent = filter.icon;
+              const isActive = activeDiscoveryFilter === filter.id;
+              
+              return (
+                <button
+                  key={filter.id}
+                  onClick={() => setActiveDiscoveryFilter(filter.id)}
+                  title={filter.tooltip}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    backgroundColor: isActive ? filter.color + '15' : 'transparent',
+                    border: `2px solid ${isActive ? filter.color : 'var(--color-border)'}`,
+                    borderRadius: '20px',
+                    color: isActive ? filter.color : 'var(--color-text-muted)',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    minWidth: '80px',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <IconComponent color={isActive ? filter.color : 'var(--color-text-muted)'} size={16} />
+                  <span>{filter.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Empty space on right for balance */}
+          <div style={{
+            minWidth: '60px'
+          }}></div>
         </div>
 
         {/* Timeframe Selector */}
