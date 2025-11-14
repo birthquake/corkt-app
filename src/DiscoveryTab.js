@@ -241,7 +241,7 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
             flex: 1,
             display: 'flex',
             justifyContent: 'center',
-            gap: '8px'
+            gap: '4px'
           }}>
             {availableFilters.map(filter => {
               const IconComponent = filter.icon;
@@ -278,9 +278,7 @@ const DiscoveryTab = ({ currentUser, currentLocation, onPhotoClick, onUserClick 
           </div>
 
           {/* Empty space on right for balance */}
-          <div style={{
-            minWidth: '60px'
-          }}></div>
+          <div style={{ flex: 0 }}></div>
         </div>
 
         {/* Timeframe Selector */}
