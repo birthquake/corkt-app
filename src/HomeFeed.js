@@ -846,8 +846,8 @@ const HomeFeed = ({ photos, currentUser }) => {
             })}
           </div>
 
-          {/* Right Section: Spacer for balance */}
-          <div style={{ minWidth: "60px" }}></div>
+          {/* Right Section: Empty, let icons expand */}
+          <div style={{ flex: 0 }}></div>
         </div>
       </div>
 
