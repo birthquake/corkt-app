@@ -798,7 +798,7 @@ const HomeFeed = ({ photos, currentUser }) => {
             flex: 1,
             display: "flex",
             justifyContent: "center",
-            gap: "2px"
+            gap: "4px"
           }}>
             {filters.map((filter) => {
               const IconComponent = filter.icon;
@@ -847,7 +847,7 @@ const HomeFeed = ({ photos, currentUser }) => {
           </div>
 
           {/* Right Section: Spacer for balance */}
-          <div style={{ minWidth: "120px" }}></div>
+          <div style={{ minWidth: "60px" }}></div>
         </div>
       </div>
 
