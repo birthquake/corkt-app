@@ -710,7 +710,8 @@ const HomeFeed = ({ photos, currentUser }) => {
   };
 
   return (
-<div style={{ maxWidth: "500px", margin: "0 auto", backgroundColor: "var(--color-bg-primary)", minHeight: "100vh", paddingTop: "16px" }}>      {/* Location Status Indicators */}
+    <div style={{ maxWidth: "500px", margin: "0 auto", backgroundColor: "var(--color-bg-primary)", minHeight: "100vh", paddingTop: "16px" }}>
+      {/* Location Status Indicators */}
       {locationError && (
         <div className="alert alert-danger" style={{ margin: "0 16px 16px 16px" }}>
           📍 Location unavailable - showing all photos
@@ -724,21 +725,36 @@ const HomeFeed = ({ photos, currentUser }) => {
         </div>
       )}
 
-      {/* Filter Tabs with Global/Local Toggle */}
+      {/* Filter Tabs with Corkt Branding, Global/Local Toggle, and Centered Icons */}
       <div style={{
         backgroundColor: "var(--color-bg-secondary)",
         borderBottom: "1px solid var(--color-border)",
-        padding: "12px 0",
+        padding: "12px 16px",
         position: "sticky",
         top: "0",
         zIndex: 100,
         boxShadow: "var(--shadow-sm)",
       }}>
-        <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "2px", padding: "0 8px" }}>
-          {/* Global/Local Toggle */}
-          {activeFilter !== "discovery" && (
-            <>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginRight: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+          {/* Left Section: Corkt + Global/Local Toggle */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: "fit-content" }}>
+            {/* Corkt Branding */}
+            <h2 style={{
+              margin: 0,
+              fontSize: "18px",
+              fontWeight: "700",
+              color: "var(--color-primary)",
+              letterSpacing: "0.5px",
+              minWidth: "50px"
+            }}>
+              Corkt
+            </h2>
+
+            {/* Global/Local Toggle */}
+            {activeFilter !== "discovery" && (
+              <>
+                <div style={{ width: "1px", height: "24px", backgroundColor: "var(--color-border)" }} />
+                
                 <button
                   onClick={handleModeToggle}
                   className="mode-toggle active"
@@ -746,6 +762,22 @@ const HomeFeed = ({ photos, currentUser }) => {
                   style={{
                     backgroundColor: isGlobalMode ? "rgba(6, 182, 212, 0.1)" : "rgba(34, 197, 94, 0.1)",
                     borderColor: isGlobalMode ? "var(--color-primary)" : "var(--color-success)",
+                    border: `2px solid ${isGlobalMode ? "var(--color-primary)" : "var(--color-success)"}`,
+                    borderRadius: "20px",
+                    padding: "6px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    fontWeight: "500",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.opacity = "0.8";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.opacity = "1";
                   }}
                 >
                   {isGlobalMode ? (
@@ -757,14 +789,17 @@ const HomeFeed = ({ photos, currentUser }) => {
                     {isGlobalMode ? "Global" : "Local"}
                   </span>
                 </button>
-              </div>
+              </>
+            )}
+          </div>
 
-              <div style={{ width: "1px", height: "24px", backgroundColor: "var(--color-border)" }} />
-            </>
-          )}
-
-          {/* Filter Tabs */}
-          <div className="filter-tabs">
+          {/* Center Section: Centered Filter Tabs */}
+          <div className="filter-tabs" style={{
+            flex: 1,
+            display: "flex",
+            justifyContent: "center",
+            gap: "2px"
+          }}>
             {filters.map((filter) => {
               const IconComponent = filter.icon;
               const isActive = activeFilter === filter.id;
@@ -810,6 +845,9 @@ const HomeFeed = ({ photos, currentUser }) => {
               );
             })}
           </div>
+
+          {/* Right Section: Spacer for balance */}
+          <div style={{ minWidth: "120px" }}></div>
         </div>
       </div>
 
