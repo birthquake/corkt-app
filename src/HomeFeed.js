@@ -1154,12 +1154,12 @@ const HomeFeed = ({ photos, currentUser }) => {
                 src={selectedPhoto.imageUrl}
                 alt={selectedPhoto.caption || "Photo"}
                 style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                  transform: `scale(${imageScale}) translate(${imageTranslateX}px, ${imageTranslateY}px)`,
-                  transition: (isDragging || isZooming) ? 'none' : 'transform 0.3s ease-out',
-                  cursor: imageScale > 1 ? 'grab' : 'default',
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                transform: `rotate(${selectedPhoto.rotation || 0}deg) scale(${imageScale}) translate(${imageTranslateX}px, ${imageTranslateY}px)`,
+                transition: (isDragging || isZooming) ? 'none' : 'transform 0.3s ease-out',
+                cursor: imageScale > 1 ? 'grab' : 'default',
                 }}
                 onDoubleClick={handleDoubleTab}
                 draggable={false}
