@@ -349,7 +349,6 @@ const AdminPanel = ({ currentUser }) => {
                           maxHeight: rotation === 90 || rotation === 270 ? '100%' : '200px',
                           objectFit: 'contain',
                           cursor: 'pointer',
-                          transition: 'transform 0.3s ease',
                           ...getRotationStyle(rotation)
                         }}
                         onClick={() => setSelectedPhoto(photo)}
@@ -595,7 +594,6 @@ const AdminPanel = ({ currentUser }) => {
                   maxWidth: (selectedPhoto.rotation === 90 || selectedPhoto.rotation === 270) ? '300px' : '100%',
                   maxHeight: '400px',
                   objectFit: 'contain',
-                  transition: 'transform 0.3s ease',
                   ...getRotationStyle(selectedPhoto.rotation || 0)
                 }}
               />
