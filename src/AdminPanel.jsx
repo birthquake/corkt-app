@@ -137,32 +137,44 @@ const AdminPanel = ({ currentUser }) => {
     }
   };
 
-  // ✅ NEW: Handle photo rotation
-  // Cycles through 0 → 90 → 180 → 270 → 0
+  // ✅ FIXED: Optimistically update local state immediately so the image
+  // doesn't snap back while waiting for Firestore to confirm the write.
   const handleRotatePhoto = async (photoId, currentRotation, direction) => {
     const current = currentRotation || 0;
     let newRotation;
 
     if (direction === 'cw') {
       newRotation = (current + 90) % 360;
-    } else {
+    } else if (direction === 'ccw') {
       newRotation = (current - 90 + 360) % 360;
+    } else {
+      // 'reset' — called from the Reset button in the modal
+      newRotation = 0;
+    }
+
+    // Update local photos state immediately so UI reflects the change at once
+    setPhotos(prev =>
+      prev.map(p => p.id === photoId ? { ...p, rotation: newRotation } : p)
+    );
+
+    // Also update the modal if it's open for this photo
+    if (selectedPhoto && selectedPhoto.id === photoId) {
+      setSelectedPhoto(prev => ({ ...prev, rotation: newRotation }));
     }
 
     try {
-      await updateDoc(doc(db, 'photos', photoId), {
-        rotation: newRotation
-      });
-
-      // If the modal is open for this photo, update it locally too
-      if (selectedPhoto && selectedPhoto.id === photoId) {
-        setSelectedPhoto(prev => ({ ...prev, rotation: newRotation }));
-      }
-
+      await updateDoc(doc(db, 'photos', photoId), { rotation: newRotation });
       setError('');
     } catch (error) {
       console.error('Error rotating photo:', error);
       setError('Error rotating photo: ' + error.message);
+      // Revert the optimistic update if the save failed
+      setPhotos(prev =>
+        prev.map(p => p.id === photoId ? { ...p, rotation: current } : p)
+      );
+      if (selectedPhoto && selectedPhoto.id === photoId) {
+        setSelectedPhoto(prev => ({ ...prev, rotation: current }));
+      }
     }
   };
 
@@ -215,15 +227,13 @@ const AdminPanel = ({ currentUser }) => {
     return '#28a745';
   };
 
-  // ✅ NEW: Helper to get CSS rotation transform string
+  // ✅ No CSS transition — instant snap avoids the backwards-spin visual glitch
   const getRotationStyle = (rotation) => {
     if (!rotation || rotation === 0) return {};
     return { transform: `rotate(${rotation}deg)` };
   };
 
-  // ✅ NEW: For 90/270 degree rotations the image needs extra space so it doesn't get clipped
   const getImageWrapperStyle = (rotation) => {
-    const isLandscapeTurned = rotation === 90 || rotation === 270;
     return {
       width: '100%',
       height: '200px',
@@ -307,7 +317,6 @@ const AdminPanel = ({ currentUser }) => {
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#dc3545' }}>Flagged:</strong> {flaggedCount}</div>
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#ffc107' }}>Private:</strong> {photos.filter(p => p.privacy === 'private').length}</div>
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#17a2b8' }}>User Reports:</strong> {flags.filter(f => f.flagStatus === 'pending').length}</div>
-        {/* ✅ NEW: Show how many photos have been rotated */}
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#6f42c1' }}>Rotated:</strong> {photos.filter(p => p.rotation && p.rotation !== 0).length}</div>
       </div>
 
@@ -375,7 +384,6 @@ const AdminPanel = ({ currentUser }) => {
                           {photo.privacy.toUpperCase()}
                         </div>
                       )}
-                      {/* ✅ NEW: Show rotation badge if photo is rotated */}
                       {rotation !== 0 && (
                         <div style={{ backgroundColor: '#6f42c1', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>
                           {rotation}°
@@ -424,7 +432,6 @@ const AdminPanel = ({ currentUser }) => {
 
                     {/* Action Buttons */}
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {/* ✅ NEW: Rotate buttons */}
                       <button
                         onClick={() => handleRotatePhoto(photo.id, rotation, 'ccw')}
                         title="Rotate counter-clockwise"
@@ -511,7 +518,7 @@ const AdminPanel = ({ currentUser }) => {
             style={{ backgroundColor: '#fff', borderRadius: '12px', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflow: 'auto' }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* ✅ NEW: Rotation controls in modal */}
+            {/* Rotation controls in modal */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -560,7 +567,7 @@ const AdminPanel = ({ currentUser }) => {
               </button>
               {(selectedPhoto.rotation || 0) !== 0 && (
                 <button
-                  onClick={() => handleRotatePhoto(selectedPhoto.id, 0, 'reset')}
+                  onClick={() => handleRotatePhoto(selectedPhoto.id, selectedPhoto.rotation || 0, 'reset')}
                   title="Reset rotation"
                   style={{
                     padding: '6px 10px',
@@ -577,7 +584,7 @@ const AdminPanel = ({ currentUser }) => {
               )}
             </div>
 
-            {/* ✅ UPDATED: Image in modal respects rotation */}
+            {/* Image in modal respects rotation */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -606,7 +613,6 @@ const AdminPanel = ({ currentUser }) => {
               <p><strong>Location:</strong> {getDetailedLocation(selectedPhoto)}</p>
               <p><strong>Privacy:</strong> {selectedPhoto.privacy || 'public'}</p>
               <p><strong>Posted:</strong> {formatDate(selectedPhoto.timestamp)}</p>
-              {/* ✅ NEW: Show current rotation in details */}
               <p><strong>Rotation:</strong> {selectedPhoto.rotation || 0}° {(selectedPhoto.rotation || 0) === 0 ? '(original)' : '(adjusted by admin)'}</p>
               {selectedPhoto.taggedUsers && selectedPhoto.taggedUsers.length > 0 && (
                 <p><strong>Tagged Users:</strong> {selectedPhoto.taggedUsers.join(', ')}</p>
