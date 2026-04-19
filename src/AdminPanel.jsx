@@ -11,6 +11,10 @@ const AdminPanel = ({ currentUser }) => {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [error, setError] = useState('');
 
+  // ✅ FIX: Track in-flight rotation updates so the onSnapshot listener
+  // doesn't overwrite our optimistic UI before Firestore confirms the write.
+  const pendingRotations = React.useRef({});
+
   const adminEmail = 'corktapp@gmail.com';
   const userEmail = currentUser?.email || '';
   const isAdmin = userEmail === adminEmail;
@@ -35,10 +39,17 @@ const AdminPanel = ({ currentUser }) => {
       
       const photosUnsubscribe = onSnapshot(photosQuery, (snapshot) => {
         try {
-          const allPhotos = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
+          const allPhotos = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            // ✅ FIX: If we have a pending rotation for this photo, use our
+            // local value instead of whatever Firestore just sent back.
+            // This prevents the snapshot from snapping the image back before
+            // Firestore has confirmed the write.
+            if (pendingRotations.current[doc.id] !== undefined) {
+              return { id: doc.id, ...data, rotation: pendingRotations.current[doc.id] };
+            }
+            return { id: doc.id, ...data };
+          });
           setPhotos(allPhotos);
           setError('');
         } catch (err) {
@@ -137,8 +148,6 @@ const AdminPanel = ({ currentUser }) => {
     }
   };
 
-  // ✅ FIXED: Optimistically update local state immediately so the image
-  // doesn't snap back while waiting for Firestore to confirm the write.
   const handleRotatePhoto = async (photoId, currentRotation, direction) => {
     const current = currentRotation || 0;
     let newRotation;
@@ -148,16 +157,18 @@ const AdminPanel = ({ currentUser }) => {
     } else if (direction === 'ccw') {
       newRotation = (current - 90 + 360) % 360;
     } else {
-      // 'reset' — called from the Reset button in the modal
       newRotation = 0;
     }
 
-    // Update local photos state immediately so UI reflects the change at once
+    // ✅ FIX: Register the pending rotation BEFORE updating state or writing
+    // to Firestore. The onSnapshot listener will see this and preserve our
+    // value instead of overwriting it.
+    pendingRotations.current[photoId] = newRotation;
+
+    // Update local state immediately
     setPhotos(prev =>
       prev.map(p => p.id === photoId ? { ...p, rotation: newRotation } : p)
     );
-
-    // Also update the modal if it's open for this photo
     if (selectedPhoto && selectedPhoto.id === photoId) {
       setSelectedPhoto(prev => ({ ...prev, rotation: newRotation }));
     }
@@ -168,13 +179,20 @@ const AdminPanel = ({ currentUser }) => {
     } catch (error) {
       console.error('Error rotating photo:', error);
       setError('Error rotating photo: ' + error.message);
-      // Revert the optimistic update if the save failed
+      // Revert on failure
+      pendingRotations.current[photoId] = current;
       setPhotos(prev =>
         prev.map(p => p.id === photoId ? { ...p, rotation: current } : p)
       );
       if (selectedPhoto && selectedPhoto.id === photoId) {
         setSelectedPhoto(prev => ({ ...prev, rotation: current }));
       }
+    } finally {
+      // ✅ Clear the pending rotation after a short delay — enough time for
+      // Firestore's onSnapshot to fire with the confirmed value.
+      setTimeout(() => {
+        delete pendingRotations.current[photoId];
+      }, 3000);
     }
   };
 
