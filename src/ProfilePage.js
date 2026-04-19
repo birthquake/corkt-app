@@ -202,11 +202,14 @@ const ProfilePage = ({ currentUser, photos }) => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  // ✅ NEW: Track which photo is currently being rotated (to show a spinner)
+  const [rotatingPhotoId, setRotatingPhotoId] = useState(null);
+
   const isOwnProfile = !userId || userId === currentUser?.uid;
   const profileUserId = userId || currentUser?.uid;
 
   const { isFollowing, actionLoading: followLoading, toggleFollow } = useFollow(
-    isOwnProfile ? null : profileUserId, 
+    isOwnProfile ? null : profileUserId,
     currentUser?.uid
   );
 
@@ -346,10 +349,7 @@ const ProfilePage = ({ currentUser, photos }) => {
   };
 
   const getAchievementIcon = (achievementId, unlocked) => {
-    const iconProps = { 
-      color: "#ffffff", 
-      size: 20 
-    };
+    const iconProps = { color: "#ffffff", size: 20 };
 
     const iconMap = {
       first_photo: <CameraIcon {...iconProps} />,
@@ -381,71 +381,32 @@ const ProfilePage = ({ currentUser, photos }) => {
     const achievements = [];
 
     if (userSpecificPhotos.length >= 1)
-      achievements.push({
-        id: "first_photo",
-        title: "First Photo",
-        description: "Shared your first memory",
-        unlocked: true,
-      });
+      achievements.push({ id: "first_photo", title: "First Photo", description: "Shared your first memory", unlocked: true });
     if (userSpecificPhotos.length >= 10)
-      achievements.push({
-        id: "photographer",
-        title: "Photographer",
-        description: "Shared 10 photos",
-        unlocked: true,
-      });
+      achievements.push({ id: "photographer", title: "Photographer", description: "Shared 10 photos", unlocked: true });
     if (userSpecificPhotos.length >= 50)
-      achievements.push({
-        id: "pro_shooter",
-        title: "Pro Shooter",
-        description: "Shared 50 photos",
-        unlocked: true,
-      });
+      achievements.push({ id: "pro_shooter", title: "Pro Shooter", description: "Shared 50 photos", unlocked: true });
 
     if (photosWithLocation.length >= 1)
-      achievements.push({
-        id: "explorer",
-        title: "Explorer",
-        description: "Tagged your first location",
-        unlocked: true,
-      });
+      achievements.push({ id: "explorer", title: "Explorer", description: "Tagged your first location", unlocked: true });
     if (photosWithLocation.length >= 5)
-      achievements.push({
-        id: "traveler",
-        title: "Traveler",
-        description: "Photos from 5+ locations",
-        unlocked: true,
-      });
+      achievements.push({ id: "traveler", title: "Traveler", description: "Photos from 5+ locations", unlocked: true });
 
     const uniqueLocations = new Set();
     photosWithLocation.forEach((photo) => {
-      const locationKey = `${photo.latitude.toFixed(
-        2
-      )},${photo.longitude.toFixed(2)}`;
+      const locationKey = `${photo.latitude.toFixed(2)},${photo.longitude.toFixed(2)}`;
       uniqueLocations.add(locationKey);
     });
 
     if (uniqueLocations.size >= 3)
-      achievements.push({
-        id: "wanderer",
-        title: "Wanderer",
-        description: "Visited 3+ unique places",
-        unlocked: true,
-      });
+      achievements.push({ id: "wanderer", title: "Wanderer", description: "Visited 3+ unique places", unlocked: true });
     if (uniqueLocations.size >= 10)
-      achievements.push({
-        id: "globetrotter",
-        title: "Globetrotter",
-        description: "Visited 10+ unique places",
-        unlocked: true,
-      });
+      achievements.push({ id: "globetrotter", title: "Globetrotter", description: "Visited 10+ unique places", unlocked: true });
 
     const photosByDate = {};
     userSpecificPhotos.forEach((photo) => {
       if (photo.timestamp) {
-        const date = photo.timestamp.toDate
-          ? photo.timestamp.toDate()
-          : new Date(photo.timestamp);
+        const date = photo.timestamp.toDate ? photo.timestamp.toDate() : new Date(photo.timestamp);
         const dateKey = date.toDateString();
         photosByDate[dateKey] = true;
       }
@@ -465,60 +426,20 @@ const ProfilePage = ({ currentUser, photos }) => {
     }
 
     if (maxStreak >= 3)
-      achievements.push({
-        id: "consistent",
-        title: "Consistent",
-        description: "3-day photo streak",
-        unlocked: true,
-      });
+      achievements.push({ id: "consistent", title: "Consistent", description: "3-day photo streak", unlocked: true });
     if (maxStreak >= 7)
-      achievements.push({
-        id: "dedicated",
-        title: "Dedicated",
-        description: "7-day photo streak",
-        unlocked: true,
-      });
+      achievements.push({ id: "dedicated", title: "Dedicated", description: "7-day photo streak", unlocked: true });
 
     if (followersCount >= 10)
-      achievements.push({
-        id: "popular",
-        title: "Popular",
-        description: "10+ followers",
-        unlocked: true,
-      });
+      achievements.push({ id: "popular", title: "Popular", description: "10+ followers", unlocked: true });
     if (followersCount >= 50)
-      achievements.push({
-        id: "influencer",
-        title: "Influencer",
-        description: "50+ followers",
-        unlocked: true,
-      });
+      achievements.push({ id: "influencer", title: "Influencer", description: "50+ followers", unlocked: true });
 
     achievements.push(
-      {
-        id: "century",
-        title: "Century Club",
-        description: "Share 100 photos",
-        unlocked: userSpecificPhotos.length >= 100,
-      },
-      {
-        id: "world_explorer",
-        title: "World Explorer",
-        description: "Visit 25+ unique places",
-        unlocked: uniqueLocations.size >= 25,
-      },
-      {
-        id: "celebrity",
-        title: "Celebrity",
-        description: "100+ followers",
-        unlocked: followersCount >= 100,
-      },
-      {
-        id: "legend",
-        title: "Legend",
-        description: "Share 500 photos",
-        unlocked: userSpecificPhotos.length >= 500,
-      }
+      { id: "century", title: "Century Club", description: "Share 100 photos", unlocked: userSpecificPhotos.length >= 100 },
+      { id: "world_explorer", title: "World Explorer", description: "Visit 25+ unique places", unlocked: uniqueLocations.size >= 25 },
+      { id: "celebrity", title: "Celebrity", description: "100+ followers", unlocked: followersCount >= 100 },
+      { id: "legend", title: "Legend", description: "Share 500 photos", unlocked: userSpecificPhotos.length >= 500 }
     );
 
     setAchievements(achievements);
@@ -533,27 +454,13 @@ const ProfilePage = ({ currentUser, photos }) => {
     if (!isOwnProfile) return;
 
     try {
-      console.log("🎨 Avatar update attempt:");
-      console.log("User ID:", currentUser.uid);
-      console.log("Avatar URL:", avatarUrl);
-      console.log("Current user data:", userData);
-
       setProfileImage(avatarUrl);
-
       const userDocRef = doc(db, "users", currentUser.uid);
-      const updateData = { profilePicture: avatarUrl };
-
-      console.log("📝 Update data:", updateData);
-
-      await updateDoc(userDocRef, updateData);
-      console.log("✅ Avatar update successful");
-
+      await updateDoc(userDocRef, { profilePicture: avatarUrl });
       setUserData({ ...userData, profilePicture: avatarUrl });
       setShowAvatarPicker(false);
     } catch (err) {
       console.error("❌ Avatar update error:", err);
-      console.error("Error code:", err.code);
-      console.error("Error message:", err.message);
       setError(`Failed to update avatar: ${err.message} (${err.code})`);
     }
   };
@@ -569,11 +476,7 @@ const ProfilePage = ({ currentUser, photos }) => {
         bio: formData.bio,
       });
 
-      setUserData({ 
-        ...userData, 
-        ...formData, 
-        realName: formData.username 
-      });
+      setUserData({ ...userData, ...formData, realName: formData.username });
       setIsEditing(false);
     } catch (err) {
       console.error("Error updating profile:", err.message);
@@ -598,14 +501,9 @@ const ProfilePage = ({ currentUser, photos }) => {
       await deleteDoc(doc(db, "photos", photo.id));
 
       try {
-        const likesQuery = query(
-          collection(db, "likes"),
-          where("photoId", "==", photo.id)
-        );
+        const likesQuery = query(collection(db, "likes"), where("photoId", "==", photo.id));
         const likesSnapshot = await getDocs(likesQuery);
-        const deletePromises = likesSnapshot.docs.map((likeDoc) =>
-          deleteDoc(doc(db, "likes", likeDoc.id))
-        );
+        const deletePromises = likesSnapshot.docs.map((likeDoc) => deleteDoc(doc(db, "likes", likeDoc.id)));
         await Promise.all(deletePromises);
       } catch (likesError) {
         console.warn("Error deleting associated likes:", likesError);
@@ -618,6 +516,36 @@ const ProfilePage = ({ currentUser, photos }) => {
     } finally {
       setDeleting(false);
       setDeleteConfirm(null);
+    }
+  };
+
+  // ✅ NEW: Rotate a photo by saving the new rotation value to Firestore
+  // and updating it locally so the UI changes immediately without a refresh.
+  const handleRotatePhoto = async (photo, direction) => {
+    if (!isOwnProfile) return;
+
+    const currentRotation = photo.rotation || 0;
+    const newRotation = direction === 'cw'
+      ? (currentRotation + 90) % 360
+      : (currentRotation - 90 + 360) % 360;
+
+    // Optimistically update the UI right away
+    setUserPhotos((prev) =>
+      prev.map((p) => p.id === photo.id ? { ...p, rotation: newRotation } : p)
+    );
+
+    setRotatingPhotoId(photo.id);
+    try {
+      await updateDoc(doc(db, "photos", photo.id), { rotation: newRotation });
+    } catch (err) {
+      console.error("Error rotating photo:", err);
+      setError("Failed to rotate photo. Please try again.");
+      // Revert the optimistic update if save failed
+      setUserPhotos((prev) =>
+        prev.map((p) => p.id === photo.id ? { ...p, rotation: currentRotation } : p)
+      );
+    } finally {
+      setRotatingPhotoId(null);
     }
   };
 
@@ -658,10 +586,7 @@ const ProfilePage = ({ currentUser, photos }) => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+          setUserCurrentLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
         },
         (error) => {
           console.log("Location access denied for profile map");
@@ -671,18 +596,12 @@ const ProfilePage = ({ currentUser, photos }) => {
   }, []);
 
   const getMapCenter = () => {
-    if (userCurrentLocation) {
-      return userCurrentLocation;
-    }
+    if (userCurrentLocation) return userCurrentLocation;
 
     const photosWithLocation = getPhotoLocations();
     if (photosWithLocation.length > 0) {
-      const avgLat =
-        photosWithLocation.reduce((sum, photo) => sum + photo.latitude, 0) /
-        photosWithLocation.length;
-      const avgLng =
-        photosWithLocation.reduce((sum, photo) => sum + photo.longitude, 0) /
-        photosWithLocation.length;
+      const avgLat = photosWithLocation.reduce((sum, photo) => sum + photo.latitude, 0) / photosWithLocation.length;
+      const avgLng = photosWithLocation.reduce((sum, photo) => sum + photo.longitude, 0) / photosWithLocation.length;
       return { lat: avgLat, lng: avgLng };
     }
 
@@ -691,18 +610,11 @@ const ProfilePage = ({ currentUser, photos }) => {
 
   const getMapZoom = () => {
     const photosWithLocation = getPhotoLocations();
-
-    if (photosWithLocation.length === 0) {
-      return 15;
-    }
-
-    if (photosWithLocation.length === 1) {
-      return 16;
-    }
+    if (photosWithLocation.length === 0) return 15;
+    if (photosWithLocation.length === 1) return 16;
 
     const lats = photosWithLocation.map((p) => p.latitude);
     const lngs = photosWithLocation.map((p) => p.longitude);
-
     const latRange = Math.max(...lats) - Math.min(...lats);
     const lngRange = Math.max(...lngs) - Math.min(...lngs);
     const maxRange = Math.max(latRange, lngRange);
@@ -716,50 +628,18 @@ const ProfilePage = ({ currentUser, photos }) => {
 
   if (loading)
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "50vh",
-          color: "var(--color-text-muted)",
-          paddingTop: "16px",
-          backgroundColor: "var(--color-bg-primary)",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh", color: "var(--color-text-muted)", paddingTop: "16px", backgroundColor: "var(--color-bg-primary)" }}>
         Loading profile...
       </div>
     );
 
   if (error)
     return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "40px 20px",
-          color: "#dc3545",
-          paddingTop: "56px",
-          backgroundColor: "var(--color-bg-primary)",
-          minHeight: "100vh",
-        }}
-      >
+      <div style={{ textAlign: "center", padding: "40px 20px", color: "#dc3545", paddingTop: "56px", backgroundColor: "var(--color-bg-primary)", minHeight: "100vh" }}>
         {!isOwnProfile && (
           <button
             onClick={() => window.history.back()}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "20px",
-              padding: "8px 16px",
-              backgroundColor: "transparent",
-              color: "var(--color-primary)",
-              border: "1px solid var(--color-primary)",
-              borderRadius: "8px",
-              fontSize: "14px",
-              cursor: "pointer",
-              margin: "0 auto 20px auto",
-            }}
+            style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px", padding: "8px 16px", backgroundColor: "transparent", color: "var(--color-primary)", border: "1px solid var(--color-primary)", borderRadius: "8px", fontSize: "14px", cursor: "pointer", margin: "0 auto 20px auto" }}
           >
             <BackIcon color="var(--color-primary)" size={16} />
             Back
@@ -770,32 +650,12 @@ const ProfilePage = ({ currentUser, photos }) => {
     );
 
   return (
-    <div
-      style={{
-        maxWidth: "500px",
-        margin: "0 auto",
-        backgroundColor: "var(--color-bg-primary)",
-        minHeight: "100vh",
-        paddingTop: "16px",
-        paddingBottom: "120px",
-      }}
-    >
+    <div style={{ maxWidth: "500px", margin: "0 auto", backgroundColor: "var(--color-bg-primary)", minHeight: "100vh", paddingTop: "16px", paddingBottom: "120px" }}>
       {!isOwnProfile && (
         <div style={{ padding: "0 16px 16px 16px" }}>
           <button
             onClick={() => window.history.back()}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
-              backgroundColor: "transparent",
-              color: "var(--color-primary)",
-              border: "1px solid var(--color-primary)",
-              borderRadius: "8px",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
+            style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", backgroundColor: "transparent", color: "var(--color-primary)", border: "1px solid var(--color-primary)", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
           >
             <BackIcon color="var(--color-primary)" size={16} />
             Back
@@ -806,72 +666,22 @@ const ProfilePage = ({ currentUser, photos }) => {
       {showAvatarPicker && isOwnProfile && (
         <div
           className="modal-backdrop avatar-modal-backdrop"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 3000,
-            padding: "20px",
-            touchAction: "none",
-            overscrollBehavior: "contain",
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowAvatarPicker(false);
-            }
-          }}
+          style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0, 0, 0, 0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 3000, padding: "20px", touchAction: "none", overscrollBehavior: "contain" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAvatarPicker(false); }}
         >
           <div
             className="modal-content avatar-modal-content"
-            style={{
-              backgroundColor: "var(--color-bg-secondary)",
-              borderRadius: "16px",
-              padding: "24px",
-              maxWidth: "400px",
-              width: "100%",
-              maxHeight: "85vh",
-              display: "flex",
-              flexDirection: "column",
-              position: "relative",
-              overflow: "hidden",
-            }}
+            style={{ backgroundColor: "var(--color-bg-secondary)", borderRadius: "16px", padding: "24px", maxWidth: "400px", width: "100%", maxHeight: "85vh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              style={{
-                marginBottom: "20px",
-                textAlign: "center",
-                flexShrink: 0,
-              }}
-            >
-              <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>
-                Choose Your Avatar
-              </h3>
-              <p style={{ margin: 0, fontSize: "14px", color: "var(--color-text-muted)" }}>
-                Choose from 32 unique avatars
-              </p>
+            <div style={{ marginBottom: "20px", textAlign: "center", flexShrink: 0 }}>
+              <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>Choose Your Avatar</h3>
+              <p style={{ margin: 0, fontSize: "14px", color: "var(--color-text-muted)" }}>Choose from 32 unique avatars</p>
             </div>
 
             <div
               className="avatar-picker-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: "10px",
-                paddingBottom: "40px",
-                flex: 1,
-                overflowY: "auto",
-                paddingRight: "4px",
-                WebkitOverflowScrolling: "touch",
-                scrollBehavior: "smooth",
-                overscrollBehavior: "contain",
-              }}
+              style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", paddingBottom: "40px", flex: 1, overflowY: "auto", paddingRight: "4px", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", overscrollBehavior: "contain" }}
               onTouchStart={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
             >
@@ -879,52 +689,17 @@ const ProfilePage = ({ currentUser, photos }) => {
                 <div
                   key={index}
                   onClick={() => handleAvatarSelect(avatar)}
-                  style={{
-                    cursor: "pointer",
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                    border:
-                      profileImage === avatar
-                        ? "3px solid var(--color-primary)"
-                        : "2px solid var(--color-border)",
-                    transition: "all 0.2s ease",
-                    aspectRatio: "1",
-                    touchAction: "manipulation",
-                  }}
+                  style={{ cursor: "pointer", borderRadius: "12px", overflow: "hidden", border: profileImage === avatar ? "3px solid var(--color-primary)" : "2px solid var(--color-border)", transition: "all 0.2s ease", aspectRatio: "1", touchAction: "manipulation" }}
                   onTouchStart={(e) => e.stopPropagation()}
                 >
-                  <img
-                    src={avatar}
-                    alt={`Avatar ${index + 1}`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      display: "block",
-                      userSelect: "none",
-                      WebkitUserSelect: "none",
-                      pointerEvents: "none",
-                    }}
-                  />
+                  <img src={avatar} alt={`Avatar ${index + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", userSelect: "none", WebkitUserSelect: "none", pointerEvents: "none" }} />
                 </div>
               ))}
             </div>
 
             <button
               onClick={() => setShowAvatarPicker(false)}
-              style={{
-                width: "100%",
-                padding: "12px",
-                backgroundColor: "var(--color-text-muted)",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                flexShrink: 0,
-                touchAction: "manipulation",
-              }}
+              style={{ width: "100%", padding: "12px", backgroundColor: "var(--color-text-muted)", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: "pointer", flexShrink: 0, touchAction: "manipulation" }}
             >
               Cancel
             </button>
@@ -932,51 +707,18 @@ const ProfilePage = ({ currentUser, photos }) => {
         </div>
       )}
 
-      <div
-        style={{
-          backgroundColor: "var(--color-bg-secondary)",
-          padding: "24px",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "20px",
-            marginBottom: "20px",
-          }}
-        >
+      <div style={{ backgroundColor: "var(--color-bg-secondary)", padding: "24px", borderBottom: "1px solid var(--color-border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "20px" }}>
           <div style={{ position: "relative" }}>
             <img
               src={profileImage || userData?.profilePicture || stockAvatars[0]}
               alt="Profile"
-              style={{
-                width: "80px",
-                height: "80px",
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "3px solid var(--color-primary)",
-              }}
+              style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "3px solid var(--color-primary)" }}
             />
             {isEditing && isOwnProfile && (
               <button
                 onClick={() => setShowAvatarPicker(true)}
-                style={{
-                  position: "absolute",
-                  bottom: "0",
-                  right: "0",
-                  backgroundColor: "var(--color-primary)",
-                  borderRadius: "50%",
-                  width: "24px",
-                  height: "24px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  color: "white",
-                  border: "none",
-                }}
+                style={{ position: "absolute", bottom: "0", right: "0", backgroundColor: "var(--color-primary)", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "white", border: "none" }}
               >
                 <EditIcon color="white" size={12} />
               </button>
@@ -984,67 +726,21 @@ const ProfilePage = ({ currentUser, photos }) => {
           </div>
 
           <div style={{ flex: 1 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-around",
-                textAlign: "center",
-              }}
-            >
+            <div style={{ display: "flex", justifyContent: "space-around", textAlign: "center" }}>
               <div>
-                <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: "600",
-                    color: "var(--color-text-primary)",
-                  }}
-                >
-                  {userPhotos.length}
-                </div>
+                <div style={{ fontSize: "20px", fontWeight: "600", color: "var(--color-text-primary)" }}>{userPhotos.length}</div>
                 <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Photos</div>
               </div>
               <div>
-                <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: "600",
-                    color: "var(--color-text-primary)",
-                  }}
-                >
-                  {followCountsLoading
-                    ? "..."
-                    : formatFollowCount(followersCount)}
-                </div>
-                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
-                  Followers
-                </div>
+                <div style={{ fontSize: "20px", fontWeight: "600", color: "var(--color-text-primary)" }}>{followCountsLoading ? "..." : formatFollowCount(followersCount)}</div>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Followers</div>
               </div>
               <div>
-                <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: "600",
-                    color: "var(--color-text-primary)",
-                  }}
-                >
-                  {followCountsLoading
-                    ? "..."
-                    : formatFollowCount(followingCount)}
-                </div>
-                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
-                  Following
-                </div>
+                <div style={{ fontSize: "20px", fontWeight: "600", color: "var(--color-text-primary)" }}>{followCountsLoading ? "..." : formatFollowCount(followingCount)}</div>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Following</div>
               </div>
               <div>
-                <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: "600",
-                    color: "var(--color-text-primary)",
-                  }}
-                >
-                  {achievements.filter((a) => a.unlocked).length}
-                </div>
+                <div style={{ fontSize: "20px", fontWeight: "600", color: "var(--color-text-primary)" }}>{achievements.filter((a) => a.unlocked).length}</div>
                 <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Badges</div>
               </div>
             </div>
@@ -1059,18 +755,7 @@ const ProfilePage = ({ currentUser, photos }) => {
               value={formData.username}
               onChange={handleInputChange}
               placeholder="Username"
-              style={{
-                width: "100%",
-                padding: "12px",
-                marginBottom: "12px",
-                border: "1px solid var(--color-border)",
-                borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "600",
-                boxSizing: "border-box",
-                backgroundColor: "var(--color-bg-tertiary)",
-                color: "var(--color-text-primary)",
-              }}
+              style={{ width: "100%", padding: "12px", marginBottom: "12px", border: "1px solid var(--color-border)", borderRadius: "8px", fontSize: "16px", fontWeight: "600", boxSizing: "border-box", backgroundColor: "var(--color-bg-tertiary)", color: "var(--color-text-primary)" }}
             />
             <textarea
               name="bio"
@@ -1078,48 +763,20 @@ const ProfilePage = ({ currentUser, photos }) => {
               onChange={handleInputChange}
               placeholder="Write a bio..."
               rows="3"
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "1px solid var(--color-border)",
-                borderRadius: "8px",
-                fontSize: "14px",
-                resize: "vertical",
-                boxSizing: "border-box",
-                backgroundColor: "var(--color-bg-tertiary)",
-                color: "var(--color-text-primary)",
-              }}
+              style={{ width: "100%", padding: "12px", border: "1px solid var(--color-border)", borderRadius: "8px", fontSize: "14px", resize: "vertical", boxSizing: "border-box", backgroundColor: "var(--color-bg-tertiary)", color: "var(--color-text-primary)" }}
             />
           </div>
         ) : (
           <div style={{ marginBottom: "20px" }}>
-            <h2
-              style={{
-                margin: "0 0 8px 0",
-                fontSize: "20px",
-                fontWeight: "600",
-                color: "var(--color-text-primary)",
-              }}
-            >
+            <h2 style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "600", color: "var(--color-text-primary)" }}>
               {getDisplayName(userData, currentUser?.uid) || "User"}
             </h2>
             {!isOwnProfile && userData && (
-              <p style={{
-                margin: "0 0 8px 0",
-                fontSize: "14px",
-                color: "var(--color-primary)",
-              }}>
+              <p style={{ margin: "0 0 8px 0", fontSize: "14px", color: "var(--color-primary)" }}>
                 @{getScreenName(userData)}
               </p>
             )}
-            <p
-              style={{
-                margin: 0,
-                fontSize: "14px",
-                color: "var(--color-text-primary)",
-                lineHeight: "1.4",
-              }}
-            >
+            <p style={{ margin: 0, fontSize: "14px", color: "var(--color-text-primary)", lineHeight: "1.4" }}>
               {userData?.bio || `${isOwnProfile ? "No bio yet." : "No bio."}`}
             </p>
           </div>
@@ -1128,55 +785,16 @@ const ProfilePage = ({ currentUser, photos }) => {
         {isOwnProfile ? (
           isEditing ? (
             <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                onClick={handleSave}
-                style={{
-                  flex: 1,
-                  padding: "8px 16px",
-                  backgroundColor: "var(--color-primary)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={handleSave} style={{ flex: 1, padding: "8px 16px", backgroundColor: "var(--color-primary)", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: "pointer" }}>
                 Save
               </button>
-              <button
-                onClick={() => setIsEditing(false)}
-                style={{
-                  flex: 1,
-                  padding: "8px 16px",
-                  backgroundColor: "var(--color-text-muted)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={() => setIsEditing(false)} style={{ flex: 1, padding: "8px 16px", backgroundColor: "var(--color-text-muted)", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: "pointer" }}>
                 Cancel
               </button>
             </div>
           ) : (
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button
-                onClick={() => setIsEditing(true)}
-                style={{
-                  flex: 1,
-                  padding: "8px 16px",
-                  backgroundColor: "transparent",
-                  color: "var(--color-primary)",
-                  border: "1px solid var(--color-primary)",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={() => setIsEditing(true)} style={{ flex: 1, padding: "8px 16px", backgroundColor: "transparent", color: "var(--color-primary)", border: "1px solid var(--color-primary)", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: "pointer" }}>
                 Edit Profile
               </button>
               <div style={{ display: "flex", alignItems: "center" }}>
@@ -1189,32 +807,11 @@ const ProfilePage = ({ currentUser, photos }) => {
             <button
               onClick={toggleFollow}
               disabled={followLoading}
-              style={{
-                flex: 1,
-                padding: "8px 16px",
-                backgroundColor: isFollowing ? "var(--color-text-muted)" : "var(--color-primary)",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: followLoading ? "not-allowed" : "pointer",
-                opacity: followLoading ? 0.6 : 1,
-                transition: "all 0.2s ease",
-              }}
+              style={{ flex: 1, padding: "8px 16px", backgroundColor: isFollowing ? "var(--color-text-muted)" : "var(--color-primary)", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: followLoading ? "not-allowed" : "pointer", opacity: followLoading ? 0.6 : 1, transition: "all 0.2s ease" }}
             >
               {followLoading ? (
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                  <div
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      border: "2px solid transparent",
-                      borderTop: "2px solid white",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite",
-                    }}
-                  />
+                  <div style={{ width: "16px", height: "16px", border: "2px solid transparent", borderTop: "2px solid white", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
                   {isFollowing ? "Unfollowing..." : "Following..."}
                 </span>
               ) : (
@@ -1225,13 +822,8 @@ const ProfilePage = ({ currentUser, photos }) => {
         )}
       </div>
 
-      <div
-        style={{
-          backgroundColor: "var(--color-bg-secondary)",
-          borderBottom: "1px solid var(--color-border)",
-          display: "flex",
-        }}
-      >
+      {/* Tabs */}
+      <div style={{ backgroundColor: "var(--color-bg-secondary)", borderBottom: "1px solid var(--color-border)", display: "flex" }}>
         {[
           { id: "photos", label: "Photos", IconComponent: PhotoIcon },
           { id: "map", label: "Map", IconComponent: MapIcon },
@@ -1239,29 +831,11 @@ const ProfilePage = ({ currentUser, photos }) => {
         ].map((tab) => {
           const isActive = activeTab === tab.id;
           const iconColor = isActive ? "var(--color-primary)" : "var(--color-text-muted)";
-          
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1,
-                padding: "16px",
-                backgroundColor: "transparent",
-                border: "none",
-                borderBottom: isActive
-                  ? "2px solid var(--color-primary)"
-                  : "2px solid transparent",
-                color: isActive ? "var(--color-primary)" : "var(--color-text-muted)",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-              }}
+              style={{ flex: 1, padding: "16px", backgroundColor: "transparent", border: "none", borderBottom: isActive ? "2px solid var(--color-primary)" : "2px solid transparent", color: isActive ? "var(--color-primary)" : "var(--color-text-muted)", fontSize: "14px", fontWeight: "500", cursor: "pointer", transition: "all 0.2s ease", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
             >
               <tab.IconComponent color={iconColor} size={16} />
               {tab.label}
@@ -1274,21 +848,17 @@ const ProfilePage = ({ currentUser, photos }) => {
         {activeTab === "photos" && (
           <div>
             {userPhotos.length > 0 && isOwnProfile && (
-              <div style={{ marginBottom: "16px", textAlign: "right" }}>
+              <div style={{ marginBottom: "16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                {/* ✅ NEW: Hint text shown when in edit mode so user knows about rotation */}
+                {editMode && (
+                  <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
+                    ↺ ↻ to rotate · ✕ to delete
+                  </span>
+                )}
                 <button
                   onClick={toggleEditMode}
                   disabled={deleting}
-                  style={{
-                    padding: "8px 16px",
-                    backgroundColor: editMode ? "var(--color-text-muted)" : "var(--color-primary)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    cursor: deleting ? "not-allowed" : "pointer",
-                    opacity: deleting ? 0.6 : 1,
-                  }}
+                  style={{ marginLeft: "auto", padding: "8px 16px", backgroundColor: editMode ? "var(--color-text-muted)" : "var(--color-primary)", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}
                 >
                   {editMode ? "Done" : "Edit Photos"}
                 </button>
@@ -1296,81 +866,108 @@ const ProfilePage = ({ currentUser, photos }) => {
             )}
 
             {userPhotos.length > 0 ? (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: "2px",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                }}
-              >
-                {userPhotos.map((photo) => (
-                  <div
-                    key={photo.id}
-                    style={{
-                      aspectRatio: "1",
-                      overflow: "hidden",
-                      cursor: editMode ? "default" : "pointer",
-                      position: "relative",
-                    }}
-                  >
-                    <img
-                      src={photo.imageUrl}
-                      alt={photo.caption}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        transition: "transform 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!editMode) {
-                          e.target.style.transform = "scale(1.05)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!editMode) {
-                          e.target.style.transform = "scale(1)";
-                        }
-                      }}
-                    />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px", borderRadius: "8px", overflow: "hidden" }}>
+                {userPhotos.map((photo) => {
+                  const rotation = photo.rotation || 0;
+                  const isRotating = rotatingPhotoId === photo.id;
 
-                    {editMode && isOwnProfile && (
-                      <button
-                        onClick={() => handleDeleteClick(photo)}
-                        disabled={deleting}
+                  return (
+                    <div
+                      key={photo.id}
+                      style={{ aspectRatio: "1", overflow: "hidden", cursor: editMode ? "default" : "pointer", position: "relative", backgroundColor: "#000" }}
+                    >
+                      {/* ✅ UPDATED: Apply rotation CSS to the thumbnail */}
+                      <img
+                        src={photo.imageUrl}
+                        alt={photo.caption}
                         style={{
-                          position: "absolute",
-                          top: "4px",
-                          right: "4px",
-                          width: "24px",
-                          height: "24px",
-                          borderRadius: "50%",
-                          backgroundColor: "rgba(220, 53, 69, 0.9)",
-                          color: "white",
-                          border: "none",
-                          cursor: deleting ? "not-allowed" : "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          opacity: deleting ? 0.6 : 1,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          transition: "transform 0.3s ease",
+                          // For 90/270 deg we scale slightly so the image fills the square
+                          transform: rotation !== 0
+                            ? `rotate(${rotation}deg) ${rotation === 90 || rotation === 270 ? "scale(1.35)" : ""}`
+                            : "none",
                         }}
-                      >
-                        <CloseIcon color="white" size={14} />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                        onMouseEnter={(e) => {
+                          if (!editMode) e.target.style.transform = "scale(1.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!editMode) {
+                            e.target.style.transform = rotation !== 0
+                              ? `rotate(${rotation}deg) ${rotation === 90 || rotation === 270 ? "scale(1.35)" : ""}`
+                              : "none";
+                          }
+                        }}
+                      />
+
+                      {/* ✅ NEW: Rotation buttons — shown in edit mode, top-left corner */}
+                      {editMode && isOwnProfile && (
+                        <div style={{ position: "absolute", bottom: "4px", left: "4px", display: "flex", gap: "3px" }}>
+                          <button
+                            onClick={() => handleRotatePhoto(photo, 'ccw')}
+                            disabled={isRotating || deleting}
+                            title="Rotate counter-clockwise"
+                            style={{
+                              width: "22px",
+                              height: "22px",
+                              borderRadius: "50%",
+                              backgroundColor: "rgba(0,0,0,0.65)",
+                              color: "white",
+                              border: "none",
+                              cursor: isRotating || deleting ? "not-allowed" : "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "13px",
+                              lineHeight: 1,
+                              opacity: isRotating ? 0.5 : 1,
+                            }}
+                          >
+                            ↺
+                          </button>
+                          <button
+                            onClick={() => handleRotatePhoto(photo, 'cw')}
+                            disabled={isRotating || deleting}
+                            title="Rotate clockwise"
+                            style={{
+                              width: "22px",
+                              height: "22px",
+                              borderRadius: "50%",
+                              backgroundColor: "rgba(0,0,0,0.65)",
+                              color: "white",
+                              border: "none",
+                              cursor: isRotating || deleting ? "not-allowed" : "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "13px",
+                              lineHeight: 1,
+                              opacity: isRotating ? 0.5 : 1,
+                            }}
+                          >
+                            ↻
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Delete button — top-right, unchanged */}
+                      {editMode && isOwnProfile && (
+                        <button
+                          onClick={() => handleDeleteClick(photo)}
+                          disabled={deleting}
+                          style={{ position: "absolute", top: "4px", right: "4px", width: "24px", height: "24px", borderRadius: "50%", backgroundColor: "rgba(220, 53, 69, 0.9)", color: "white", border: "none", cursor: deleting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: deleting ? 0.6 : 1 }}
+                        >
+                          <CloseIcon color="white" size={14} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "60px 20px",
-                  color: "var(--color-text-muted)",
-                }}
-              >
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--color-text-muted)" }}>
                 <div style={{ marginBottom: "16px" }}>
                   <PhotoEmptyIcon color="var(--color-text-muted)" size={48} />
                 </div>
@@ -1378,7 +975,7 @@ const ProfilePage = ({ currentUser, photos }) => {
                   {isOwnProfile ? "No photos yet" : "No photos"}
                 </h3>
                 <p style={{ margin: 0, fontSize: "14px" }}>
-                  {isOwnProfile 
+                  {isOwnProfile
                     ? "Start capturing memories to see them here!"
                     : `${getDisplayName(userData, currentUser?.uid) || "This user"} hasn't shared any photos yet.`
                   }
@@ -1397,47 +994,25 @@ const ProfilePage = ({ currentUser, photos }) => {
                     mapContainerStyle={mapContainerStyle}
                     center={getMapCenter()}
                     zoom={getMapZoom()}
-                    options={{
-                      zoomControl: true,
-                      gestureHandling: "greedy",
-                      mapTypeControl: false,
-                      streetViewControl: false,
-                      fullscreenControl: false,
-                    }}
+                    options={{ zoomControl: true, gestureHandling: "greedy", mapTypeControl: false, streetViewControl: false, fullscreenControl: false }}
                   >
                     {userCurrentLocation && isOwnProfile && (
                       <Marker
                         position={userCurrentLocation}
                         icon={{
-                          url:
-                            "data:image/svg+xml;charset=UTF-8," +
-                            encodeURIComponent(`
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="12" cy="12" r="8" fill="#06B6D4" stroke="white" stroke-width="3"/>
-                              <circle cx="12" cy="12" r="3" fill="white"/>
-                            </svg>
-                          `),
+                          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" fill="#06B6D4" stroke="white" stroke-width="3"/><circle cx="12" cy="12" r="3" fill="white"/></svg>`),
                           scaledSize: new window.google.maps.Size(24, 24),
                           anchor: new window.google.maps.Point(12, 12),
                         }}
                         title="Your current location"
                       />
                     )}
-
                     {getPhotoLocations().map((photo, index) => (
                       <Marker
                         key={photo.id || index}
                         position={{ lat: photo.latitude, lng: photo.longitude }}
                         icon={{
-                          url:
-                            "data:image/svg+xml;charset=UTF-8," +
-                            encodeURIComponent(`
-                            <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M16 0C7.163 0 0 7.163 0 16c0 16 16 24 16 24s16-8 16-24c0-8.837-7.163-16-16-16z" fill="#dc3545"/>
-                              <circle cx="16" cy="16" r="8" fill="white"/>
-                              <circle cx="16" cy="16" r="5" fill="#dc3545"/>
-                            </svg>
-                          `),
+                          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`<svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 0C7.163 0 0 7.163 0 16c0 16 16 24 16 24s16-8 16-24c0-8.837-7.163-16-16-16z" fill="#dc3545"/><circle cx="16" cy="16" r="8" fill="white"/><circle cx="16" cy="16" r="5" fill="#dc3545"/></svg>`),
                           scaledSize: new window.google.maps.Size(32, 40),
                           anchor: new window.google.maps.Point(16, 40),
                         }}
@@ -1446,61 +1021,25 @@ const ProfilePage = ({ currentUser, photos }) => {
                     ))}
                   </GoogleMap>
                 ) : (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "300px",
-                      backgroundColor: "var(--color-bg-secondary)",
-                      borderRadius: "12px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "1px solid var(--color-border)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        textAlign: "center",
-                        color: "var(--color-text-muted)",
-                      }}
-                    >
-                      <div style={{ marginBottom: "8px" }}>
-                        <MapIcon color="var(--color-text-muted)" size={24} />
-                      </div>
-                      <p style={{ margin: 0, fontSize: "14px" }}>
-                        Loading map...
-                      </p>
+                  <div style={{ width: "100%", height: "300px", backgroundColor: "var(--color-bg-secondary)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--color-border)" }}>
+                    <div style={{ textAlign: "center", color: "var(--color-text-muted)" }}>
+                      <div style={{ marginBottom: "8px" }}><MapIcon color="var(--color-text-muted)" size={24} /></div>
+                      <p style={{ margin: 0, fontSize: "14px" }}>Loading map...</p>
                     </div>
                   </div>
                 )}
-
-                <div
-                  style={{
-                    marginTop: "16px",
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    fontSize: "14px",
-                  }}
-                >
+                <div style={{ marginTop: "16px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "14px" }}>
                   📍 {getPhotoLocations().length} photos with location data
                 </div>
               </div>
             ) : (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "60px 20px",
-                  color: "var(--color-text-muted)",
-                }}
-              >
-                <div style={{ marginBottom: "16px" }}>
-                  <MapEmptyIcon color="var(--color-text-muted)" size={48} />
-                </div>
+              <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--color-text-muted)" }}>
+                <div style={{ marginBottom: "16px" }}><MapEmptyIcon color="var(--color-text-muted)" size={48} /></div>
                 <h3 style={{ margin: "0 0 8px 0", color: "var(--color-text-primary)" }}>
                   {isOwnProfile ? "No locations yet" : "No locations"}
                 </h3>
                 <p style={{ margin: 0, fontSize: "14px" }}>
-                  {isOwnProfile 
+                  {isOwnProfile
                     ? "Take photos with location to see them on your map!"
                     : `${getDisplayName(userData, currentUser?.uid) || "This user"} hasn't shared any photos with location data yet.`
                   }
@@ -1512,76 +1051,23 @@ const ProfilePage = ({ currentUser, photos }) => {
 
         {activeTab === "achievements" && (
           <div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {achievements.map((achievement) => (
                 <div
                   key={achievement.id}
-                  style={{
-                    backgroundColor: "var(--color-bg-secondary)",
-                    padding: "16px",
-                    borderRadius: "12px",
-                    border: "1px solid var(--color-border)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    opacity: achievement.unlocked ? 1 : 0.5,
-                    position: "relative",
-                  }}
+                  style={{ backgroundColor: "var(--color-bg-secondary)", padding: "16px", borderRadius: "12px", border: "1px solid var(--color-border)", display: "flex", alignItems: "center", gap: "12px", opacity: achievement.unlocked ? 1 : 0.5, position: "relative" }}
                 >
-                  <div
-                    style={{
-                      width: "48px",
-                      height: "48px",
-                      borderRadius: "50%",
-                      backgroundColor: achievement.unlocked
-                        ? "#28a745"
-                        : "var(--color-bg-tertiary)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "20px",
-                    }}
-                  >
+                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: achievement.unlocked ? "#28a745" : "var(--color-bg-tertiary)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>
                     {getAchievementIcon(achievement.id, achievement.unlocked)}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <h4
-                      style={{
-                        margin: "0 0 4px 0",
-                        fontSize: "16px",
-                        fontWeight: "600",
-                        color: achievement.unlocked ? "var(--color-text-primary)" : "var(--color-text-muted)",
-                      }}
-                    >
+                    <h4 style={{ margin: "0 0 4px 0", fontSize: "16px", fontWeight: "600", color: achievement.unlocked ? "var(--color-text-primary)" : "var(--color-text-muted)" }}>
                       {achievement.title}
                     </h4>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "14px",
-                        color: "var(--color-text-muted)",
-                      }}
-                    >
-                      {achievement.description}
-                    </p>
+                    <p style={{ margin: 0, fontSize: "14px", color: "var(--color-text-muted)" }}>{achievement.description}</p>
                   </div>
                   {achievement.unlocked && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      ✅
-                    </div>
+                    <div style={{ position: "absolute", top: "8px", right: "8px", fontSize: "12px" }}>✅</div>
                   )}
                 </div>
               ))}
@@ -1591,114 +1077,24 @@ const ProfilePage = ({ currentUser, photos }) => {
       </div>
 
       {deleteConfirm && isOwnProfile && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 2000,
-            padding: "20px",
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "var(--color-bg-secondary)",
-              borderRadius: "16px",
-              padding: "24px",
-              maxWidth: "300px",
-              width: "100%",
-              textAlign: "center",
-            }}
-          >
-            <div style={{ marginBottom: "16px" }}>
-              <TrashIcon color="#dc3545" size={48} />
-            </div>
-            <h3
-              style={{
-                margin: "0 0 8px 0",
-                fontSize: "18px",
-                fontWeight: "600",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              Delete Photo?
-            </h3>
-            <p
-              style={{
-                margin: "0 0 24px 0",
-                fontSize: "14px",
-                color: "var(--color-text-muted)",
-                lineHeight: "1.4",
-              }}
-            >
-              This action cannot be undone. The photo will be permanently
-              deleted from your profile.
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0, 0, 0, 0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 2000, padding: "20px" }}>
+          <div style={{ backgroundColor: "var(--color-bg-secondary)", borderRadius: "16px", padding: "24px", maxWidth: "300px", width: "100%", textAlign: "center" }}>
+            <div style={{ marginBottom: "16px" }}><TrashIcon color="#dc3545" size={48} /></div>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: "600", color: "var(--color-text-primary)" }}>Delete Photo?</h3>
+            <p style={{ margin: "0 0 24px 0", fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.4" }}>
+              This action cannot be undone. The photo will be permanently deleted from your profile.
             </p>
             <div style={{ display: "flex", gap: "12px" }}>
-              <button
-                onClick={cancelDelete}
-                disabled={deleting}
-                style={{
-                  flex: 1,
-                  padding: "12px",
-                  backgroundColor: "var(--color-text-muted)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: deleting ? "not-allowed" : "pointer",
-                  opacity: deleting ? 0.6 : 1,
-                }}
-              >
+              <button onClick={cancelDelete} disabled={deleting} style={{ flex: 1, padding: "12px", backgroundColor: "var(--color-text-muted)", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}>
                 Cancel
               </button>
-              <button
-                onClick={confirmDelete}
-                disabled={deleting}
-                style={{
-                  flex: 1,
-                  padding: "12px",
-                  backgroundColor: "#dc3545",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: deleting ? "not-allowed" : "pointer",
-                  opacity: deleting ? 0.6 : 1,
-                }}
-              >
+              <button onClick={confirmDelete} disabled={deleting} style={{ flex: 1, padding: "12px", backgroundColor: "#dc3545", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: deleting ? "not-allowed" : "pointer", opacity: deleting ? 0.6 : 1 }}>
                 {deleting ? (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "16px",
-                        height: "16px",
-                        border: "2px solid transparent",
-                        borderTop: "2px solid white",
-                        borderRadius: "50%",
-                        animation: "spin 1s linear infinite",
-                      }}
-                    />
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                    <div style={{ width: "16px", height: "16px", border: "2px solid transparent", borderTop: "2px solid white", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
                     Deleting...
                   </span>
-                ) : (
-                  "Delete"
-                )}
+                ) : "Delete"}
               </button>
             </div>
           </div>
