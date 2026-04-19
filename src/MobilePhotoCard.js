@@ -212,7 +212,6 @@ const MobilePhotoCard = ({
         if (navigator.vibrate) {
           navigator.vibrate(50);
         }
-
         console.log("Long press detected - could show context menu");
       }, 500);
 
@@ -244,21 +243,10 @@ const MobilePhotoCard = ({
     const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
     
-    if (diffInMinutes < 1) {
-      return 'just now';
-    }
-    
-    if (diffInHours < 1) {
-      return diffInMinutes === 1 ? '1m' : `${diffInMinutes}m`;
-    }
-    
-    if (diffInDays < 1) {
-      return diffInHours === 1 ? '1h' : `${diffInHours}h`;
-    }
-    
-    if (diffInDays < 7) {
-      return diffInDays === 1 ? '1d' : `${diffInDays}d`;
-    }
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInHours < 1) return diffInMinutes === 1 ? '1m' : `${diffInMinutes}m`;
+    if (diffInDays < 1) return diffInHours === 1 ? '1h' : `${diffInHours}h`;
+    if (diffInDays < 7) return diffInDays === 1 ? '1d' : `${diffInDays}d`;
     
     const options = {
       month: 'short',
@@ -270,6 +258,10 @@ const MobilePhotoCard = ({
   }, []);
 
   const timeFormatter = formatTimeAgo || defaultFormatTimeAgo;
+
+  // ✅ NEW: Read the rotation value saved by admin or the user themselves.
+  // Defaults to 0 (no rotation) if the field doesn't exist on older photos.
+  const rotation = photo?.rotation || 0;
 
   return (
     <div
@@ -297,26 +289,17 @@ const MobilePhotoCard = ({
           }}
           onClick={handleUserClick}
           onMouseEnter={(e) => {
-            if (onUserClick) {
-              e.target.style.backgroundColor = "var(--color-bg-tertiary)";
-            }
+            if (onUserClick) e.target.style.backgroundColor = "var(--color-bg-tertiary)";
           }}
           onMouseLeave={(e) => {
-            if (onUserClick) {
-              e.target.style.backgroundColor = "transparent";
-            }
+            if (onUserClick) e.target.style.backgroundColor = "transparent";
           }}
         >
           {userInfo.profilePicture ? (
             <img
               src={userInfo.profilePicture}
               alt={userInfo.displayName}
-              style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "50%",
-                objectFit: "cover",
-              }}
+              style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
             />
           ) : (
             <div
@@ -349,18 +332,12 @@ const MobilePhotoCard = ({
                 {userInfo.displayName}
               </span>
               {showTimestamp && (
-                <span
-                  style={{
-                    fontSize: "12px",
-                    color: "var(--color-text-muted)",
-                  }}
-                >
+                <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
                   • {timeFormatter(photo.timestamp)}
                 </span>
               )}
             </div>
 
-            {/* ENHANCED LOCATION DISPLAY */}
             {photo.placeName ? (
               <div
                 style={{
@@ -376,10 +353,7 @@ const MobilePhotoCard = ({
                 <span>{photo.placeName}</span>
               </div>
             ) : photo.latitude && photo.longitude ? (
-              <LocationDisplay
-                latitude={photo.latitude}
-                longitude={photo.longitude}
-              />
+              <LocationDisplay latitude={photo.latitude} longitude={photo.longitude} />
             ) : null}
           </div>
         </div>
@@ -395,6 +369,8 @@ const MobilePhotoCard = ({
           userSelect: "none",
           WebkitUserSelect: "none",
           touchAction: "manipulation",
+          // ✅ NEW: Dark background so rotated images don't show white corners
+          backgroundColor: rotation !== 0 ? "#000" : "transparent",
         }}
         onTouchStart={handleTouchStartLongPress}
         onTouchEnd={handleTouchEndLongPress}
@@ -407,6 +383,12 @@ const MobilePhotoCard = ({
             height: "100%",
             objectFit: "cover",
             display: "block",
+            // ✅ NEW: Apply rotation. For 90/270 deg we scale slightly so
+            // the image still fills the square card without leaving gaps.
+            transform: rotation !== 0
+              ? `rotate(${rotation}deg)${rotation === 90 || rotation === 270 ? " scale(1.35)" : ""}`
+              : "none",
+            transition: "transform 0.3s ease",
           }}
           draggable={false}
         />
@@ -471,22 +453,12 @@ const MobilePhotoCard = ({
             transition: "transform 0.1s ease",
             borderRadius: "50%",
           }}
-          onTouchStart={(e) => {
-            e.currentTarget.style.transform = "scale(0.9)";
-          }}
-          onTouchEnd={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-          }}
+          onTouchStart={(e) => { e.currentTarget.style.transform = "scale(0.9)"; }}
+          onTouchEnd={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
         >
           {isLiked ? "❤️" : "🤍"}
           {likesCount > 0 && (
-            <span
-              style={{
-                fontSize: "14px",
-                fontWeight: "500",
-                marginLeft: "4px",
-              }}
-            >
+            <span style={{ fontSize: "14px", fontWeight: "500", marginLeft: "4px" }}>
               {likesCount}
             </span>
           )}
@@ -553,24 +525,11 @@ const MobilePhotoCard = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div style={{
-                  padding: "12px 16px",
-                  borderBottom: "1px solid var(--color-border)",
-                  marginBottom: "8px"
-                }}>
-                  <h4 style={{ 
-                    margin: "0 0 4px 0", 
-                    color: "var(--color-text-primary)", 
-                    fontSize: "14px", 
-                    fontWeight: "600" 
-                  }}>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--color-border)", marginBottom: "8px" }}>
+                  <h4 style={{ margin: "0 0 4px 0", color: "var(--color-text-primary)", fontSize: "14px", fontWeight: "600" }}>
                     Report this photo
                   </h4>
-                  <p style={{ 
-                    margin: 0, 
-                    color: "var(--color-text-muted)", 
-                    fontSize: "12px" 
-                  }}>
+                  <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "12px" }}>
                     Help us keep the community safe
                   </p>
                 </div>
@@ -601,23 +560,15 @@ const MobilePhotoCard = ({
                       transition: "background-color 0.2s ease",
                       marginBottom: "4px"
                     }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = "var(--color-bg-tertiary)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = "transparent";
-                    }}
+                    onMouseEnter={(e) => { e.target.style.backgroundColor = "var(--color-bg-tertiary)"; }}
+                    onMouseLeave={(e) => { e.target.style.backgroundColor = "transparent"; }}
                   >
                     <span style={{ fontSize: "16px" }}>{reason.emoji}</span>
                     <span style={{ fontWeight: "500" }}>{reason.label}</span>
                   </button>
                 ))}
                 
-                <div style={{
-                  padding: "8px 16px",
-                  borderTop: "1px solid var(--color-border)",
-                  marginTop: "8px"
-                }}>
+                <div style={{ padding: "8px 16px", borderTop: "1px solid var(--color-border)", marginTop: "8px" }}>
                   <button
                     onClick={() => setShowFlagMenu(false)}
                     style={{
@@ -632,12 +583,8 @@ const MobilePhotoCard = ({
                       fontWeight: "500",
                       transition: "all 0.2s ease"
                     }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = "var(--color-bg-tertiary)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = "transparent";
-                    }}
+                    onMouseEnter={(e) => { e.target.style.backgroundColor = "var(--color-bg-tertiary)"; }}
+                    onMouseLeave={(e) => { e.target.style.backgroundColor = "transparent"; }}
                   >
                     Cancel
                   </button>
@@ -679,16 +626,9 @@ const MobilePhotoCard = ({
       {/* Caption with Clickable Hashtags and Clickable Username */}
       {photo.caption && (
         <div style={{ padding: "0 16px 16px" }}>
-          <p
-            style={{
-              margin: 0,
-              fontSize: "14px",
-              lineHeight: "20px",
-              color: "var(--color-text-primary)",
-            }}
-          >
-            <span 
-              style={{ 
+          <p style={{ margin: 0, fontSize: "14px", lineHeight: "20px", color: "var(--color-text-primary)" }}>
+            <span
+              style={{
                 fontWeight: "600",
                 cursor: onUserClick ? "pointer" : "default",
                 color: onUserClick ? "var(--color-primary)" : "var(--color-text-primary)",
@@ -707,51 +647,22 @@ const MobilePhotoCard = ({
       <style>
         {`
           @keyframes heartPulse {
-            0% {
-              transform: translate(-50%, -50%) scale(0);
-              opacity: 0;
-            }
-            15% {
-              transform: translate(-50%, -50%) scale(1.2);
-              opacity: 1;
-            }
-            30% {
-              transform: translate(-50%, -50%) scale(1);
-            }
-            100% {
-              transform: translate(-50%, -50%) scale(1);
-              opacity: 0;
-            }
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            15% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            30% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
           }
           
           @keyframes slideUpFromBottom {
-            0% {
-              opacity: 0;
-              transform: translateY(10px);
-            }
-            100% {
-              opacity: 1;
-              transform: translateY(0);
-            }
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
           }
           
           @keyframes fadeInOut {
-            0% {
-              opacity: 0;
-              transform: translate(-50%, -50%) scale(0.8);
-            }
-            20% {
-              opacity: 1;
-              transform: translate(-50%, -50%) scale(1);
-            }
-            80% {
-              opacity: 1;
-              transform: translate(-50%, -50%) scale(1);
-            }
-            100% {
-              opacity: 0;
-              transform: translate(-50%, -50%) scale(0.8);
-            }
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
           }
           
           @keyframes spin {
