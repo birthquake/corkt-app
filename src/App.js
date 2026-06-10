@@ -5,7 +5,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import Signup from "./Signup";
 import Login from "./Login";
-import ForgotPassword from "./ForgotPassword"; // ✅ New import
+import ForgotPassword from "./ForgotPassword";
 import HomeFeed from "./HomeFeed";
 import SearchPage from "./SearchPage";
 import CaptureComponent from "./CaptureComponent";
@@ -36,7 +36,6 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [photos, setPhotos] = useState([]);
-  // ✅ Updated: Replace showLogin boolean with authView string for 3 states
   const [authView, setAuthView] = useState('login'); // 'login', 'signup', 'forgot'
 
   // Detect CodeSandbox environment for navigation adjustments
@@ -49,16 +48,15 @@ export default function App() {
   const bottomPadding = isCodeSandbox ? "150px" : "90px";
 
   // 📊 Admin check for analytics access
-  const isAdmin = user?.email === 'corktapp@gmail.com'; // Replace with your actual email
+  const isAdmin = user?.email === 'corktapp@gmail.com';
 
-  // ✅ PWA Service Worker Registration with Enhanced Debugging
+  // ✅ PWA Service Worker Registration
   useEffect(() => {
     console.log('🔧 APP: PWA useEffect starting...');
     console.log('🔧 APP: registerServiceWorker type:', typeof registerServiceWorker);
     
     try {
       console.log('🔧 APP: About to call registerServiceWorker...');
-      // Register service worker for PWA functionality
       registerServiceWorker();
       console.log('🔧 APP: registerServiceWorker called successfully');
     } catch (error) {
@@ -94,7 +92,6 @@ export default function App() {
           ...doc.data(),
         }));
 
-        // Sort by timestamp (newest first)
         const sortedPhotos = allPhotos.sort((a, b) => {
           const aTime = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
           const bTime = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
@@ -351,7 +348,6 @@ export default function App() {
                     path="/capture"
                     element={<CaptureComponent user={user} />}
                   />
-                  {/* Updated profile route to handle user-specific profiles */}
                   <Route
                     path="/profile/:userId?"
                     element={<ProfilePage currentUser={user} photos={photos} />}
@@ -364,8 +360,6 @@ export default function App() {
                     path="/admin"
                     element={<AdminPanel currentUser={user} />}
                   />
-                  
-                  {/* 📊 Analytics Dashboard - Admin Only */}
                   <Route
                     path="/analytics"
                     element={
@@ -382,188 +376,412 @@ export default function App() {
             <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
           </div>
         ) : (
-          // ✅ Updated: Enhanced authentication section with password recovery + dark theme
+          // ✅ Enhanced landing page with app explanation + auth
           <div style={{
             background: "var(--color-bg-primary)",
-            padding: "20px 20px 300px 20px", // HUGE bottom padding for iOS
+            minHeight: "100vh",
             fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           }}>
+            {/* Hero Section */}
             <div style={{
+              background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(255, 107, 53, 0.06) 100%)",
+              padding: "48px 20px 32px 20px",
+              textAlign: "center",
+              borderBottom: "1px solid var(--color-border)"
+            }}>
+              <h1 style={{
+                fontSize: "42px",
+                color: "var(--color-primary)",
+                fontWeight: "700",
+                margin: "0 0 8px 0",
+                letterSpacing: "1px"
+              }}>
+                Corkt
+              </h1>
+              <p style={{
+                color: "var(--color-text-primary)",
+                fontSize: "18px",
+                fontWeight: "500",
+                margin: "0 0 8px 0"
+              }}>
+                Live photo sharing, powered by location
+              </p>
+              <p style={{
+                color: "var(--color-text-muted)",
+                fontSize: "14px",
+                margin: "0",
+                maxWidth: "340px",
+                marginLeft: "auto",
+                marginRight: "auto",
+                lineHeight: "1.5"
+              }}>
+                See and share photos with everyone at the same place in real time — no follows needed, just be there.
+              </p>
+            </div>
+
+            {/* How It Works Section */}
+            <div style={{
+              padding: "28px 20px",
               maxWidth: "400px",
               margin: "0 auto"
             }}>
-              {/* ✅ Login View */}
-              {authView === 'login' && (
+              <h3 style={{
+                color: "var(--color-text-primary)",
+                fontSize: "15px",
+                fontWeight: "600",
+                textAlign: "center",
+                margin: "0 0 20px 0",
+                textTransform: "uppercase",
+                letterSpacing: "1px"
+              }}>
+                How It Works
+              </h3>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* Feature 1 - Local Feed */}
                 <div style={{
-                  background: "var(--color-bg-secondary)",
-                  borderRadius: "20px",
-                  padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "14px",
+                  padding: "14px 16px",
+                  backgroundColor: "var(--color-bg-secondary)",
+                  borderRadius: "12px",
+                  border: "1px solid var(--color-border)"
                 }}>
-                  <div style={{ textAlign: "center", marginBottom: "30px" }}>
-                    <h1 style={{
-                      fontSize: "36px",
-                      color: "var(--color-primary)",
-                      fontWeight: "700",
-                      margin: "0 0 8px 0"
-                    }}>
-                      Corkt
-                    </h1>
+                  <div style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: "rgba(34, 197, 94, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    marginTop: "2px"
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  </div>
+                  <div>
                     <p style={{
-                      color: "var(--color-text-muted)",
-                      fontSize: "16px",
-                      margin: "0"
+                      margin: "0 0 4px 0",
+                      fontWeight: "600",
+                      fontSize: "14px",
+                      color: "var(--color-text-primary)"
                     }}>
-                      Share your moments
+                      Local Feed
+                    </p>
+                    <p style={{
+                      margin: 0,
+                      fontSize: "13px",
+                      color: "var(--color-text-muted)",
+                      lineHeight: "1.4"
+                    }}>
+                      See photos from everyone at your bar, venue, or event right now — perfect for watch parties and live moments.
                     </p>
                   </div>
+                </div>
 
-                  <Login />
-
-                  {/* ✅ Updated: Navigation section with forgot password */}
+                {/* Feature 2 - Global Feed */}
+                <div style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "14px",
+                  padding: "14px 16px",
+                  backgroundColor: "var(--color-bg-secondary)",
+                  borderRadius: "12px",
+                  border: "1px solid var(--color-border)"
+                }}>
                   <div style={{
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    margin: "24px 0 16px 0"
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: "rgba(6, 182, 212, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    marginTop: "2px"
                   }}>
-                    <span 
-                      onClick={() => setAuthView('forgot')}
-                      style={{
-                        color: "var(--color-primary)",
-                        cursor: "pointer",
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="2" y1="12" x2="22" y2="12"/>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p style={{
+                      margin: "0 0 4px 0",
+                      fontWeight: "600",
+                      fontSize: "14px",
+                      color: "var(--color-text-primary)"
+                    }}>
+                      Global Feed
+                    </p>
+                    <p style={{
+                      margin: 0,
+                      fontSize: "13px",
+                      color: "var(--color-text-muted)",
+                      lineHeight: "1.4"
+                    }}>
+                      Switch to global and see what people are sharing from watch parties and venues everywhere. One community, every location.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Feature 3 - Hashtags */}
+                <div style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "14px",
+                  padding: "14px 16px",
+                  backgroundColor: "var(--color-bg-secondary)",
+                  borderRadius: "12px",
+                  border: "1px solid var(--color-border)"
+                }}>
+                  <div style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: "rgba(255, 107, 53, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    marginTop: "2px"
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" strokeWidth="2">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                      <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p style={{
+                      margin: "0 0 4px 0",
+                      fontWeight: "600",
+                      fontSize: "14px",
+                      color: "var(--color-text-primary)"
+                    }}>
+                      Hashtags & Discovery
+                    </p>
+                    <p style={{
+                      margin: 0,
+                      fontSize: "13px",
+                      color: "var(--color-text-muted)",
+                      lineHeight: "1.4"
+                    }}>
+                      Tag your moments with #AO26, #MatchDay, or anything else — find trending content and connect with your community.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* No Download Callout */}
+              <div style={{
+                textAlign: "center",
+                padding: "16px 0 8px 0",
+                marginTop: "8px"
+              }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: "13px",
+                  color: "var(--color-text-muted)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px"
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                  Works in your browser — no app download needed
+                </p>
+              </div>
+            </div>
+
+            {/* Auth Section */}
+            <div style={{
+              padding: "0 20px 300px 20px"
+            }}>
+              <div style={{
+                maxWidth: "400px",
+                margin: "0 auto"
+              }}>
+                {/* ✅ Login View */}
+                {authView === 'login' && (
+                  <div style={{
+                    background: "var(--color-bg-secondary)",
+                    borderRadius: "20px",
+                    padding: "32px 30px",
+                    boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
+                  }}>
+                    <div style={{ textAlign: "center", marginBottom: "24px" }}>
+                      <h2 style={{
+                        fontSize: "20px",
+                        color: "var(--color-text-primary)",
+                        fontWeight: "600",
+                        margin: "0 0 4px 0"
+                      }}>
+                        Welcome back
+                      </h2>
+                      <p style={{
+                        color: "var(--color-text-muted)",
                         fontSize: "14px",
-                        textDecoration: "underline"
-                      }}
-                    >
-                      Forgot your password?
-                    </span>
-                  </div>
+                        margin: "0"
+                      }}>
+                        Log in to start sharing
+                      </p>
+                    </div>
 
-                  <div style={{
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    margin: "16px 0",
-                    position: "relative"
-                  }}>
+                    <Login />
+
                     <div style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "0",
-                      right: "0",
-                      height: "1px",
-                      background: "var(--color-border)"
-                    }}></div>
-                    <span style={{
-                      background: "var(--color-bg-secondary)",
-                      padding: "0 16px"
-                    }}>
-                      or
-                    </span>
-                  </div>
-
-                  <div style={{
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    fontSize: "14px"
-                  }}>
-                    Don't have an account?{" "}
-                    <span 
-                      onClick={() => setAuthView('signup')}
-                      style={{
-                        color: "var(--color-primary)",
-                        cursor: "pointer",
-                        fontWeight: "600"
-                      }}
-                    >
-                      Sign up
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* ✅ Signup View */}
-              {authView === 'signup' && (
-                <div style={{
-                  background: "var(--color-bg-secondary)",
-                  borderRadius: "20px",
-                  padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
-                }}>
-                  <div style={{ textAlign: "center", marginBottom: "30px" }}>
-                    <h1 style={{
-                      fontSize: "36px",
-                      color: "var(--color-primary)",
-                      fontWeight: "700",
-                      margin: "0 0 8px 0"
-                    }}>
-                      Corkt
-                    </h1>
-                    <p style={{
+                      textAlign: "center",
                       color: "var(--color-text-muted)",
-                      fontSize: "16px",
-                      margin: "0"
+                      margin: "24px 0 16px 0"
                     }}>
-                      Create your account
-                    </p>
-                  </div>
+                      <span 
+                        onClick={() => setAuthView('forgot')}
+                        style={{
+                          color: "var(--color-primary)",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                          textDecoration: "underline"
+                        }}
+                      >
+                        Forgot your password?
+                      </span>
+                    </div>
 
-                  <Signup />
-
-                  <div style={{
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    margin: "24px 0",
-                    position: "relative"
-                  }}>
                     <div style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "0",
-                      right: "0",
-                      height: "1px",
-                      background: "var(--color-border)"
-                    }}></div>
-                    <span style={{
-                      background: "var(--color-bg-secondary)",
-                      padding: "0 16px"
+                      textAlign: "center",
+                      color: "var(--color-text-muted)",
+                      margin: "16px 0",
+                      position: "relative"
                     }}>
-                      or
-                    </span>
-                  </div>
+                      <div style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "0",
+                        right: "0",
+                        height: "1px",
+                        background: "var(--color-border)"
+                      }}></div>
+                      <span style={{
+                        background: "var(--color-bg-secondary)",
+                        padding: "0 16px"
+                      }}>
+                        or
+                      </span>
+                    </div>
 
+                    <div style={{
+                      textAlign: "center",
+                      color: "var(--color-text-muted)",
+                      fontSize: "14px"
+                    }}>
+                      Don't have an account?{" "}
+                      <span 
+                        onClick={() => setAuthView('signup')}
+                        style={{
+                          color: "var(--color-primary)",
+                          cursor: "pointer",
+                          fontWeight: "600"
+                        }}
+                      >
+                        Sign up
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* ✅ Signup View */}
+                {authView === 'signup' && (
                   <div style={{
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    fontSize: "14px"
+                    background: "var(--color-bg-secondary)",
+                    borderRadius: "20px",
+                    padding: "32px 30px",
+                    boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
                   }}>
-                    Already have an account?{" "}
-                    <span 
-                      onClick={() => setAuthView('login')}
-                      style={{
-                        color: "var(--color-primary)",
-                        cursor: "pointer",
-                        fontWeight: "600"
-                      }}
-                    >
-                      Log in
-                    </span>
-                  </div>
-                </div>
-              )}
+                    <div style={{ textAlign: "center", marginBottom: "24px" }}>
+                      <h2 style={{
+                        fontSize: "20px",
+                        color: "var(--color-text-primary)",
+                        fontWeight: "600",
+                        margin: "0 0 4px 0"
+                      }}>
+                        Create your account
+                      </h2>
+                      <p style={{
+                        color: "var(--color-text-muted)",
+                        fontSize: "14px",
+                        margin: "0"
+                      }}>
+                        Join the feed in seconds
+                      </p>
+                    </div>
 
-              {/* ✅ New: Forgot Password View */}
-              {authView === 'forgot' && (
-                <div style={{
-                  background: "var(--color-bg-secondary)",
-                  borderRadius: "20px",
-                  padding: "40px 30px",
-                  boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
-                }}>
-                  <ForgotPassword 
-                    onBackToLogin={() => setAuthView('login')} 
-                  />
-                </div>
-              )}
+                    <Signup />
+
+                    <div style={{
+                      textAlign: "center",
+                      color: "var(--color-text-muted)",
+                      margin: "24px 0",
+                      position: "relative"
+                    }}>
+                      <div style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "0",
+                        right: "0",
+                        height: "1px",
+                        background: "var(--color-border)"
+                      }}></div>
+                      <span style={{
+                        background: "var(--color-bg-secondary)",
+                        padding: "0 16px"
+                      }}>
+                        or
+                      </span>
+                    </div>
+
+                    <div style={{
+                      textAlign: "center",
+                      color: "var(--color-text-muted)",
+                      fontSize: "14px"
+                    }}>
+                      Already have an account?{" "}
+                      <span 
+                        onClick={() => setAuthView('login')}
+                        style={{
+                          color: "var(--color-primary)",
+                          cursor: "pointer",
+                          fontWeight: "600"
+                        }}
+                      >
+                        Log in
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* ✅ Forgot Password View */}
+                {authView === 'forgot' && (
+                  <div style={{
+                    background: "var(--color-bg-secondary)",
+                    borderRadius: "20px",
+                    padding: "32px 30px",
+                    boxShadow: "0 10px 30px rgba(var(--color-primary-rgb), 0.1)"
+                  }}>
+                    <ForgotPassword 
+                      onBackToLogin={() => setAuthView('login')} 
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
