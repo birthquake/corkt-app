@@ -376,7 +376,7 @@ export default function App() {
             <MobileBottomNavigation isCodeSandbox={isCodeSandbox} />
           </div>
         ) : (
-          // ✅ Enhanced responsive landing page
+          // ✅ Enhanced landing page — features paired with screenshots
           <div className="landing-page" style={{
             background: "var(--color-bg-primary)",
             minHeight: "100vh",
@@ -384,16 +384,14 @@ export default function App() {
           }}>
             {/* Hero Section */}
             <div style={{
-              background: "linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(255, 107, 53, 0.06) 100%)",
-              padding: "48px 20px 36px 20px",
-              textAlign: "center",
-              borderBottom: "1px solid var(--color-border)"
+              padding: "44px 20px 28px 20px",
+              textAlign: "center"
             }}>
               <h1 style={{
                 fontSize: "48px",
                 color: "var(--color-primary)",
                 fontWeight: "700",
-                margin: "0 0 10px 0",
+                margin: "0 0 8px 0",
                 letterSpacing: "1px"
               }}>
                 Corkt
@@ -402,180 +400,236 @@ export default function App() {
                 color: "var(--color-text-primary)",
                 fontSize: "20px",
                 fontWeight: "500",
-                margin: "0 0 10px 0"
+                margin: "0 0 14px 0"
               }}>
                 Live photo sharing, powered by location
               </p>
-              <p style={{
-                color: "var(--color-text-muted)",
-                fontSize: "15px",
-                margin: "0 auto",
-                maxWidth: "460px",
-                lineHeight: "1.5"
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 14px",
+                borderRadius: "20px",
+                backgroundColor: "rgba(6, 182, 212, 0.1)",
+                border: "1px solid rgba(6, 182, 212, 0.2)"
               }}>
-                See and share photos with everyone at the same place in real time — no follows needed, just be there.
-              </p>
+                <span style={{ fontSize: "14px" }}>⚽</span>
+                <span style={{
+                  color: "var(--color-primary)",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  letterSpacing: "0.5px"
+                }}>
+                  Live for the match day
+                </span>
+              </div>
             </div>
 
-            {/* How It Works Section */}
+            {/* Feature + Screenshot Sections */}
             <div style={{
-              padding: "32px 20px",
-              maxWidth: "900px",
-              margin: "0 auto"
+              maxWidth: "960px",
+              margin: "0 auto",
+              padding: "0 20px"
             }}>
-              <h3 style={{
-                color: "var(--color-text-primary)",
-                fontSize: "15px",
-                fontWeight: "600",
-                textAlign: "center",
-                margin: "0 0 24px 0",
-                textTransform: "uppercase",
-                letterSpacing: "1px"
-              }}>
-                How It Works
-              </h3>
 
-              <div className="features-grid" style={{
+              {/* Feature 1 — Local Feed + Bar Screenshot */}
+              <div className="feature-row" style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "16px"
+                gap: "24px",
+                padding: "32px 0",
+                alignItems: "center"
               }}>
-                {/* Feature 1 - Local Feed */}
-                <div style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "14px",
-                  padding: "16px 18px",
-                  backgroundColor: "var(--color-bg-secondary)",
-                  borderRadius: "12px",
-                  border: "1px solid var(--color-border)"
-                }}>
+                <div className="feature-text" style={{ flex: 1 }}>
                   <div style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "10px",
-                    background: "rgba(34, 197, 94, 0.1)",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    marginTop: "2px"
+                    gap: "10px",
+                    marginBottom: "10px"
                   }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p style={{
-                      margin: "0 0 4px 0",
+                    <div style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "10px",
+                      background: "rgba(34, 197, 94, 0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0
+                    }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                      </svg>
+                    </div>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: "20px",
                       fontWeight: "600",
-                      fontSize: "15px",
                       color: "var(--color-text-primary)"
                     }}>
                       Local Feed
-                    </p>
-                    <p style={{
-                      margin: 0,
-                      fontSize: "14px",
-                      color: "var(--color-text-muted)",
-                      lineHeight: "1.5"
-                    }}>
-                      See photos from everyone at your bar, venue, or event right now — perfect for watch parties and live moments.
-                    </p>
+                    </h3>
+                  </div>
+                  <p style={{
+                    margin: 0,
+                    fontSize: "15px",
+                    color: "var(--color-text-muted)",
+                    lineHeight: "1.6"
+                  }}>
+                    See photos from everyone at your bar, venue, or event right now. No need to follow anyone — if you're there, you're on the feed. Perfect for watch parties and live moments.
+                  </p>
+                </div>
+                <div className="feature-screenshot">
+                  <div style={{
+                    borderRadius: "20px",
+                    overflow: "hidden",
+                    border: "2px solid var(--color-border)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+                  }}>
+                    <img
+                      src="/screenshot-local.jpg"
+                      alt="Corkt local feed showing a crowded bar"
+                      style={{
+                        width: "100%",
+                        display: "block"
+                      }}
+                    />
                   </div>
                 </div>
+              </div>
 
-                {/* Feature 2 - Global Feed */}
-                <div style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "14px",
-                  padding: "16px 18px",
-                  backgroundColor: "var(--color-bg-secondary)",
-                  borderRadius: "12px",
-                  border: "1px solid var(--color-border)"
-                }}>
+              {/* Feature 2 — Global Feed + Global Screenshot */}
+              <div className="feature-row feature-row-reverse" style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "24px",
+                padding: "32px 0",
+                alignItems: "center"
+              }}>
+                <div className="feature-text" style={{ flex: 1 }}>
                   <div style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "10px",
-                    background: "rgba(6, 182, 212, 0.1)",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    marginTop: "2px"
+                    gap: "10px",
+                    marginBottom: "10px"
                   }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="2" y1="12" x2="22" y2="12"/>
-                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p style={{
-                      margin: "0 0 4px 0",
+                    <div style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "10px",
+                      background: "rgba(6, 182, 212, 0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0
+                    }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="2" y1="12" x2="22" y2="12"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                      </svg>
+                    </div>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: "20px",
                       fontWeight: "600",
-                      fontSize: "15px",
                       color: "var(--color-text-primary)"
                     }}>
                       Global Feed
-                    </p>
-                    <p style={{
-                      margin: 0,
-                      fontSize: "14px",
-                      color: "var(--color-text-muted)",
-                      lineHeight: "1.5"
-                    }}>
-                      Switch to global and see what people are sharing from watch parties and venues everywhere. One community, every location.
-                    </p>
+                    </h3>
+                  </div>
+                  <p style={{
+                    margin: 0,
+                    fontSize: "15px",
+                    color: "var(--color-text-muted)",
+                    lineHeight: "1.6"
+                  }}>
+                    Switch to global and see what people are sharing from watch parties and venues everywhere. One community, every location.
+                  </p>
+                </div>
+                <div className="feature-screenshot">
+                  <div style={{
+                    borderRadius: "20px",
+                    overflow: "hidden",
+                    border: "2px solid var(--color-border)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+                  }}>
+                    <img
+                      src="/screenshot-global.jpg"
+                      alt="Corkt global feed showing photos from different cities"
+                      style={{
+                        width: "100%",
+                        display: "block"
+                      }}
+                    />
                   </div>
                 </div>
+              </div>
 
-                {/* Feature 3 - Hashtags */}
-                <div style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "14px",
-                  padding: "16px 18px",
-                  backgroundColor: "var(--color-bg-secondary)",
-                  borderRadius: "12px",
-                  border: "1px solid var(--color-border)"
-                }}>
+              {/* Feature 3 — Profile + Map Screenshot */}
+              <div className="feature-row" style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "24px",
+                padding: "32px 0",
+                alignItems: "center"
+              }}>
+                <div className="feature-text" style={{ flex: 1 }}>
                   <div style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 107, 53, 0.1)",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    marginTop: "2px"
+                    gap: "10px",
+                    marginBottom: "10px"
                   }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" strokeWidth="2">
-                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                      <line x1="7" y1="7" x2="7.01" y2="7"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p style={{
-                      margin: "0 0 4px 0",
+                    <div style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "10px",
+                      background: "rgba(255, 107, 53, 0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0
+                    }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" strokeWidth="2">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                        <line x1="7" y1="7" x2="7.01" y2="7"/>
+                      </svg>
+                    </div>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: "20px",
                       fontWeight: "600",
-                      fontSize: "15px",
                       color: "var(--color-text-primary)"
                     }}>
-                      Hashtags & Discovery
-                    </p>
-                    <p style={{
-                      margin: 0,
-                      fontSize: "14px",
-                      color: "var(--color-text-muted)",
-                      lineHeight: "1.5"
-                    }}>
-                      Tag your moments with #AO26, #MatchDay, or anything else — find trending content and connect with your community.
-                    </p>
+                      Your Profile & Photo Map
+                    </h3>
+                  </div>
+                  <p style={{
+                    margin: 0,
+                    fontSize: "15px",
+                    color: "var(--color-text-muted)",
+                    lineHeight: "1.6"
+                  }}>
+                    Tag your moments with #AO26, #MatchDay, or anything — and see every photo you've taken pinned on a map. Build your story, one location at a time.
+                  </p>
+                </div>
+                <div className="feature-screenshot">
+                  <div style={{
+                    borderRadius: "20px",
+                    overflow: "hidden",
+                    border: "2px solid var(--color-border)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)"
+                  }}>
+                    <img
+                      src="/screenshot-profile.jpg"
+                      alt="Corkt profile page with photo map"
+                      style={{
+                        width: "100%",
+                        display: "block"
+                      }}
+                    />
                   </div>
                 </div>
               </div>
@@ -583,7 +637,7 @@ export default function App() {
               {/* No Download Callout */}
               <div style={{
                 textAlign: "center",
-                padding: "20px 0 0 0"
+                padding: "8px 0 32px 0"
               }}>
                 <p style={{
                   margin: 0,
@@ -600,141 +654,6 @@ export default function App() {
                   </svg>
                   Works in your browser — no app download needed
                 </p>
-              </div>
-            </div>
-
-            {/* Screenshot Showcase */}
-            <div style={{
-              padding: "8px 20px 36px 20px",
-              maxWidth: "900px",
-              margin: "0 auto"
-            }}>
-              <h3 style={{
-                color: "var(--color-text-primary)",
-                fontSize: "15px",
-                fontWeight: "600",
-                textAlign: "center",
-                margin: "0 0 20px 0",
-                textTransform: "uppercase",
-                letterSpacing: "1px"
-              }}>
-                See It In Action
-              </h3>
-
-              <div className="screenshots-grid" style={{
-                display: "flex",
-                gap: "20px",
-                overflowX: "auto",
-                scrollSnapType: "x mandatory",
-                WebkitOverflowScrolling: "touch",
-                msOverflowStyle: "none",
-                scrollbarWidth: "none",
-                paddingBottom: "8px"
-              }}>
-                {/* Screenshot 1 - Local / Bar */}
-                <div className="screenshot-item" style={{
-                  flexShrink: 0,
-                  scrollSnapAlign: "center"
-                }}>
-                  <div style={{
-                    borderRadius: "20px",
-                    overflow: "hidden",
-                    border: "2px solid var(--color-border)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                    backgroundColor: "var(--color-bg-secondary)"
-                  }}>
-                    <img
-                      src="/screenshot-local.jpg"
-                      alt="Corkt local feed at a bar"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        objectPosition: "top",
-                        display: "block"
-                      }}
-                    />
-                  </div>
-                  <p style={{
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    fontSize: "13px",
-                    marginTop: "10px",
-                    fontWeight: "500"
-                  }}>
-                    Live feed at your venue
-                  </p>
-                </div>
-
-                {/* Screenshot 2 - Global Feed */}
-                <div className="screenshot-item" style={{
-                  flexShrink: 0,
-                  scrollSnapAlign: "center"
-                }}>
-                  <div style={{
-                    borderRadius: "20px",
-                    overflow: "hidden",
-                    border: "2px solid var(--color-border)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                    backgroundColor: "var(--color-bg-secondary)"
-                  }}>
-                    <img
-                      src="/screenshot-global.jpg"
-                      alt="Corkt global feed showing posts from different cities"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        objectPosition: "top",
-                        display: "block"
-                      }}
-                    />
-                  </div>
-                  <p style={{
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    fontSize: "13px",
-                    marginTop: "10px",
-                    fontWeight: "500"
-                  }}>
-                    Global feed from everywhere
-                  </p>
-                </div>
-
-                {/* Screenshot 3 - Profile */}
-                <div className="screenshot-item" style={{
-                  flexShrink: 0,
-                  scrollSnapAlign: "center"
-                }}>
-                  <div style={{
-                    borderRadius: "20px",
-                    overflow: "hidden",
-                    border: "2px solid var(--color-border)",
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                    backgroundColor: "var(--color-bg-secondary)"
-                  }}>
-                    <img
-                      src="/screenshot-profile.jpg"
-                      alt="Corkt profile page with photo map"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        objectPosition: "top",
-                        display: "block"
-                      }}
-                    />
-                  </div>
-                  <p style={{
-                    textAlign: "center",
-                    color: "var(--color-text-muted)",
-                    fontSize: "13px",
-                    marginTop: "10px",
-                    fontWeight: "500"
-                  }}>
-                    Your profile & photo map
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -963,37 +882,33 @@ export default function App() {
               min-height: 100vh !important;
             }
 
-            /* Hide scrollbar on screenshot carousel */
-            .screenshots-grid::-webkit-scrollbar {
-              display: none;
-            }
-
             /* ===== Mobile defaults ===== */
-            .screenshot-item {
-              width: 240px;
+            .feature-screenshot {
+              width: 260px;
+              flex-shrink: 0;
             }
-            .screenshot-item img {
-              height: 420px;
+            .feature-text {
+              max-width: 100%;
             }
 
             /* ===== Desktop responsive ===== */
             @media (min-width: 768px) {
-              .features-grid {
+              .feature-row {
                 flex-direction: row !important;
-                gap: 20px !important;
+                gap: 48px !important;
+                padding: 48px 0 !important;
               }
-              .features-grid > div {
+              .feature-row-reverse {
+                flex-direction: row-reverse !important;
+              }
+              .feature-text {
                 flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
               }
-              .screenshots-grid {
-                justify-content: center !important;
-                overflow-x: visible !important;
-              }
-              .screenshot-item {
-                width: 260px;
-              }
-              .screenshot-item img {
-                height: 460px;
+              .feature-screenshot {
+                width: 300px;
               }
             }
           `}
