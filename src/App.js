@@ -644,7 +644,7 @@ export default function App() {
                     backgroundColor: "var(--color-bg-secondary)"
                   }}>
                     <img
-                      src="/screenshot-local.png"
+                      src="/screenshot-local.jpg"
                       alt="Corkt local feed at a bar"
                       style={{
                         width: "100%",
@@ -680,7 +680,7 @@ export default function App() {
                     backgroundColor: "var(--color-bg-secondary)"
                   }}>
                     <img
-                      src="/screenshot-global.png"
+                      src="/screenshot-global.jpg"
                       alt="Corkt global feed showing posts from different cities"
                       style={{
                         width: "100%",
@@ -716,7 +716,7 @@ export default function App() {
                     backgroundColor: "var(--color-bg-secondary)"
                   }}>
                     <img
-                      src="/screenshot-profile.png"
+                      src="/screenshot-profile.jpg"
                       alt="Corkt profile page with photo map"
                       style={{
                         width: "100%",
