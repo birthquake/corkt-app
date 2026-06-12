@@ -420,7 +420,7 @@ export default function App() {
                   fontWeight: "600",
                   letterSpacing: "0.5px"
                 }}>
-                  Live for the match day
+                  Live for match day!
                 </span>
               </div>
             </div>
