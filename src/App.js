@@ -271,6 +271,7 @@ export default function App() {
                     ⚙️ Admin Panel
                   </a>
                   
+                    <a
                     href="/analytics"
                     style={{
                       color: "white",
