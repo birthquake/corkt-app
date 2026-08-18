@@ -247,7 +247,8 @@ export default function App() {
                 <span style={{ fontWeight: "500" }}>👨‍💻 Admin Mode</span>
                 <div style={{ display: "flex", gap: "16px" }}>
                   
-                    href="/admin"
+                <a  
+                href="/admin"
                     style={{
                       color: "white",
                       textDecoration: "none",
@@ -295,7 +296,8 @@ export default function App() {
                   >
                     📊 Analytics
                   </a>
-                  
+                    
+                      <a
                     href="/"
                     style={{
                       color: "white",
