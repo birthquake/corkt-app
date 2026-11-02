@@ -5,7 +5,6 @@ import {
   getDocs,
   orderBy,
   limit,
-  arrayContains,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 
