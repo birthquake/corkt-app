@@ -1,1 +1,10 @@
 node_modules
+
+# Secrets — never commit these. Put server-side secrets in .env.local (ignored)
+# or in the hosting provider's environment variables.
+.env.local
+.env.*.local
+*.pem
+*.p12
+serviceAccount*.json
+*-firebase-adminsdk-*.json
