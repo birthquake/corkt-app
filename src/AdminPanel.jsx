@@ -14,6 +14,8 @@ const AdminPanel = ({ currentUser }) => {
   // ✅ FIX: Track in-flight rotation updates so the onSnapshot listener
   // doesn't overwrite our optimistic UI before Firestore confirms the write.
   const pendingRotations = React.useRef({});
+  // Same idea for multi-photo posts: per-image rotation arrays in flight.
+  const pendingImageRotations = React.useRef({});
 
   const adminEmail = 'corktapp@gmail.com';
   const userEmail = currentUser?.email || '';
@@ -45,10 +47,14 @@ const AdminPanel = ({ currentUser }) => {
             // local value instead of whatever Firestore just sent back.
             // This prevents the snapshot from snapping the image back before
             // Firestore has confirmed the write.
+            const merged = { id: doc.id, ...data };
             if (pendingRotations.current[doc.id] !== undefined) {
-              return { id: doc.id, ...data, rotation: pendingRotations.current[doc.id] };
+              merged.rotation = pendingRotations.current[doc.id];
             }
-            return { id: doc.id, ...data };
+            if (pendingImageRotations.current[doc.id] !== undefined) {
+              merged.imageRotations = pendingImageRotations.current[doc.id];
+            }
+            return merged;
           });
           setPhotos(allPhotos);
           setError('');
@@ -192,6 +198,63 @@ const AdminPanel = ({ currentUser }) => {
       // Firestore's onSnapshot to fire with the confirmed value.
       setTimeout(() => {
         delete pendingRotations.current[photoId];
+      }, 3000);
+    }
+  };
+
+  // ── Multi-photo posts ──────────────────────────────────────────────────
+  // The native app stores multi-photo posts as an `images` array (with
+  // `imageUrl` = images[0]). Photo #1 keeps using the existing `rotation`
+  // field so the web feed and older app versions behave exactly as before.
+  // Every photo also gets an entry in `imageRotations` (same order as
+  // `images`); the native app reads entries 2+ from there.
+  const getPostImages = (photo) =>
+    photo.images && photo.images.length > 0
+      ? photo.images
+      : (photo.imageUrl ? [photo.imageUrl] : []);
+
+  const getImageRotations = (photo) =>
+    getPostImages(photo).map((_, i) =>
+      i === 0 ? (photo.rotation || 0) : ((photo.imageRotations && photo.imageRotations[i]) || 0)
+    );
+
+  const handleRotateImage = async (photo, index, direction) => {
+    const before = getImageRotations(photo);
+    const current = before[index] || 0;
+    let newRotation;
+    if (direction === 'cw') newRotation = (current + 90) % 360;
+    else if (direction === 'ccw') newRotation = (current - 90 + 360) % 360;
+    else newRotation = 0;
+
+    const after = [...before];
+    after[index] = newRotation;
+
+    const applyLocal = (rots) => {
+      const patch = { imageRotations: rots, rotation: rots[0] };
+      setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, ...patch } : p));
+      setSelectedPhoto(prev => (prev && prev.id === photo.id ? { ...prev, ...patch } : prev));
+    };
+
+    pendingImageRotations.current[photo.id] = after;
+    pendingRotations.current[photo.id] = after[0];
+    applyLocal(after);
+
+    try {
+      await updateDoc(doc(db, 'photos', photo.id), {
+        imageRotations: after,
+        rotation: after[0]
+      });
+      setError('');
+    } catch (err) {
+      console.error('Error rotating photo:', err);
+      setError('Error rotating photo: ' + err.message);
+      pendingImageRotations.current[photo.id] = before;
+      pendingRotations.current[photo.id] = before[0];
+      applyLocal(before);
+    } finally {
+      setTimeout(() => {
+        delete pendingImageRotations.current[photo.id];
+        delete pendingRotations.current[photo.id];
       }, 3000);
     }
   };
@@ -537,6 +600,104 @@ const AdminPanel = ({ currentUser }) => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Rotation controls in modal */}
+            {getPostImages(selectedPhoto).length > 1 ? (
+              <div style={{ backgroundColor: '#000' }}>
+                {getPostImages(selectedPhoto).map((url, idx) => {
+                  const rot = getImageRotations(selectedPhoto)[idx] || 0;
+                  return (
+                    <div key={idx} style={{ borderBottom: '1px solid #343a40' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        padding: '10px 20px',
+                        backgroundColor: '#f8f9fa',
+                        borderBottom: '1px solid #dee2e6',
+                        borderRadius: idx === 0 ? '12px 12px 0 0' : 0
+                      }}>
+                        <span style={{ fontSize: '13px', color: '#6c757d', fontWeight: '500' }}>
+                          Photo {idx + 1} of {getPostImages(selectedPhoto).length}
+                        </span>
+                        <button
+                          onClick={() => handleRotateImage(selectedPhoto, idx, 'ccw')}
+                          title="Rotate counter-clockwise"
+                          style={{
+                      padding: '6px 14px',
+                      border: '1px solid #ced4da',
+                      borderRadius: '6px',
+                      fontSize: '18px',
+                      cursor: 'pointer',
+                      backgroundColor: '#fff',
+                      color: '#343a40',
+                      lineHeight: 1
+                    }}
+                        >
+                          ↺
+                        </button>
+                        <span style={{ fontSize: '12px', color: '#6c757d', minWidth: '36px', textAlign: 'center' }}>
+                          {rot}°
+                        </span>
+                        <button
+                          onClick={() => handleRotateImage(selectedPhoto, idx, 'cw')}
+                          title="Rotate clockwise"
+                          style={{
+                      padding: '6px 14px',
+                      border: '1px solid #ced4da',
+                      borderRadius: '6px',
+                      fontSize: '18px',
+                      cursor: 'pointer',
+                      backgroundColor: '#fff',
+                      color: '#343a40',
+                      lineHeight: 1
+                    }}
+                        >
+                          ↻
+                        </button>
+                        {rot !== 0 && (
+                          <button
+                            onClick={() => handleRotateImage(selectedPhoto, idx, 'reset')}
+                            title="Reset rotation"
+                            style={{
+                              padding: '6px 10px',
+                              border: '1px solid #ced4da',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              backgroundColor: '#fff',
+                              color: '#6c757d'
+                            }}
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: '300px',
+                        maxHeight: '420px',
+                        backgroundColor: '#000',
+                        overflow: 'hidden'
+                      }}>
+                        <img
+                          src={url}
+                          alt={`Photo ${idx + 1}`}
+                          style={{
+                            maxWidth: (rot === 90 || rot === 270) ? '300px' : '100%',
+                            maxHeight: '400px',
+                            objectFit: 'contain',
+                            ...getRotationStyle(rot)
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <>
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -623,6 +784,9 @@ const AdminPanel = ({ currentUser }) => {
                 }}
               />
             </div>
+
+              </>
+            )}
 
             <div style={{ padding: '20px' }}>
               <h3 style={{ marginBottom: '12px' }}>Photo Details</h3>
