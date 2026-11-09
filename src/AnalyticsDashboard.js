@@ -1,7 +1,8 @@
 // AnalyticsDashboard.js - Enhanced with engagement metrics for investors and Flagged Content Management
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, getDocs, updateDoc, doc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebaseConfig";
+import { collection, query, orderBy, onSnapshot, getDocs, getDoc, updateDoc, doc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { ref as storageRef, deleteObject } from "firebase/storage";
+import { db, storage } from "./firebaseConfig";
 import analytics from './analyticsService';
 
 // Comprehensive minimalist SVG icon components (matching HomeFeed.js style)
@@ -232,6 +233,34 @@ const AnalyticsDashboard = () => {
   // ✅ NEW: Flagged content state
   const [flaggedContent, setFlaggedContent] = useState([]);
   const [loadingFlags, setLoadingFlags] = useState(true);
+  const [flagError, setFlagError] = useState('');      // last problem updating or removing a report
+  const [reportFilter, setReportFilter] = useState('pending'); // 'pending' | 'all'
+  const [nameCache, setNameCache] = useState({});      // uid -> display name, for reporters and reported people
+
+  // Look up names for everyone mentioned in reports, so the list shows people
+  // instead of raw user IDs.
+  useEffect(() => {
+    const wanted = new Set();
+    flaggedContent.forEach(f => {
+      [f.flaggedBy, f.reportedUserId, f.photoOwnerId].forEach(u => { if (u && !(u in nameCache)) wanted.add(u); });
+    });
+    if (wanted.size === 0) return;
+    let cancelled = false;
+    Promise.all([...wanted].map(async uid => {
+      try {
+        const snap = await getDoc(doc(db, 'users', uid));
+        const d = snap.exists() ? snap.data() : {};
+        const name = d.username || d.screenName || d.displayName || null;
+        return [uid, name ? '@' + name.replace(/^@/, '') : 'Unknown user'];
+      } catch { return [uid, 'Unknown user']; }
+    })).then(pairs => {
+      if (!cancelled) setNameCache(prev => ({ ...prev, ...Object.fromEntries(pairs) }));
+    });
+    return () => { cancelled = true; };
+  }, [flaggedContent]);
+
+  const nameOf = (uid) => (uid ? (nameCache[uid] || 'Loading…') : 'Unknown');
+  const reportsAgainst = (uid) => flaggedContent.filter(f => (f.reportedUserId || f.photoOwnerId) === uid).length;
   const [flagStats, setFlagStats] = useState({
     totalFlags: 0,
     pendingFlags: 0,
@@ -315,32 +344,59 @@ const AnalyticsDashboard = () => {
   // ✅ NEW: Flag management functions
   const updateFlagStatus = async (flagId, newStatus) => {
     try {
+      setFlagError('');
       await updateDoc(doc(db, "flags", flagId), {
         flagStatus: newStatus,
         reviewedAt: serverTimestamp(),
-        reviewedBy: 'admin' // You could use actual admin user ID
+        reviewedBy: 'admin'
       });
-      console.log(`✅ Flag ${flagId} updated to ${newStatus}`);
     } catch (error) {
-      console.error("❌ Error updating flag status:", error);
+      console.error("Error updating flag status:", error);
+      setFlagError(
+        "Couldn't update this report: " + (error.message || error) +
+        (String(error.code || '').includes('permission')
+          ? " (publish the updated Firestore rules that allow admin updates on flags)"
+          : "")
+      );
     }
   };
 
+  // Remove the reported photo for real: delete its image files from Storage,
+  // delete the post, and close every pending report about that photo.
   const removePhoto = async (flagId, photoId) => {
+    if (!photoId) { setFlagError('This report has no photo attached.'); return; }
+    if (!window.confirm('Remove this photo? The post and its image files will be deleted. This cannot be undone.')) return;
+    setFlagError('');
+    let fileProblem = '';
     try {
-      // Update flag status
-      await updateDoc(doc(db, "flags", flagId), {
-        flagStatus: 'removed',
-        reviewedAt: serverTimestamp(),
-        reviewedBy: 'admin'
-      });
-      
-      // You might want to also delete or hide the actual photo
-      // await deleteDoc(doc(db, "photos", photoId));
-      
-      console.log(`✅ Photo ${photoId} marked as removed`);
+      const photoRef = doc(db, 'photos', photoId);
+      const snap = await getDoc(photoRef);
+      if (snap.exists()) {
+        const d = snap.data();
+        const urls = [...new Set([
+          ...(d.images || []), d.imageUrl, ...(d.thumbnails || []), d.thumbnailUrl,
+        ].filter(Boolean))];
+        for (const url of urls) {
+          try { await deleteObject(storageRef(storage, url)); }
+          catch (e) {
+            // already gone is fine; anything else is worth telling you about
+            if (!String(e.code || '').includes('object-not-found')) fileProblem = e.message || String(e);
+          }
+        }
+        await deleteDoc(photoRef);
+      }
+      const pending = flaggedContent.filter(f => f.photoId === photoId && f.flagStatus === 'pending');
+      for (const f of (pending.length ? pending : [{ id: flagId }])) {
+        await updateDoc(doc(db, "flags", f.id), {
+          flagStatus: 'removed', reviewedAt: serverTimestamp(), reviewedBy: 'admin'
+        });
+      }
+      if (fileProblem) {
+        setFlagError('The post was removed, but its image files could not all be deleted from Storage: ' + fileProblem);
+      }
     } catch (error) {
-      console.error("❌ Error removing photo:", error);
+      console.error("Error removing photo:", error);
+      setFlagError("Couldn't remove the photo: " + (error.message || error));
     }
   };
 
@@ -2280,6 +2336,31 @@ const AnalyticsDashboard = () => {
               </span>
             </h2>
 
+            <div style={{ display: 'flex', gap: '8px', padding: '0 20px 12px 20px', alignItems: 'center' }}>
+              {['pending', 'all'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setReportFilter(f)}
+                  style={{
+                    padding: '4px 12px', borderRadius: '14px', fontSize: '12px', cursor: 'pointer',
+                    border: '1px solid #d1d5db',
+                    backgroundColor: reportFilter === f ? '#1f2937' : 'white',
+                    color: reportFilter === f ? 'white' : '#374151',
+                  }}
+                >
+                  {f === 'pending' ? 'Pending' : 'All reports'}
+                </button>
+              ))}
+            </div>
+            {flagError && (
+              <div style={{
+                margin: '0 20px 12px 20px', padding: '10px 12px', borderRadius: '8px',
+                backgroundColor: '#fef2f2', color: '#b91c1c', fontSize: '13px'
+              }}>
+                {flagError}
+              </div>
+            )}
+
             {loadingFlags ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
                 <div style={{
@@ -2308,10 +2389,10 @@ const AnalyticsDashboard = () => {
                 maxHeight: '600px',
                 overflowY: 'auto'
               }}>
-                {flaggedContent.map((flag, index) => (
+                {flaggedContent.filter(f => reportFilter === 'all' || f.flagStatus === 'pending').map((flag, index, shown) => (
                   <div key={flag.id} style={{
                     padding: '20px',
-                    borderBottom: index < flaggedContent.length - 1 ? '1px solid #f3f4f6' : 'none',
+                    borderBottom: index < shown.length - 1 ? '1px solid #f3f4f6' : 'none',
                     display: 'grid',
                     gridTemplateColumns: '80px 1fr auto',
                     gap: '16px',
@@ -2344,7 +2425,7 @@ const AnalyticsDashboard = () => {
                           justifyContent: 'center',
                           color: '#9ca3af'
                         }}>
-                          📸
+                          {flag.type === 'user' ? '👤' : '📸'}
                         </div>
                       )}
                     </div>
@@ -2373,11 +2454,11 @@ const AnalyticsDashboard = () => {
                       </div>
 
                       <h4 style={{ margin: '0 0 4px 0', color: '#1f2937', fontSize: '14px', fontWeight: '600' }}>
-                        Reported for: {flag.reason?.replace('_', ' ') || 'Unknown reason'}
+                        {flag.type === 'user' ? 'Person reported for: ' : 'Photo reported for: '}{flag.reason?.replace('_', ' ') || 'Unknown reason'}
                       </h4>
                       
                       <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#6b7280' }}>
-                        Reported by: {flag.flaggedByEmail}
+                        Reported by: {flag.flaggedByEmail || nameOf(flag.flaggedBy)}
                       </p>
 
                       {flag.photoCaption && (
@@ -2393,7 +2474,9 @@ const AnalyticsDashboard = () => {
                       )}
 
                       <p style={{ margin: '0', fontSize: '12px', color: '#9ca3af' }}>
-                        📍 {flag.location} • Photo ID: {flag.photoId}
+                        {flag.type === 'user'
+                          ? <>👤 Reported person: <strong>{nameOf(flag.reportedUserId)}</strong> • {reportsAgainst(flag.reportedUserId)} report{reportsAgainst(flag.reportedUserId) === 1 ? '' : 's'} against them • ID: {flag.reportedUserId}</>
+                          : <>📍 {flag.location} • Posted by <strong>{nameOf(flag.photoOwnerId)}</strong> ({reportsAgainst(flag.photoOwnerId)} report{reportsAgainst(flag.photoOwnerId) === 1 ? '' : 's'} against them) • Photo ID: {flag.photoId}</>}
                       </p>
                     </div>
 
@@ -2419,7 +2502,7 @@ const AnalyticsDashboard = () => {
                             }}
                           >
                             <CheckCircleIcon color="white" size={12} />
-                            Approve
+                            Mark reviewed
                           </button>
                           <button
                             onClick={() => updateFlagStatus(flag.id, 'dismissed')}
@@ -2436,7 +2519,7 @@ const AnalyticsDashboard = () => {
                           >
                             Dismiss
                           </button>
-                          <button
+                          {flag.type !== 'user' && (<button
                             onClick={() => removePhoto(flag.id, flag.photoId)}
                             style={{
                               padding: '6px 12px',
@@ -2454,8 +2537,8 @@ const AnalyticsDashboard = () => {
                             }}
                           >
                             <XCircleIcon color="white" size={12} />
-                            Remove
-                          </button>
+                            Remove photo
+                          </button>)}
                         </>
                       )}
                       
