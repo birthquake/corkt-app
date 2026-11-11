@@ -361,6 +361,19 @@ const AnalyticsDashboard = () => {
     }
   };
 
+  // Admin note on a report (kept with the report so the reason for a decision
+  // is still there months later).
+  const addFlagNote = async (flag) => {
+    const note = window.prompt('Note for this report (what you decided and why):', flag.adminNote || '');
+    if (note === null) return;
+    try {
+      setFlagError('');
+      await updateDoc(doc(db, "flags", flag.id), { adminNote: note, noteAt: serverTimestamp() });
+    } catch (error) {
+      setFlagError("Couldn't save the note: " + (error.message || error));
+    }
+  };
+
   // Remove the reported photo for real: delete its image files from Storage,
   // delete the post, and close every pending report about that photo.
   const removePhoto = async (flagId, photoId) => {
@@ -2473,6 +2486,11 @@ const AnalyticsDashboard = () => {
                         </p>
                       )}
 
+                      {flag.adminNote && (
+                        <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#374151', backgroundColor: '#f9fafb', padding: '6px 8px', borderRadius: '6px' }}>
+                          📝 {flag.adminNote}
+                        </p>
+                      )}
                       <p style={{ margin: '0', fontSize: '12px', color: '#9ca3af' }}>
                         {flag.type === 'user'
                           ? <>👤 Reported person: <strong>{nameOf(flag.reportedUserId)}</strong> • {reportsAgainst(flag.reportedUserId)} report{reportsAgainst(flag.reportedUserId) === 1 ? '' : 's'} against them • ID: {flag.reportedUserId}</>
@@ -2542,6 +2560,20 @@ const AnalyticsDashboard = () => {
                         </>
                       )}
                       
+                      {flag.flagStatus !== 'pending' && flag.reviewedAt && (
+                        <div style={{ fontSize: '11px', color: '#9ca3af', textAlign: 'center' }}>
+                          {formatDate(flag.reviewedAt?.toDate ? flag.reviewedAt.toDate() : flag.reviewedAt)}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => addFlagNote(flag)}
+                        style={{
+                          padding: '6px 12px', backgroundColor: 'white', color: '#374151',
+                          border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontSize: '12px'
+                        }}
+                      >
+                        {flag.adminNote ? 'Edit note' : 'Add note'}
+                      </button>
                       {flag.flagStatus !== 'pending' && (
                         <div style={{
                           padding: '8px 12px',

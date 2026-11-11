@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, doc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import AdminInsights from './AdminInsights';
 
 const AdminPanel = ({ currentUser }) => {
   const [photos, setPhotos] = useState([]);
@@ -10,6 +11,7 @@ const AdminPanel = ({ currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [error, setError] = useState('');
+  const [section, setSection] = useState('photos'); // photos | activity | people | health
 
   // ✅ FIX: Track in-flight rotation updates so the onSnapshot listener
   // doesn't overwrite our optimistic UI before Firestore confirms the write.
@@ -119,8 +121,10 @@ const AdminPanel = ({ currentUser }) => {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const photoDate = photo.timestamp?.toDate?.() || new Date(photo.timestamp);
       return photoDate > oneDayAgo;
-    } else if (filter === 'private') {
-      return photo.privacy === 'private';
+    } else if (filter === 'friends') {
+      return photo.privacy === 'friends';
+    } else if (filter === 'vault') {
+      return photo.privacy === 'vault' || photo.privacy === 'invited' || photo.privacy === 'tagged';
     }
     
     return true;
@@ -303,7 +307,7 @@ const AdminPanel = ({ currentUser }) => {
   };
 
   const getPrivacyColor = (privacy) => {
-    if (privacy === 'private') return '#dc3545';
+    if (privacy === 'vault' || privacy === 'invited' || privacy === 'tagged') return '#dc3545';
     if (privacy === 'friends') return '#ffc107';
     return '#28a745';
   };
@@ -363,6 +367,20 @@ const AdminPanel = ({ currentUser }) => {
         <div style={{ marginBottom: '16px', color: '#6c757d', fontSize: '14px' }}>
           Logged in as: <strong>{userEmail}</strong>
         </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {[['photos', 'Photos'], ['activity', 'Activity'], ['people', 'People'], ['health', 'Health']].map(([key, label]) => (
+            <button key={key} onClick={() => setSection(key)}
+              style={{
+                padding: '6px 14px', borderRadius: '16px', fontSize: '13px', cursor: 'pointer',
+                border: '1px solid #ced4da',
+                backgroundColor: section === key ? '#343a40' : '#fff',
+                color: section === key ? '#fff' : '#343a40',
+              }}>
+              {label}
+            </button>
+          ))}
+        </div>
         
         {error && (
           <div style={{ backgroundColor: '#f8d7da', color: '#721c24', padding: '12px', borderRadius: '6px', marginBottom: '16px', border: '1px solid #f5c6cb' }}>
@@ -370,6 +388,7 @@ const AdminPanel = ({ currentUser }) => {
           </div>
         )}
         
+        {section === 'photos' && (
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             type="text"
@@ -386,17 +405,30 @@ const AdminPanel = ({ currentUser }) => {
             <option value="all">All Photos ({photos.length})</option>
             <option value="recent">Recent (24h)</option>
             <option value="flagged">Flagged ({flaggedCount})</option>
-            <option value="private">Private Photos ({photos.filter(p => p.privacy === 'private').length})</option>
+            <option value="friends">Friends-only ({photos.filter(p => p.privacy === 'friends').length})</option>
+            <option value="vault">Vault ({photos.filter(p => p.privacy === 'vault' || p.privacy === 'invited' || p.privacy === 'tagged').length})</option>
           </select>
         </div>
+        )}
       </div>
 
+      {section !== 'photos' && (
+        <AdminInsights
+          tab={section}
+          photos={photos}
+          flags={flags}
+          onViewPosts={(uid) => { setSearchTerm(uid); setFilter('all'); setSection('photos'); }}
+        />
+      )}
+
+      {section === 'photos' && (<>
       {/* Stats Bar */}
       <div style={{ backgroundColor: '#fff', padding: '16px 20px', borderBottom: '1px solid #dee2e6', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#343a40' }}>Total Photos:</strong> {photos.length}</div>
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#343a40' }}>Showing:</strong> {filteredPhotos.length}</div>
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#dc3545' }}>Flagged:</strong> {flaggedCount}</div>
-        <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#ffc107' }}>Private:</strong> {photos.filter(p => p.privacy === 'private').length}</div>
+        <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#ffc107' }}>Friends-only:</strong> {photos.filter(p => p.privacy === 'friends').length}</div>
+        <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#dc3545' }}>Vault:</strong> {photos.filter(p => p.privacy === 'vault' || p.privacy === 'invited' || p.privacy === 'tagged').length}</div>
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#17a2b8' }}>User Reports:</strong> {flags.filter(f => f.flagStatus === 'pending').length}</div>
         <div style={{ color: '#6c757d', fontSize: '14px' }}><strong style={{ color: '#6f42c1' }}>Rotated:</strong> {photos.filter(p => p.rotation && p.rotation !== 0).length}</div>
       </div>
@@ -585,6 +617,7 @@ const AdminPanel = ({ currentUser }) => {
       </div>
 
       {/* Photo Modal */}
+      </>)}
       {selectedPhoto && (
         <div
           style={{
