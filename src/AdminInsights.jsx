@@ -29,16 +29,18 @@ const nameOf = (u) => {
 };
 const VALID_PRIVACY = new Set(['public', 'friends', 'vault', 'invited', 'tagged']);
 
-const card = { backgroundColor: '#fff', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.06)' };
+const TEXT = '#343a40';
+const card = { backgroundColor: '#fff', color: TEXT, borderRadius: '12px', padding: '16px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.06)' };
 const muted = { color: '#6c757d', fontSize: '13px' };
 const th = { textAlign: 'left', padding: '8px 10px', fontSize: '12px', color: '#6c757d', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' };
-const td = { padding: '8px 10px', fontSize: '13px', borderBottom: '1px solid #f1f3f5', verticalAlign: 'top' };
+const td = { padding: '8px 10px', fontSize: '13px', color: TEXT, borderBottom: '1px solid #f1f3f5', verticalAlign: 'top' };
+const control = { padding: '8px 12px', border: '1px solid #ced4da', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff', color: TEXT };
 
 function Stat({ label, value, sub, color }) {
   return (
     <div style={{ ...card, minWidth: '150px', flex: '1' }}>
       <div style={{ fontSize: '26px', fontWeight: '700', color: color || '#343a40' }}>{value}</div>
-      <div style={{ fontSize: '13px', color: '#343a40', marginTop: '2px' }}>{label}</div>
+      <div style={{ fontSize: '13px', color: TEXT, marginTop: '2px' }}>{label}</div>
       {sub ? <div style={{ ...muted, marginTop: '2px' }}>{sub}</div> : null}
     </div>
   );
@@ -49,7 +51,7 @@ function DayBars({ series, label }) {
   const max = Math.max(1, ...series.map(s => s.count));
   return (
     <div style={card}>
-      <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px' }}>{label}</div>
+      <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '10px', color: TEXT }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '90px' }}>
         {series.map(s => (
           <div key={s.key} title={`${s.key}: ${s.count}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
@@ -166,7 +168,7 @@ export default function AdminInsights({ tab, photos, flags, onViewPosts }) {
     return checks;
   }, [photos, users]);
 
-  const wrap = { padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' };
+  const wrap = { padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', color: TEXT };
 
   if (tab === 'activity') {
     const a = activity;
@@ -184,7 +186,7 @@ export default function AdminInsights({ tab, photos, flags, onViewPosts }) {
           <DayBars series={a.signupsPerDay} label="Sign-ups per day, last 14 days" />
         </div>
         <div style={card}>
-          <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '6px' }}>All posts by privacy</div>
+          <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '6px', color: TEXT }}>All posts by privacy</div>
           <div style={muted}>
             Public {a.mix.public} · Friends {a.mix.friends} · Vault {a.mix.vault}{a.mix.other ? ` · Unknown ${a.mix.other}` : ''}
           </div>
@@ -205,10 +207,10 @@ export default function AdminInsights({ tab, photos, flags, onViewPosts }) {
           <input
             type="text" placeholder="Search by name or user ID…" value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #ced4da', borderRadius: '6px', fontSize: '14px', flex: 1, minWidth: '220px' }}
+            style={{ ...control, flex: 1, minWidth: '220px' }}
           />
           <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #ced4da', borderRadius: '6px', fontSize: '14px', backgroundColor: '#fff' }}>
+            style={control}>
             <option value="lastPost">Most recent post</option>
             <option value="posts">Most posts</option>
             <option value="reports">Most reports</option>
@@ -226,7 +228,7 @@ export default function AdminInsights({ tab, photos, flags, onViewPosts }) {
               {people.map(r => (
                 <tr key={r.uid}>
                   <td style={td}>
-                    <div style={{ fontWeight: '600' }}>{r.name}{r.missingProfile ? <span style={{ color: '#dc3545', fontSize: '11px', marginLeft: '6px' }}>no profile</span> : null}</div>
+                    <div style={{ fontWeight: '600', color: TEXT }}>{r.name}{r.missingProfile ? <span style={{ color: '#dc3545', fontSize: '11px', marginLeft: '6px' }}>no profile</span> : null}</div>
                     {r.user?.displayName && r.user.displayName !== r.user.username ? <div style={muted}>{r.user.displayName}</div> : null}
                     <div style={{ ...muted, fontSize: '11px' }}>{r.uid}</div>
                   </td>
@@ -239,7 +241,7 @@ export default function AdminInsights({ tab, photos, flags, onViewPosts }) {
                   <td style={td}>
                     {r.posts > 0 && (
                       <button onClick={() => onViewPosts?.(r.uid)}
-                        style={{ padding: '4px 10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#fff', cursor: 'pointer', fontSize: '12px' }}>
+                        style={{ padding: '4px 10px', border: '1px solid #ced4da', borderRadius: '6px', backgroundColor: '#fff', color: TEXT, cursor: 'pointer', fontSize: '12px' }}>
                         View posts
                       </button>
                     )}
@@ -261,7 +263,7 @@ export default function AdminInsights({ tab, photos, flags, onViewPosts }) {
       {health.map(c => (
         <div key={c.label} style={card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px' }}>
-            <div style={{ fontSize: '14px', fontWeight: '600' }}>{c.label}</div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: TEXT }}>{c.label}</div>
             <div style={{ fontSize: '18px', fontWeight: '700', color: c.items.length ? '#dc3545' : '#28a745' }}>{c.items.length}</div>
           </div>
           <div style={muted}>{c.why}</div>
